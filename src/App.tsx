@@ -374,6 +374,16 @@ export default function App() {
 
           {/* User authentication states block - Premium Orokin styling */}
           <div className="flex items-center gap-3 shrink-0">
+            <a
+              href="https://github.com/yaseen454/DucaPlatv2"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 md:p-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[#d4af37] border border-[#2a2c33] hover:border-[#d4af37]/30 rounded-lg transition-all duration-150 flex items-center justify-center"
+              title="GitHub Repository"
+            >
+              <Github className="w-4 h-4" />
+            </a>
+
             {user ? (
               <div className="flex items-center gap-2.5 bg-[#111317] border border-[#d4af37]/20 p-1 pl-2.5 pr-2.5 md:pl-3 md:pr-3.5 rounded-lg">
                 {user.photoURL ? (

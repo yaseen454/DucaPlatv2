@@ -1,6 +1,8 @@
 # 🪐 DUCAPLAT (Pro v2.0)
 ### Void Market Efficiency Analytics & Sellsheet Vision Engine
 
+🔗 **GitHub Repository**: [https://github.com/yaseen454/DucaPlatv2](https://github.com/yaseen454/DucaPlatv2)
+
 **Ducaplat** is a premium, full-featured analytics board and inventory calculator built for *Warframe* Tenno looking to maximize trade efficiency. By evaluating Platinum-to-Ducat conversion matrices, visualizing price distribution profiles, scanning screenshots natively via AI, and syncing inventories securely, players can make fast, mathematically optimal trading decisions.
 
 ---
