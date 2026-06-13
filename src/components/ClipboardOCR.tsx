@@ -161,28 +161,130 @@ export default function ClipboardOCR({
       const base64Data = commaIndex !== -1 ? previewUrl.substring(commaIndex + 1) : previewUrl;
       const mimeType = imageFile?.type || 'image/png';
 
-      const response = await fetch('/api/ocr', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          image: base64Data,
-          mimeType
-        })
+      const schemaPrompt = `You are a Warframe Prime inventory screenshot analyzer. 
+Review the given screenshot image of Warframe, specifically looking at any listed prime blueprints, prime weapon links, chassis, barrels, stocks, receivers, or components.
+Extract each visible prime item and its count. Keep in mind:
+- If a count prefix is visible like '5 X Acceltra Prime Stock', extract count = 5.
+- If it's a single item listed, count = 1.
+- Filter out items that are not prime parts.
+Return a structured JSON list. Only return a plain JSON array of objects conforming to the type { name: string, count: number }[]. Do not write markdown blocks or any other explanation, just the raw JSON.`;
+
+      let responseText = "";
+      let isExpressFallbackResult = false;
+      
+      try {
+        // Attempt reaching the serverless function first (for Netlify production)
+        const netlifyResponse = await fetch('/.netlify/functions/gemini', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            image: base64Data,
+            mimeType,
+            prompt: schemaPrompt
+          })
+        });
+
+        const contentType = netlifyResponse.headers.get('content-type') || '';
+        if (!netlifyResponse.ok || netlifyResponse.status === 404 || contentType.includes('text/html')) {
+          throw new Error("SERVERLESS_NOT_FOUND");
+        }
+
+        const resData = await netlifyResponse.json();
+        responseText = resData.text;
+      } catch (netlifyErr: any) {
+        console.log("Could not resolve Netlify serverless endpoint, triggering Express local API route fallback...", netlifyErr);
+        
+        // Express fallback (for local dev server / AI Studio container environment)
+        const expressResponse = await fetch('/api/ocr', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            image: base64Data,
+            mimeType
+          })
+        });
+
+        if (!expressResponse.ok) {
+          const errData = await expressResponse.json().catch(() => ({}));
+          throw new Error(errData.error || `OCR API route failed with status ${expressResponse.status}`);
+        }
+
+        const expressData = await expressResponse.json();
+        if (expressData.items) {
+          setOcrItems(expressData.items);
+          setFeedback(`Vision scanning completed via Express! Extracted ${expressData.items.length} items successfully.`);
+          isExpressFallbackResult = true;
+        } else {
+          throw new Error("Express OCR response was invalid.");
+        }
+      }
+
+      if (isExpressFallbackResult) {
+        setLoading(false);
+        return;
+      }
+      
+      if (!responseText) {
+        throw new Error("No response text returned from secure serverless endpoint.");
+      }
+
+      const rawResults = JSON.parse(responseText.trim());
+      
+      // Run standard fuzzy matching against prime parts database in the browser context
+      const enrichedResults = rawResults.map((item: any) => {
+        const cleanScanned = item.name.toLowerCase().trim().replace(/[^a-z0-9 ]/g, "");
+        let bestMatch = null;
+        let maxOverlapScore = 0;
+
+        if (cleanScanned) {
+          for (const official of PRIME_ITEMS) {
+            const cleanOfficial = official.part.toLowerCase().trim().replace(/[^a-z0-9 ]/g, "");
+            if (cleanScanned === cleanOfficial) {
+              bestMatch = official;
+              break;
+            }
+            if (cleanScanned.includes(cleanOfficial) || cleanOfficial.includes(cleanScanned)) {
+              const overlap = Math.min(cleanScanned.length, cleanOfficial.length) / Math.max(cleanScanned.length, cleanOfficial.length);
+              if (overlap > maxOverlapScore) {
+                maxOverlapScore = overlap;
+                bestMatch = official;
+              }
+            }
+          }
+
+          if (!bestMatch) {
+            const scannedWords = cleanScanned.split(/\s+/).filter(w => w.length > 2 && w !== "prime");
+            for (const official of PRIME_ITEMS) {
+              const officialWords = official.part.toLowerCase().split(/\s+/).filter(w => w.length > 2 && w !== "prime");
+              const matchCount = scannedWords.filter(w => officialWords.includes(w)).length;
+              if (matchCount >= 2 && matchCount / officialWords.length > maxOverlapScore) {
+                maxOverlapScore = matchCount / officialWords.length;
+                bestMatch = official;
+              }
+            }
+          }
+        }
+
+        return {
+          name: item.name,
+          count: item.count || 1,
+          matchedItem: bestMatch || undefined
+        };
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to analyze the screenshot.');
-      }
-
-      setOcrItems(data.items || []);
-      if (!data.items || data.items.length === 0) {
+      setOcrItems(enrichedResults);
+      if (enrichedResults.length === 0) {
         setError("Gemini couldn't find any prime parts in the screenshot. Please make sure the table text is clear.");
+      } else {
+        setFeedback(`Vision scanning completed! Extracted ${enrichedResults.length} items successfully.`);
       }
     } catch (err: any) {
-      setError(err.message || 'Failure connecting to Gemini server.');
+      console.error(err);
+      setError(err.message || 'Failure executing the Gemini OCR scan.');
     } finally {
       setLoading(false);
     }
@@ -568,14 +670,16 @@ export default function ClipboardOCR({
                 <span className="text-[10px] text-zinc-600">Checking for parts and quantities...</span>
               </div>
             ) : error ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-red-400 text-xs px-4 text-center">
-                <span>{error}</span>
-                <button 
-                  onClick={runOcrAnalysis}
-                  className="mt-4 px-3 py-1 bg-red-950/30 border border-red-900/40 rounded text-red-300 font-semibold"
-                >
-                  Retry Scan
-                </button>
+              <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center text-red-400 text-xs px-4 py-4 text-center space-y-4">
+                <span className="leading-relaxed">{error}</span>
+                <div className="flex justify-center gap-2.5">
+                  <button 
+                    onClick={runOcrAnalysis}
+                    className="px-3 py-1.5 bg-[#d4af37] hover:bg-[#b08d26] text-black font-extrabold rounded text-[10px] uppercase tracking-wider duration-150 transition"
+                  >
+                    Retry Scan
+                  </button>
+                </div>
               </div>
             ) : ocrItems.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center text-[#8e9299]/70 text-center">
