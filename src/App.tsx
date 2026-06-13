@@ -896,7 +896,7 @@ export default function App() {
           <span>DucaPlat Trade Optimizer. For educational use within Warframe Free markets.</span>
         </div>
         <div className="flex gap-4">
-          <a href="https://drops.warframestat.us/" target="_blank" rel="noreferrer" className="hover:text-white transition">Sourced with warframestat.us</a>
+          <a href="https://wiki.warframe.com/w/Ducats/Prices/All" target="_blank" rel="noreferrer" className="hover:text-white transition">Sourced from wiki.warframe.com</a>
           <span>•</span>
           <span className="text-[#d4af37] font-semibold tracking-wide">Powered by Google Gemini</span>
         </div>

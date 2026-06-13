@@ -39,6 +39,7 @@ Extract each visible prime item and its count. Keep in mind:
 Return a structured JSON list. Only return a plain JSON array of objects conforming to the type { name: string, count: number }[]. Do not write markdown blocks or any other explanation, just the raw JSON.`;
 
     const contents: any[] = [];
+    contents.push({ text: schemaPrompt });
     if (image) {
       contents.push({
         inlineData: {
@@ -47,7 +48,6 @@ Return a structured JSON list. Only return a plain JSON array of objects conform
         },
       });
     }
-    contents.push({ text: schemaPrompt });
 
     // Call ai.models.generateContent using 'gemini-2.5-flash' as requested
     const response = await ai.models.generateContent({
@@ -69,18 +69,22 @@ Return a structured JSON list. Only return a plain JSON array of objects conform
       }
     });
 
+    const finalData = JSON.parse(response.text || "[]");
     return {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ text: response.text }),
+      body: JSON.stringify(finalData),
     };
   } catch (error: any) {
     console.error("Netlify Function Gemini OCR error:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message || "Failed to execute serverless OCR scan" }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ error: "Failed to execute serverless OCR scan" }),
     };
   }
 };

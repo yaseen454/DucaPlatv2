@@ -169,7 +169,7 @@ Extract each visible prime item and its count. Keep in mind:
 - Filter out items that are not prime parts.
 Return a structured JSON list. Only return a plain JSON array of objects conforming to the type { name: string, count: number }[]. Do not write markdown blocks or any other explanation, just the raw JSON.`;
 
-      let responseText = "";
+      let rawResults: any[] = [];
       let isExpressFallbackResult = false;
       
       try {
@@ -192,7 +192,15 @@ Return a structured JSON list. Only return a plain JSON array of objects conform
         }
 
         const resData = await netlifyResponse.json();
-        responseText = resData.text;
+        if (Array.isArray(resData)) {
+          rawResults = resData;
+        } else if (resData && typeof resData.text === 'string') {
+          rawResults = JSON.parse(resData.text.trim());
+        } else if (resData && Array.isArray(resData.items)) {
+          rawResults = resData.items;
+        } else {
+          throw new Error("Invalid response format from serverless function.");
+        }
       } catch (netlifyErr: any) {
         console.log("Could not resolve Netlify serverless endpoint, triggering Express local API route fallback...", netlifyErr);
         
@@ -227,12 +235,6 @@ Return a structured JSON list. Only return a plain JSON array of objects conform
         setLoading(false);
         return;
       }
-      
-      if (!responseText) {
-        throw new Error("No response text returned from secure serverless endpoint.");
-      }
-
-      const rawResults = JSON.parse(responseText.trim());
       
       // Run standard fuzzy matching against prime parts database in the browser context
       const enrichedResults = rawResults.map((item: any) => {
