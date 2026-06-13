@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile document containing basic user metadata.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The unique ID of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The display name of the user."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "The profile photo URL of the user."
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last login event."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of user document creation."
+        }
+      },
+      "required": ["uid"]
+    },
+    "SavedItemEntry": {
+      "title": "SavedItemEntry",
+      "description": "A saved calculation inventory state representing counts of rare, uncommon or common prime items.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The entry's ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "Dynamic or custom name of the save."
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of calculation: 'manual', 'directory', or 'ocr'."
+        },
+        "counts": {
+          "type": "object",
+          "description": "The item quantity counts map."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "User visible date string for display."
+        },
+        "totalDucats": {
+          "type": "number",
+          "description": "Total sum of ducat values."
+        },
+        "totalItems": {
+          "type": "number",
+          "description": "Total count of prime items in the batch."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Raw server timestamp of the save."
+        }
+      },
+      "required": ["id", "name", "source", "counts", "totalDucats", "totalItems"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Reference profile document for each registered user."
+    },
+    "/users/{userId}/savedItems/{itemId}": {
+      "schema": "SavedItemEntry",
+      "description": "Cached collections of saved prime calculator batches."
+    }
+  }
+}

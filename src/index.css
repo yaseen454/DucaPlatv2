@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* Ensure all interactive, clickable, and actionable elements yield the hand/pointer cursor */
+button,
+[role="button"],
+.cursor-pointer,
+select,
+summary,
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+a {
+  cursor: pointer !important;
+}
+
+/* Custom modern horizontal scrollbar styling for navigation tabs to prevent hidden items across all desktop/mobile devices */
+.custom-nav-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #23252c #0b0c0f;
+}
+
+.custom-nav-scroll::-webkit-scrollbar {
+  height: 3px;
+}
+
+.custom-nav-scroll::-webkit-scrollbar-track {
+  background: #0b0c0f;
+}
+
+.custom-nav-scroll::-webkit-scrollbar-thumb {
+  background: #23252c;
+  border-radius: 4px;
+}
+
+.custom-nav-scroll::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}

@@ -1,0 +1,5 @@
+# SPA single page navigation path compliance fallbacks
+/* /index.html 200
+
+# Proxy Firebase auth callbacks to the secure Firebase platform handles
+/__/auth/* https://ducaplat.firebaseapp.com/__/auth/:splat 200

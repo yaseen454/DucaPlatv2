@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default-deny Catch-All Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Validators (Rule-Side Enforcers with Type & Size Checks)
+    function isValidUserProfile(data) {
+      return data.uid == request.auth.uid 
+        && (data.email == null || (data.email is string && data.email.size() <= 200))
+        && (data.displayName == null || (data.displayName is string && data.displayName.size() <= 150))
+        && (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 500));
+    }
+
+    function isValidSavedItem(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 120
+        && data.source is string && (data.source == 'manual' || data.source == 'directory' || data.source == 'ocr')
+        && data.timestamp is string && data.timestamp.size() <= 100
+        && data.totalDucats is int && data.totalDucats >= 0
+        && data.totalItems is int && data.totalItems >= 0
+        && data.counts is map;
+    }
+
+    // Rules for collections
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      // Forbid blanket queries/listings
+      allow list: if false;
+
+      allow create: if isOwner(userId) 
+        && isValidUserProfile(incoming()) 
+        && incoming().createdAt == request.time
+        && incoming().lastLoginAt == request.time;
+
+      allow update: if isOwner(userId) 
+        && isValidUserProfile(incoming()) 
+        && incoming().lastLoginAt == request.time
+        // Protect original creation timestamp
+        && incoming().createdAt == existing().createdAt
+        // Limit which fields the client might dynamically edit in profile
+        && incoming().diff(existing()).affectedKeys().hasOnly(['lastLoginAt', 'displayName', 'photoURL', 'email']);
+      
+      allow delete: if false; // Profiles are permanent
+
+      // Subcollection for cached Saved Items
+      match /savedItems/{itemId} {
+        allow get: if isOwner(userId) && isValidId(itemId);
+        allow list: if isOwner(userId); // list is secure because user is owner of parent path
+
+        allow create: if isOwner(userId) && isValidId(itemId)
+          && isValidSavedItem(incoming())
+          && incoming().createdAt == request.time;
+
+        allow update: if isOwner(userId) && isValidId(itemId)
+          && isValidSavedItem(incoming())
+          && incoming().createdAt == existing().createdAt // Immutable creation time
+          && incoming().id == existing().id // Immutable entry ID
+          && incoming().source == existing().source // Immutable source type
+          // Explicit action field modifications allowed
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'counts', 'totalDucats', 'totalItems', 'timestamp']);
+
+        allow delete: if isOwner(userId) && isValidId(itemId);
+      }
+    }
+  }
+}

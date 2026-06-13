@@ -1,0 +1,6 @@
+{
+  "name": "DucaPlat",
+  "description": "Full-featured Warframe Prime Junk Trading Calculator utilizing Gemini-guided visual OCR, One-Way ANOVA, Tukey HSD, and pricing permutation models.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

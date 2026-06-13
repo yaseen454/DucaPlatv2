@@ -1,0 +1,7399 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+export interface WikiPart {
+  part: string;
+  drop_locations: string[];
+  ducat_value: number;
+}
+
+export const WIKI_DATA: WikiPart[] = [
+  {
+    "part": "Acceltra Prime Blueprint",
+    "drop_locations": [
+      "Axi M6 Common (V)",
+      "Lith C11 Common (V)",
+      "Lith M10 Common (V)",
+      "Lith N17 Uncommon (V)",
+      "Meso G9 Common (V)",
+      "Meso N17 Common (V)",
+      "Meso V10 Common (V)",
+      "Meso W5 Common (V)",
+      "Meso Z6 Common (V)",
+      "Neo Z11 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Acceltra Prime Barrel",
+    "drop_locations": [
+      "Lith A11 Rare (V)",
+      "Meso A5 Rare (V)",
+      "Neo A12 Rare (V)",
+      "Neo A13 Rare (V)",
+      "Neo A14 Rare (V)",
+      "Neo A15 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Acceltra Prime Receiver",
+    "drop_locations": [
+      "Axi O6 Uncommon (V)",
+      "Axi Z2 Uncommon (V)",
+      "Meso K7 Uncommon (V)",
+      "Meso L3 Uncommon (V)",
+      "Neo F3 Uncommon (V)",
+      "Neo L4 Uncommon (V)",
+      "Neo M6 Uncommon (V)",
+      "Neo O2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Acceltra Prime Stock",
+    "drop_locations": [
+      "Axi A18 Rare (V)",
+      "Axi A19 Rare (V)",
+      "Meso A11 Uncommon (V)",
+      "Meso A8 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Afuris Prime Blueprint",
+    "drop_locations": [
+      "Axi B6 Common (V)",
+      "Axi B9 Common (V)",
+      "Axi D5 Common (V)",
+      "Lith G6 Common (V)",
+      "Neo G7 Common (V)",
+      "Neo M5 Common (V)",
+      "Neo T7 Common (V)",
+      "Neo Z10 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Afuris Prime Barrel",
+    "drop_locations": [
+      "Axi N10 Common (V)",
+      "Lith H9 Common (V)",
+      "Lith N14 Common (V)",
+      "Lith P8 Common (V)",
+      "Meso B9 Common (V)",
+      "Meso D7 Common (V)",
+      "Meso R6 Common (V)",
+      "Meso W4 Common (V)",
+      "Neo E4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Afuris Prime Link",
+    "drop_locations": [
+      "Axi G11 Uncommon (V)",
+      "Meso A5 Uncommon (V)",
+      "Meso V9 Uncommon (V)",
+      "Neo K5 Uncommon (V)",
+      "Neo P8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Afuris Prime Receiver",
+    "drop_locations": [
+      "Axi A16 Rare (V)",
+      "Axi A17 Rare (V)",
+      "Lith A9 Rare (V)",
+      "Meso A4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Akarius Prime Blueprint",
+    "drop_locations": [
+      "Meso A11 Rare (V)",
+      "Meso A7 Rare (V)",
+      "Neo A11 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Akarius Prime Barrel",
+    "drop_locations": [
+      "Axi D5 Common (V)",
+      "Axi H8 Common (V)",
+      "Lith O4 Common (V)",
+      "Neo A12 Common (V)",
+      "Neo A13 Common (V)",
+      "Neo D10 Common (V)",
+      "Neo M6 Common (V)",
+      "Neo X1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Akarius Prime Link",
+    "drop_locations": [
+      "Axi Y2 Uncommon (V)",
+      "Lith A11 Uncommon (V)",
+      "Lith R5 Uncommon (V)",
+      "Meso N17 Uncommon (V)",
+      "Meso P16 Uncommon (V)",
+      "Meso T7 Uncommon (V)",
+      "Meso T8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Akarius Prime Receiver",
+    "drop_locations": [
+      "Lith A10 Rare (V)",
+      "Lith A6 Rare (V)",
+      "Lith A7 Rare (V)",
+      "Lith A8 Rare (V)",
+      "Neo G10 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Akbolto Prime Blueprint",
+    "drop_locations": [
+      "Axi G2 Common (V)",
+      "Axi H5 Common (V)",
+      "Lith M7 Common (V)",
+      "Meso D3 Common (V)",
+      "Neo M1 Common (V)",
+      "Neo V7 Common (V)",
+      "Neo Z2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Akbolto Prime Barrel",
+    "drop_locations": [
+      "Lith A3 Uncommon (V)",
+      "Lith C2 Uncommon (V)",
+      "Lith K5 Uncommon (V)",
+      "Lith O1 Uncommon (V)",
+      "Lith V5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Akbolto Prime Link",
+    "drop_locations": [
+      "Axi H4 Uncommon (V)",
+      "Lith S7 Uncommon (V)",
+      "Lith W1 Uncommon (V)",
+      "Meso E2 Uncommon (V)",
+      "Neo B6 Uncommon (V)",
+      "Neo K2 Uncommon (V)",
+      "Neo N8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Akbolto Prime Receiver",
+    "drop_locations": [
+      "Axi A12 Rare (V)",
+      "Axi A3 Rare (V)",
+      "Axi A4 Rare (V)",
+      "Meso A2 Rare (V)",
+      "Neo A2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Akbronco Prime Blueprint",
+    "drop_locations": [
+      "Neo V11 Common",
+      "Axi A10 Common (V)",
+      "Axi S11 Common (V)",
+      "Axi S16 Common (V)",
+      "Lith A8 Common (V)",
+      "Lith B11 Common (V)",
+      "Lith K9 Common (V)",
+      "Lith P6 Common (V)",
+      "Lith R4 Common (V)",
+      "Lith S2 Common (V)",
+      "Lith S3 Common (V)",
+      "Lith T1 Common (V)",
+      "Lith T8 Common (V)",
+      "Lith V5 Common (V)",
+      "Lith Z1 Common (V)",
+      "Lith Z2 Common (V)",
+      "Meso A5 Common (V)",
+      "Meso B6 Common (V)",
+      "Meso G9 Common (V)",
+      "Meso O1 Common (V)",
+      "Meso P17 Common (V)",
+      "Meso S3 Common (V)",
+      "Neo D3 Common (V)",
+      "Neo M2 Common (V)",
+      "Neo N15 Common (V)",
+      "Neo P6 Common (V)",
+      "Neo T2 Common (V)",
+      "Neo W2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Akbronco Prime Link",
+    "drop_locations": [
+      "Axi C11 Uncommon",
+      "Axi A18 Uncommon (V)",
+      "Axi A9 Uncommon (V)",
+      "Axi C5 Uncommon (V)",
+      "Axi K8 Uncommon (V)",
+      "Axi L5 Uncommon (V)",
+      "Axi S1 Uncommon (V)",
+      "Lith A2 Uncommon (V)",
+      "Lith C13 Uncommon (V)",
+      "Lith H7 Uncommon (V)",
+      "Lith N1 Uncommon (V)",
+      "Lith S5 Uncommon (V)",
+      "Meso E6 Uncommon (V)",
+      "Meso O2 Uncommon (V)",
+      "Meso P13 Uncommon (V)",
+      "Meso R1 Uncommon (V)",
+      "Neo L2 Uncommon (V)",
+      "Neo O3 Uncommon (V)",
+      "Neo V10 Uncommon (V)",
+      "Neo Z7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Akjagara Prime Blueprint",
+    "drop_locations": [
+      "Axi B4 Common (V)",
+      "Axi M3 Common (V)",
+      "Axi P1 Common (V)",
+      "Lith M4 Common (V)",
+      "Lith P7 Common (V)",
+      "Meso D4 Common (V)",
+      "Meso R3 Common (V)",
+      "Neo S9 Common (V)",
+      "Neo Z5 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Akjagara Prime Barrel",
+    "drop_locations": [
+      "Lith A3 Rare (V)",
+      "Meso A1 Rare (V)",
+      "Neo A3 Rare (V)",
+      "Neo A6 Rare (V)",
+      "Neo A9 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Akjagara Prime Link",
+    "drop_locations": [
+      "Axi R3 Uncommon (V)",
+      "Lith P3 Uncommon (V)",
+      "Meso B7 Uncommon (V)",
+      "Meso M2 Uncommon (V)",
+      "Meso N9 Uncommon (V)",
+      "Meso Z3 Uncommon (V)",
+      "Neo R5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Akjagara Prime Receiver",
+    "drop_locations": [
+      "Axi L3 Uncommon (V)",
+      "Lith M6 Uncommon (V)",
+      "Lith N9 Uncommon (V)",
+      "Meso L2 Uncommon (V)",
+      "Neo I1 Uncommon (V)",
+      "Neo P1 Uncommon (V)",
+      "Neo Z3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Aklex Prime Blueprint",
+    "drop_locations": [
+      "Axi A2 Uncommon (B)",
+      "Neo O1 Uncommon (B)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Aklex Prime Link",
+    "drop_locations": [
+      "Axi A2 Rare (B)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Akmagnus Prime Blueprint",
+    "drop_locations": [
+      "Axi M5 Common (B)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Akmagnus Prime Link",
+    "drop_locations": [
+      "Axi M5 Uncommon (B)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Aksomati Prime Blueprint",
+    "drop_locations": [
+      "Axi B4 Common (V)",
+      "Axi G6 Common (V)",
+      "Lith B8 Common (V)",
+      "Lith N8 Common (V)",
+      "Meso R2 Common (V)",
+      "Neo I3 Common (V)",
+      "Neo N13 Common (V)",
+      "Neo R4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Aksomati Prime Barrel",
+    "drop_locations": [
+      "Lith B7 Uncommon (V)",
+      "Meso D6 Uncommon (V)",
+      "Meso S10 Uncommon (V)",
+      "Neo S16 Uncommon (V)",
+      "Neo Z5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Aksomati Prime Link",
+    "drop_locations": [
+      "Axi A10 Rare (V)",
+      "Axi A13 Rare (V)",
+      "Axi A14 Rare (V)",
+      "Axi A15 Rare (V)",
+      "Axi A8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Aksomati Prime Receiver",
+    "drop_locations": [
+      "Axi D2 Common (V)",
+      "Axi G4 Common (V)",
+      "Axi S13 Common (V)",
+      "Axi W1 Common (V)",
+      "Lith K6 Common (V)",
+      "Lith N6 Common (V)",
+      "Neo B7 Common (V)",
+      "Neo P2 Common (V)",
+      "Neo T5 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Akstiletto Prime Blueprint",
+    "drop_locations": [
+      "Lith A1 Rare (V)",
+      "Lith A2 Rare (V)",
+      "Neo A1 Rare (V)",
+      "Neo A4 Rare (V)",
+      "Neo A7 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Akstiletto Prime Barrel",
+    "drop_locations": [
+      "Axi A1 Uncommon (V)",
+      "Axi H2 Uncommon (V)",
+      "Lith A5 Uncommon (V)",
+      "Lith H1 Uncommon (V)",
+      "Meso K1 Uncommon (V)",
+      "Meso V6 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Akstiletto Prime Link",
+    "drop_locations": [
+      "Axi N1 Uncommon (V)",
+      "Lith V7 Uncommon (V)",
+      "Meso O1 Uncommon (V)",
+      "Neo D6 Uncommon (V)",
+      "Neo N5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Akstiletto Prime Receiver",
+    "drop_locations": [
+      "Axi A7 Common (V)",
+      "Axi H1 Uncommon (V)",
+      "Axi K1 Uncommon (V)",
+      "Axi O1 Uncommon (V)",
+      "Axi T1 Uncommon (V)",
+      "Meso T6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Akvasto Prime Blueprint",
+    "drop_locations": [
+      "Axi A5 Rare (B)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Akvasto Prime Link",
+    "drop_locations": [
+      "Axi A5 Uncommon (B)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Alternox Prime Blueprint",
+    "drop_locations": [
+      "Meso A10 Rare",
+      "Axi A20 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Alternox Prime Barrel",
+    "drop_locations": [
+      "Lith N18 Uncommon"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Alternox Prime Receiver",
+    "drop_locations": [
+      "Axi V14 Common",
+      "Neo P9 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Alternox Prime Stock",
+    "drop_locations": [
+      "Meso A9 Rare"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Ankyros Prime Blueprint",
+    "drop_locations": [
+      "Lith B1 Common (V)",
+      "Lith B4 Common (V)",
+      "Lith E1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Ankyros Prime Blade",
+    "drop_locations": [
+      "Axi R1 Uncommon (V)",
+      "Axi S3 Uncommon (V)",
+      "Neo G6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Ankyros Prime Gauntlet",
+    "drop_locations": [
+      "Meso M1 Common (V)",
+      "Meso S14 Common (V)",
+      "Neo R1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Ash Prime Blueprint",
+    "drop_locations": [
+      "Axi I3 Uncommon (V)",
+      "Lith S3 Uncommon (V)",
+      "Lith V7 Uncommon (V)",
+      "Meso C1 Uncommon (V)",
+      "Meso S3 Uncommon (V)",
+      "Vanguard E1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Ash Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi B1 Common (V)",
+      "Axi K12 Common (V)",
+      "Lith V8 Common (V)",
+      "Meso V2 Common (V)",
+      "Neo N4 Common (V)",
+      "Vanguard M1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Ash Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi N2 Uncommon (V)",
+      "Meso N2 Uncommon (V)",
+      "Meso P12 Uncommon (V)",
+      "Meso V4 Uncommon (V)",
+      "Neo A4 Uncommon (V)",
+      "Neo N3 Uncommon (V)",
+      "Neo V4 Uncommon (V)",
+      "Vanguard P1 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Ash Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi A7 Rare (V)",
+      "Axi N1 Rare (V)",
+      "Neo A10 Rare (V)",
+      "Neo N5 Uncommon (V)",
+      "Vanguard C1 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Astilla Prime Blueprint",
+    "drop_locations": [
+      "Axi G7 Uncommon (V)",
+      "Axi N9 Uncommon (V)",
+      "Lith T11 Uncommon (V)",
+      "Meso H3 Uncommon (V)",
+      "Meso I2 Uncommon (V)",
+      "Meso R5 Uncommon (V)",
+      "Neo T4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Astilla Prime Barrel",
+    "drop_locations": [
+      "Lith A4 Rare (V)",
+      "Meso A3 Rare (V)",
+      "Meso A6 Rare (V)",
+      "Neo A8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Astilla Prime Receiver",
+    "drop_locations": [
+      "Axi N7 Common (V)",
+      "Lith B10 Common (V)",
+      "Lith H3 Common (V)",
+      "Lith N12 Common (V)",
+      "Lith N8 Common (V)",
+      "Meso C10 Common (V)",
+      "Neo S15 Common (V)",
+      "Neo T6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Astilla Prime Stock",
+    "drop_locations": [
+      "Axi V11 Uncommon (V)",
+      "Lith K9 Uncommon (V)",
+      "Lith N11 Uncommon (V)",
+      "Lith T8 Uncommon (V)",
+      "Meso N13 Uncommon (V)",
+      "Meso T5 Uncommon (V)",
+      "Neo P3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Atlas Prime Blueprint",
+    "drop_locations": [
+      "Lith D1 Common (V)",
+      "Lith K6 Common (V)",
+      "Lith M5 Common (V)",
+      "Lith P3 Common (V)",
+      "Lith P5 Common (V)",
+      "Lith V9 Common (V)",
+      "Neo Z7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Atlas Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi B3 Uncommon (V)",
+      "Lith B8 Uncommon (V)",
+      "Meso E3 Uncommon (V)",
+      "Neo A7 Uncommon (V)",
+      "Neo E2 Uncommon (V)",
+      "Neo M3 Uncommon (V)",
+      "Neo T3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Atlas Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi A11 Rare (V)",
+      "Axi A6 Rare (V)",
+      "Axi A9 Rare (V)",
+      "Lith A5 Rare (V)",
+      "Neo A5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Atlas Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi F1 Uncommon (V)",
+      "Lith N4 Uncommon (V)",
+      "Meso C4 Uncommon (V)",
+      "Meso G2 Uncommon (V)",
+      "Meso I1 Uncommon (V)",
+      "Neo A3 Uncommon (V)",
+      "Neo N15 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Ballistica Prime Blueprint",
+    "drop_locations": [
+      "Lith B2 Rare (V)",
+      "Lith B3 Rare (V)",
+      "Lith B5 Rare (V)",
+      "Lith B6 Rare (V)",
+      "Meso B7 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Ballistica Prime Lower Limb",
+    "drop_locations": [
+      "Axi K5 Common (V)",
+      "Axi V6 Common (V)",
+      "Lith O1 Common (V)",
+      "Meso A1 Common (V)",
+      "Meso M3 Common (V)",
+      "Neo B5 Common (V)",
+      "Neo H3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Ballistica Prime Receiver",
+    "drop_locations": [
+      "Lith P2 Uncommon (V)",
+      "Lith R1 Uncommon (V)",
+      "Meso P1 Uncommon (V)",
+      "Neo H2 Uncommon (V)",
+      "Neo L1 Uncommon (V)",
+      "Neo S7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Ballistica Prime String",
+    "drop_locations": [
+      "Axi A4 Uncommon (V)",
+      "Meso G1 Uncommon (V)",
+      "Meso R1 Uncommon (V)",
+      "Neo A6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Ballistica Prime Upper Limb",
+    "drop_locations": [
+      "Axi M3 Uncommon (V)",
+      "Lith T1 Uncommon (V)",
+      "Lith V5 Uncommon (V)",
+      "Meso S8 Uncommon (V)",
+      "Neo N10 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Banshee Prime Blueprint",
+    "drop_locations": [
+      "Axi A12 Uncommon (V)",
+      "Axi C3 Uncommon (V)",
+      "Axi K3 Uncommon (V)",
+      "Meso E5 Uncommon (V)",
+      "Meso T2 Uncommon (V)",
+      "Neo H1 Uncommon (V)",
+      "Neo N7 Uncommon (V)",
+      "Neo T1 Uncommon (V)",
+      "Neo V7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Banshee Prime Chassis Blueprint",
+    "drop_locations": [
+      "Meso B2 Rare (V)",
+      "Neo B1 Rare (V)",
+      "Neo B2 Rare (V)",
+      "Neo B6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Banshee Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi H5 Common (V)",
+      "Lith B5 Common (V)",
+      "Lith M7 Common (V)",
+      "Lith V5 Common (V)",
+      "Meso S4 Common (V)",
+      "Neo K2 Common (V)",
+      "Neo S7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Banshee Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi B1 Rare (V)",
+      "Axi B2 Rare (V)",
+      "Lith K5 Uncommon (V)",
+      "Neo B4 Rare (V)",
+      "Neo B5 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Baruuk Prime Blueprint",
+    "drop_locations": [
+      "Axi B9 Rare (V)",
+      "Lith B10 Rare (V)",
+      "Lith B11 Rare (V)",
+      "Meso B8 Rare (V)",
+      "Meso B9 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Baruuk Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith N15 Uncommon (V)",
+      "Lith P8 Uncommon (V)",
+      "Lith T13 Uncommon (V)",
+      "Meso V9 Uncommon (V)",
+      "Neo A8 Uncommon (V)",
+      "Neo K7 Uncommon (V)",
+      "Neo N23 Uncommon (V)",
+      "Neo S17 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Baruuk Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi B5 Rare (V)",
+      "Axi B6 Rare (V)",
+      "Axi B7 Rare (V)",
+      "Axi B8 Rare (V)",
+      "Axi B9 Uncommon (V)",
+      "Neo B9 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Baruuk Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi P7 Common (V)",
+      "Axi W3 Common (V)",
+      "Meso H4 Common (V)",
+      "Meso H6 Common (V)",
+      "Meso H7 Common (V)",
+      "Meso P14 Common (V)",
+      "Meso R5 Common (V)",
+      "Neo P8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Baza Prime Blueprint",
+    "drop_locations": [
+      "Axi B4 Rare (V)",
+      "Axi S13 Uncommon (V)",
+      "Lith B7 Rare (V)",
+      "Lith B8 Rare (V)",
+      "Meso B4 Rare (V)",
+      "Meso B5 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Baza Prime Barrel",
+    "drop_locations": [
+      "Axi I2 Uncommon (V)",
+      "Axi Z1 Uncommon (V)",
+      "Lith A4 Uncommon (V)",
+      "Lith S10 Uncommon (V)",
+      "Lith W2 Uncommon (V)",
+      "Neo I3 Uncommon (V)",
+      "Neo N15 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Baza Prime Receiver",
+    "drop_locations": [
+      "Axi A15 Common (V)",
+      "Axi N7 Common (V)",
+      "Axi W2 Common (V)",
+      "Lith K7 Common (V)",
+      "Meso C6 Common (V)",
+      "Meso E4 Common (V)",
+      "Meso P2 Common (V)",
+      "Neo R3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Baza Prime Stock",
+    "drop_locations": [
+      "Axi B3 Rare (V)",
+      "Lith B9 Rare (V)",
+      "Meso B6 Rare (V)",
+      "Neo B7 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Bo Prime Blueprint",
+    "drop_locations": [
+      "Lith G2 Common (V)",
+      "Lith O2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Bo Prime Handle",
+    "drop_locations": [
+      "Neo F1 Uncommon (V)",
+      "Neo V8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Bo Prime Ornament",
+    "drop_locations": [
+      "Axi L4 Common (V)",
+      "Meso E1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Boar Prime Blueprint",
+    "drop_locations": [
+      "Meso F4 Uncommon (V)",
+      "Neo B3 Common (V)",
+      "Neo D1 Common (V)",
+      "Neo N9 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Boar Prime Barrel",
+    "drop_locations": [
+      "Axi D4 Uncommon (V)",
+      "Axi V2 Uncommon (V)",
+      "Lith M2 Uncommon (V)",
+      "Meso M1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Boar Prime Receiver",
+    "drop_locations": [
+      "Axi R1 Common (V)",
+      "Axi S4 Common (V)",
+      "Lith L4 Common (V)",
+      "Lith M1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Boar Prime Stock",
+    "drop_locations": [
+      "Lith B1 Rare (V)",
+      "Meso B1 Rare (V)",
+      "Meso B3 Rare (V)",
+      "Neo B8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Boltor Prime Blueprint",
+    "drop_locations": [
+      "Lith B4 Rare (V)",
+      "Meso B10 Rare (V)",
+      "Neo B3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Boltor Prime Barrel",
+    "drop_locations": [
+      "Lith E1 Common (V)",
+      "Meso M1 Common (V)",
+      "Meso N6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Boltor Prime Receiver",
+    "drop_locations": [
+      "Lith B1 Uncommon (V)",
+      "Neo G6 Uncommon (V)",
+      "Neo R1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Boltor Prime Stock",
+    "drop_locations": [
+      "Axi R1 Common (V)",
+      "Axi R4 Common (V)",
+      "Axi S3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Braton Prime Blueprint",
+    "drop_locations": [
+      "Meso D8 Common",
+      "Meso V13 Common",
+      "Axi A16 Common (V)",
+      "Axi A7 Common (V)",
+      "Axi B9 Common (V)",
+      "Axi C2 Common (V)",
+      "Axi C4 Common (V)",
+      "Axi D1 Common (V)",
+      "Axi D2 Common (V)",
+      "Axi G11 Uncommon (V)",
+      "Axi G8 Common (V)",
+      "Axi K5 Common (V)",
+      "Axi K6 Common (V)",
+      "Axi L2 Common (V)",
+      "Axi N1 Common (V)",
+      "Axi O6 Common (V)",
+      "Axi S13 Common (V)",
+      "Axi T4 Common (V)",
+      "Axi V6 Common (V)",
+      "Lith B11 Uncommon (V)",
+      "Lith C3 Uncommon (V)",
+      "Lith G13 Common (V)",
+      "Lith N17 Common (V)",
+      "Lith N3 Uncommon (V)",
+      "Lith N7 Common (V)",
+      "Lith R4 Common (V)",
+      "Lith S12 Uncommon (V)",
+      "Lith S17 Uncommon (V)",
+      "Lith T2 Uncommon (V)",
+      "Lith T6 Common (V)",
+      "Lith V3 Common (V)",
+      "Lith X1 Uncommon (V)",
+      "Lith Y1 Common (V)",
+      "Meso B2 Common (V)",
+      "Meso B9 Common (V)",
+      "Meso P6 Common (V)",
+      "Meso R1 Common (V)",
+      "Meso S9 Common (V)",
+      "Meso V1 Uncommon (V)",
+      "Meso V11 Common (V)",
+      "Meso Z2 Common (V)",
+      "Neo B7 Common (V)",
+      "Neo D6 Common (V)",
+      "Neo T3 Common (V)",
+      "Neo Z6 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Braton Prime Barrel",
+    "drop_locations": [
+      "Axi C11 Common",
+      "Neo C7 Common",
+      "Axi A17 Common (V)",
+      "Axi A3 Common (V)",
+      "Axi C5 Common (V)",
+      "Axi N6 Common (V)",
+      "Lith A1 Common (V)",
+      "Lith A8 Common (V)",
+      "Lith C11 Common (V)",
+      "Lith C9 Common (V)",
+      "Lith H4 Common (V)",
+      "Lith K2 Common (V)",
+      "Lith K9 Common (V)",
+      "Lith N14 Common (V)",
+      "Lith N16 Common (V)",
+      "Lith P4 Common (V)",
+      "Lith S8 Common (V)",
+      "Lith T13 Common (V)",
+      "Meso G1 Common (V)",
+      "Meso H7 Common (V)",
+      "Meso N14 Common (V)",
+      "Meso N3 Common (V)",
+      "Meso O6 Common (V)",
+      "Meso P10 Common (V)",
+      "Meso P4 Common (V)",
+      "Meso R4 Common (V)",
+      "Meso S15 Common (V)",
+      "Meso S5 Common (V)",
+      "Meso V6 Common (V)",
+      "Neo A1 Common (V)",
+      "Neo A7 Common (V)",
+      "Neo B5 Common (V)",
+      "Neo D4 Common (V)",
+      "Neo F2 Common (V)",
+      "Neo K2 Common (V)",
+      "Neo N11 Common (V)",
+      "Neo T5 Common (V)",
+      "Neo T9 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Braton Prime Receiver",
+    "drop_locations": [
+      "Meso X1 Common",
+      "Axi C9 Common (V)",
+      "Axi H6 Uncommon (V)",
+      "Axi H7 Common (V)",
+      "Axi K10 Uncommon (V)",
+      "Axi N6 Uncommon (V)",
+      "Axi N8 Common (V)",
+      "Axi S17 Uncommon (V)",
+      "Axi V2 Uncommon (V)",
+      "Axi V3 Uncommon (V)",
+      "Axi V5 Uncommon (V)",
+      "Lith B2 Uncommon (V)",
+      "Lith B9 Uncommon (V)",
+      "Lith C6 Uncommon (V)",
+      "Lith H8 Common (V)",
+      "Lith K2 Uncommon (V)",
+      "Lith K8 Common (V)",
+      "Lith L2 Uncommon (V)",
+      "Lith N5 Uncommon (V)",
+      "Lith P1 Uncommon (V)",
+      "Lith V9 Uncommon (V)",
+      "Lith Z3 Common (V)",
+      "Meso A4 Uncommon (V)",
+      "Meso N13 Common (V)",
+      "Meso P2 Common (V)",
+      "Neo A11 Uncommon (V)",
+      "Neo K3 Uncommon (V)",
+      "Neo N14 Uncommon (V)",
+      "Neo N19 Common (V)",
+      "Neo P4 Uncommon (V)",
+      "Neo V10 Common (V)",
+      "Neo X1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Braton Prime Stock",
+    "drop_locations": [
+      "Lith K12 Common",
+      "Lith N18 Common",
+      "Axi A1 Common (V)",
+      "Axi A4 Common (V)",
+      "Axi A6 Common (V)",
+      "Axi A8 Common (V)",
+      "Axi D3 Common (V)",
+      "Axi E2 Common (V)",
+      "Axi F1 Common (V)",
+      "Axi F3 Common (V)",
+      "Axi G6 Uncommon (V)",
+      "Axi P7 Uncommon (V)",
+      "Lith C4 Uncommon (V)",
+      "Lith G9 Uncommon (V)",
+      "Lith N10 Common (V)",
+      "Lith T3 Common (V)",
+      "Meso A7 Uncommon (V)",
+      "Meso C4 Common (V)",
+      "Meso C9 Uncommon (V)",
+      "Meso D3 Common (V)",
+      "Meso G8 Common (V)",
+      "Meso K3 Common (V)",
+      "Meso M5 Common (V)",
+      "Meso N1 Common (V)",
+      "Meso N5 Common (V)",
+      "Meso P13 Common (V)",
+      "Meso P16 Common (V)",
+      "Meso R6 Common (V)",
+      "Meso S12 Uncommon (V)",
+      "Meso T1 Common (V)",
+      "Neo B2 Common (V)",
+      "Neo C2 Common (V)",
+      "Neo D2 Common (V)",
+      "Neo D5 Uncommon (V)",
+      "Neo K4 Uncommon (V)",
+      "Neo N4 Common (V)",
+      "Neo P2 Common (V)",
+      "Neo R2 Common (V)",
+      "Neo R4 Common (V)",
+      "Neo S10 Common (V)",
+      "Neo S16 Common (V)",
+      "Neo T4 Common (V)",
+      "Neo V2 Common (V)",
+      "Neo Z2 Common (V)",
+      "Neo Z8 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Bronco Prime Blueprint",
+    "drop_locations": [
+      "Lith N18 Common",
+      "Axi C7 Common (V)",
+      "Axi G12 Common (V)",
+      "Axi G15 Common (V)",
+      "Axi N2 Common (V)",
+      "Axi N8 Common (V)",
+      "Axi N9 Common (V)",
+      "Axi P2 Common (V)",
+      "Axi P3 Common (V)",
+      "Axi S1 Common (V)",
+      "Lith A6 Common (V)",
+      "Lith D4 Common (V)",
+      "Lith H1 Common (V)",
+      "Lith K6 Common (V)",
+      "Lith M6 Common (V)",
+      "Lith N1 Common (V)",
+      "Lith N4 Common (V)",
+      "Lith P4 Common (V)",
+      "Lith S1 Common (V)",
+      "Lith S12 Common (V)",
+      "Lith T7 Common (V)",
+      "Lith V8 Common (V)",
+      "Meso A4 Common (V)",
+      "Meso C2 Common (V)",
+      "Meso E2 Common (V)",
+      "Meso F5 Common (V)",
+      "Meso N2 Common (V)",
+      "Meso N3 Common (V)",
+      "Meso P11 Common (V)",
+      "Meso S2 Common (V)",
+      "Meso V5 Common (V)",
+      "Neo A14 Common (V)",
+      "Neo G8 Common (V)",
+      "Neo M1 Common (V)",
+      "Neo S9 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Bronco Prime Barrel",
+    "drop_locations": [
+      "Meso D8 Common",
+      "Meso L4 Uncommon",
+      "Axi E2 Uncommon (V)",
+      "Axi F3 Uncommon (V)",
+      "Axi N10 Uncommon (V)",
+      "Axi N3 Uncommon (V)",
+      "Axi S10 Uncommon (V)",
+      "Axi W2 Uncommon (V)",
+      "Axi W3 Uncommon (V)",
+      "Lith P9 Uncommon (V)",
+      "Lith T10 Uncommon (V)",
+      "Meso N10 Uncommon (V)",
+      "Meso R3 Uncommon (V)",
+      "Meso V12 Uncommon (V)",
+      "Meso Z4 Uncommon (V)",
+      "Meso Z6 Uncommon (V)",
+      "Neo C6 Common (V)",
+      "Neo G9 Uncommon (V)",
+      "Neo M2 Uncommon (V)",
+      "Neo S15 Uncommon (V)",
+      "Neo V1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Bronco Prime Receiver",
+    "drop_locations": [
+      "Meso V13 Common",
+      "Neo N24 Common",
+      "Axi A19 Common (V)",
+      "Axi F2 Common (V)",
+      "Axi M2 Common (V)",
+      "Axi S1 Common (V)",
+      "Axi T10 Common (V)",
+      "Axi T7 Common (V)",
+      "Axi W1 Common (V)",
+      "Lith A8 Common (V)",
+      "Lith C13 Common (V)",
+      "Lith C2 Common (V)",
+      "Lith L7 Common (V)",
+      "Lith O4 Common (V)",
+      "Lith P5 Common (V)",
+      "Lith P8 Common (V)",
+      "Lith Q1 Common (V)",
+      "Meso B4 Common (V)",
+      "Meso C8 Common (V)",
+      "Meso E3 Common (V)",
+      "Meso F1 Common (V)",
+      "Meso G4 Common (V)",
+      "Meso P1 Common (V)",
+      "Meso P15 Common (V)",
+      "Meso S12 Common (V)",
+      "Meso S8 Common (V)",
+      "Neo B1 Common (V)",
+      "Neo G9 Common (V)",
+      "Neo K6 Common (V)",
+      "Neo M3 Common (V)",
+      "Neo M6 Common (V)",
+      "Neo N14 Common (V)",
+      "Neo N6 Common (V)",
+      "Neo S11 Common (V)",
+      "Neo S8 Common (V)",
+      "Neo V4 Common (V)",
+      "Neo Z11 Common (V)",
+      "Neo Z3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Burston Prime Blueprint",
+    "drop_locations": [
+      "Neo K9 Common",
+      "Neo P10 Common",
+      "Axi B7 Common (V)",
+      "Axi B8 Common (V)",
+      "Axi C8 Common (V)",
+      "Axi G12 Common (V)",
+      "Axi G7 Common (V)",
+      "Axi G9 Common (V)",
+      "Axi K11 Common (V)",
+      "Axi K8 Common (V)",
+      "Axi L5 Common (V)",
+      "Axi M2 Common (V)",
+      "Axi M6 Common (V)",
+      "Axi R4 Common (V)",
+      "Axi S19 Common (V)",
+      "Axi S6 Common (V)",
+      "Axi T11 Common (V)",
+      "Axi T3 Common (V)",
+      "Lith A10 Common (V)",
+      "Lith B3 Common (V)",
+      "Lith D6 Common (V)",
+      "Lith O1 Common (V)",
+      "Lith P2 Common (V)",
+      "Lith S10 Common (V)",
+      "Lith T1 Common (V)",
+      "Meso C5 Common (V)",
+      "Meso C6 Common (V)",
+      "Meso C7 Common (V)",
+      "Meso I2 Common (V)",
+      "Meso P4 Common (V)",
+      "Meso V1 Common (V)",
+      "Neo A6 Common (V)",
+      "Neo K3 Common (V)",
+      "Neo L4 Common (V)",
+      "Neo N23 Common (V)",
+      "Neo R3 Common (V)",
+      "Neo S6 Common (V)",
+      "Neo T1 Common (V)",
+      "Neo Z9 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Burston Prime Barrel",
+    "drop_locations": [
+      "Meso V13 Uncommon",
+      "Axi G3 Uncommon (V)",
+      "Axi G4 Uncommon (V)",
+      "Axi H3 Uncommon (V)",
+      "Axi P3 Uncommon (V)",
+      "Axi T1 Uncommon (V)",
+      "Axi T2 Uncommon (V)",
+      "Axi V13 Uncommon (V)",
+      "Lith E1 Uncommon (V)",
+      "Lith F2 Uncommon (V)",
+      "Lith F3 Uncommon (V)",
+      "Lith G8 Uncommon (V)",
+      "Lith I1 Uncommon (V)",
+      "Lith M10 Uncommon (V)",
+      "Lith N12 Uncommon (V)",
+      "Lith P3 Uncommon (V)",
+      "Lith R1 Uncommon (V)",
+      "Lith S13 Uncommon (V)",
+      "Lith S14 Uncommon (V)",
+      "Lith T6 Uncommon (V)",
+      "Lith T8 Uncommon (V)",
+      "Meso G2 Uncommon (V)",
+      "Meso P12 Uncommon (V)",
+      "Meso S13 Uncommon (V)",
+      "Meso S8 Uncommon (V)",
+      "Neo A11 Uncommon (V)",
+      "Neo B1 Uncommon (V)",
+      "Neo B9 Uncommon (V)",
+      "Neo K8 Uncommon (V)",
+      "Neo P5 Uncommon (V)",
+      "Neo V5 Uncommon (V)",
+      "Neo W2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Burston Prime Receiver",
+    "drop_locations": [
+      "Axi Y3 Common",
+      "Meso A9 Common",
+      "Axi A11 Common (V)",
+      "Axi A13 Common (V)",
+      "Axi G2 Common (V)",
+      "Axi N11 Common (V)",
+      "Axi V11 Common (V)",
+      "Lith A4 Common (V)",
+      "Lith C4 Common (V)",
+      "Lith C8 Common (V)",
+      "Lith D1 Common (V)",
+      "Lith G10 Common (V)",
+      "Lith G12 Common (V)",
+      "Lith H10 Common (V)",
+      "Lith H6 Common (V)",
+      "Lith L6 Common (V)",
+      "Lith N3 Common (V)",
+      "Lith P6 Common (V)",
+      "Lith S15 Common (V)",
+      "Lith S5 Common (V)",
+      "Lith T9 Common (V)",
+      "Lith V10 Common (V)",
+      "Meso A8 Common (V)",
+      "Meso B10 Common (V)",
+      "Meso B7 Common (V)",
+      "Meso H3 Common (V)",
+      "Meso L1 Common (V)",
+      "Meso P7 Common (V)",
+      "Meso T1 Common (V)",
+      "Meso Z1 Common (V)",
+      "Neo B9 Common (V)",
+      "Neo E2 Common (V)",
+      "Neo E3 Common (V)",
+      "Neo G3 Common (V)",
+      "Neo H1 Common (V)",
+      "Neo I2 Common (V)",
+      "Neo K7 Common (V)",
+      "Neo M5 Common (V)",
+      "Neo N17 Common (V)",
+      "Neo Q1 Common (V)",
+      "Neo S3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Burston Prime Stock",
+    "drop_locations": [
+      "Axi T13 Common",
+      "Lith Q2 Common",
+      "Meso L4 Common",
+      "Axi G5 Common (V)",
+      "Axi O3 Common (V)",
+      "Lith B8 Common (V)",
+      "Lith D3 Common (V)",
+      "Lith G6 Common (V)",
+      "Lith K1 Common (V)",
+      "Lith M5 Common (V)",
+      "Lith N9 Common (V)",
+      "Lith R3 Common (V)",
+      "Lith S9 Common (V)",
+      "Lith T10 Common (V)",
+      "Lith V1 Common (V)",
+      "Lith W4 Common (V)",
+      "Meso A3 Common (V)",
+      "Meso C3 Common (V)",
+      "Meso G10 Common (V)",
+      "Meso G6 Common (V)",
+      "Meso G7 Common (V)",
+      "Meso N3 Common (V)",
+      "Meso O5 Common (V)",
+      "Meso S14 Common (V)",
+      "Meso S5 Common (V)",
+      "Meso T7 Common (V)",
+      "Meso T8 Common (V)",
+      "Meso W2 Common (V)",
+      "Neo A10 Common (V)",
+      "Neo B4 Common (V)",
+      "Neo C5 Common (V)",
+      "Neo G5 Common (V)",
+      "Neo H2 Common (V)",
+      "Neo M2 Common (V)",
+      "Neo N16 Common (V)",
+      "Neo P5 Common (V)",
+      "Neo S2 Common (V)",
+      "Neo T6 Common (V)",
+      "Neo V6 Common (V)",
+      "Neo Z4 Common (V)",
+      "Neo Z5 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Caliban Prime Blueprint",
+    "drop_locations": [
+      "Meso V13 Uncommon",
+      "Meso V15 Uncommon",
+      "Meso V11 Uncommon (V)",
+      "Vanguard M1 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Caliban Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith K12 Common",
+      "Meso V15 Common",
+      "Meso Y1 Common (V)",
+      "Vanguard P1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Caliban Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Neo C7 Rare",
+      "Lith C13 Rare (V)",
+      "Vanguard E1 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Caliban Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi C11 Rare",
+      "Axi C10 Rare (V)",
+      "Vanguard C1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Carrier Prime Blueprint",
+    "drop_locations": [
+      "Lith V7 Common (V)",
+      "Meso P12 Common (V)",
+      "Meso V1 Common (V)",
+      "Meso V3 Common (V)",
+      "Meso V4 Common (V)",
+      "Neo S3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Carrier Prime Carapace",
+    "drop_locations": [
+      "Axi N2 Common (V)",
+      "Lith S5 Common (V)",
+      "Lith V10 Uncommon (V)",
+      "Neo A4 Common (V)",
+      "Neo S1 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Carrier Prime Cerebrum",
+    "drop_locations": [
+      "Lith C1 Rare (V)",
+      "Meso C1 Rare (V)",
+      "Meso C2 Rare (V)",
+      "Meso C7 Rare (V)",
+      "Meso N3 Uncommon (V)",
+      "Meso V6 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Carrier Prime Systems",
+    "drop_locations": [
+      "Axi A7 Common (V)",
+      "Axi K12 Common (V)",
+      "Axi V1 Common (V)",
+      "Lith N2 Common (V)",
+      "Lith S2 Common (V)",
+      "Lith S3 Common (V)",
+      "Neo A1 Common (V)",
+      "Neo V3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Cedo Prime Blueprint",
+    "drop_locations": [
+      "Lith C14 Rare",
+      "Neo C6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Cedo Prime Barrel",
+    "drop_locations": [
+      "Axi D6 Uncommon",
+      "Meso Y1 Uncommon (V)",
+      "Neo T9 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Cedo Prime Receiver",
+    "drop_locations": [
+      "Lith K12 Uncommon",
+      "Neo P10 Uncommon",
+      "Axi M6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Cedo Prime Stock",
+    "drop_locations": [
+      "Meso E7 Common",
+      "Axi A20 Common (V)",
+      "Axi S18 Common (V)",
+      "Lith A7 Common (V)",
+      "Neo A14 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Cernos Prime Blueprint",
+    "drop_locations": [
+      "Neo V9 Uncommon",
+      "Axi B1 Uncommon (V)",
+      "Axi V4 Uncommon (V)",
+      "Lith A2 Uncommon (V)",
+      "Lith Z1 Uncommon (V)",
+      "Neo S13 Uncommon (V)",
+      "Neo V7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Cernos Prime Grip",
+    "drop_locations": [
+      "Axi S8 Common",
+      "Axi H3 Common (V)",
+      "Axi K3 Common (V)",
+      "Axi S5 Common (V)",
+      "Lith V6 Common (V)",
+      "Meso V5 Common (V)",
+      "Neo V4 Common (V)",
+      "Neo V6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Cernos Prime Lower Limb",
+    "drop_locations": [
+      "Lith C7 Rare",
+      "Axi C1 Rare (V)",
+      "Axi C2 Rare (V)",
+      "Lith C2 Rare (V)",
+      "Lith C5 Rare (V)",
+      "Meso C3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Cernos Prime String",
+    "drop_locations": [
+      "Axi V10 Common",
+      "Axi A3 Uncommon (V)",
+      "Axi K2 Uncommon (V)",
+      "Lith B3 Uncommon (V)",
+      "Meso N8 Uncommon (V)",
+      "Meso O1 Uncommon (V)",
+      "Meso S6 Uncommon (V)",
+      "Neo A1 Uncommon (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Cernos Prime Upper Limb",
+    "drop_locations": [
+      "Meso N11 Common",
+      "Axi N4 Common (V)",
+      "Lith V3 Common (V)",
+      "Meso C2 Common (V)",
+      "Meso K1 Common (V)",
+      "Meso N8 Common (V)",
+      "Meso O2 Common (V)",
+      "Meso S7 Common (V)",
+      "Neo N6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Chroma Prime Blueprint",
+    "drop_locations": [
+      "Axi A6 Common (V)",
+      "Axi D1 Common (V)",
+      "Axi G5 Common (V)",
+      "Axi T5 Common (V)",
+      "Meso B4 Common (V)",
+      "Meso P1 Common (V)",
+      "Meso Z3 Common (V)",
+      "Neo K2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Chroma Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi R2 Uncommon (V)",
+      "Meso C5 Uncommon (V)",
+      "Meso D4 Uncommon (V)",
+      "Meso K2 Uncommon (V)",
+      "Meso L1 Uncommon (V)",
+      "Meso T3 Uncommon (V)",
+      "Neo Z8 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Chroma Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Lith C3 Rare (V)",
+      "Lith C4 Rare (V)",
+      "Lith C8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Chroma Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi C3 Rare (V)",
+      "Axi C4 Rare (V)",
+      "Meso C4 Rare (V)",
+      "Meso R4 Uncommon (V)",
+      "Neo C1 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Cobra & Crane Prime Blueprint",
+    "drop_locations": [
+      "Axi B9 Uncommon (V)",
+      "Axi K11 Uncommon (V)",
+      "Lith G10 Uncommon (V)",
+      "Lith N15 Uncommon (V)",
+      "Meso K5 Uncommon (V)",
+      "Neo S18 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Cobra & Crane Prime Blade",
+    "drop_locations": [
+      "Axi G9 Uncommon (V)",
+      "Axi L6 Uncommon (V)",
+      "Meso H6 Uncommon (V)",
+      "Meso N14 Uncommon (V)",
+      "Meso R6 Uncommon (V)",
+      "Meso W5 Uncommon (V)",
+      "Neo F2 Uncommon (V)",
+      "Neo G7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Cobra & Crane Prime Guard",
+    "drop_locations": [
+      "Axi C9 Rare (V)",
+      "Lith C10 Rare (V)",
+      "Lith C11 Rare (V)",
+      "Lith C12 Rare (V)",
+      "Meso C8 Rare (V)",
+      "Neo C3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Cobra & Crane Prime Hilt",
+    "drop_locations": [
+      "Axi A18 Common (V)",
+      "Axi H6 Common (V)",
+      "Axi H7 Common (V)",
+      "Lith A9 Common (V)",
+      "Lith G12 Common (V)",
+      "Lith H7 Common (V)",
+      "Meso G7 Common (V)",
+      "Neo K6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Corinth Prime Blueprint",
+    "drop_locations": [
+      "Axi T4 Common (V)",
+      "Lith A4 Common (V)",
+      "Lith T5 Common (V)",
+      "Meso A6 Common (V)",
+      "Meso I1 Common (V)",
+      "Meso S10 Common (V)",
+      "Neo E2 Common (V)",
+      "Neo N18 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Corinth Prime Barrel",
+    "drop_locations": [
+      "Axi C5 Rare (V)",
+      "Axi C6 Rare (V)",
+      "Axi C7 Rare (V)",
+      "Meso C10 Rare (V)",
+      "Meso C5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Corinth Prime Receiver",
+    "drop_locations": [
+      "Axi P4 Uncommon (V)",
+      "Axi T7 Uncommon (V)",
+      "Lith D3 Uncommon (V)",
+      "Lith G11 Uncommon (V)",
+      "Meso P4 Uncommon (V)",
+      "Neo R4 Uncommon (V)",
+      "Neo T5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Corinth Prime Stock",
+    "drop_locations": [
+      "Axi C8 Rare (V)",
+      "Lith C6 Rare (V)",
+      "Lith C9 Rare (V)",
+      "Meso C6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Corvas Prime Blueprint",
+    "drop_locations": [
+      "Axi K7 Uncommon (V)",
+      "Lith W3 Uncommon (V)",
+      "Meso B8 Uncommon (V)",
+      "Meso H8 Uncommon (V)",
+      "Neo D5 Uncommon (V)",
+      "Neo L2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Corvas Prime Barrel",
+    "drop_locations": [
+      "Meso C9 Rare (V)",
+      "Neo C2 Rare (V)",
+      "Neo C4 Rare (V)",
+      "Neo C5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Corvas Prime Receiver",
+    "drop_locations": [
+      "Axi G10 Common (V)",
+      "Axi K8 Common (V)",
+      "Axi T10 Common (V)",
+      "Lith D6 Common (V)",
+      "Lith G8 Common (V)",
+      "Meso A4 Common (V)",
+      "Meso G4 Common (V)",
+      "Neo D7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Corvas Prime Stock",
+    "drop_locations": [
+      "Axi G8 Common (V)",
+      "Lith K10 Common (V)",
+      "Lith S12 Common (V)",
+      "Meso G5 Common (V)",
+      "Neo C3 Common (V)",
+      "Neo K8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Daikyu Prime Blueprint",
+    "drop_locations": [
+      "Lith E2 Common",
+      "Lith Q2 Common",
+      "Neo N24 Common"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Daikyu Prime Grip",
+    "drop_locations": [
+      "Meso D8 Rare",
+      "Lith D7 Rare (V)",
+      "Neo D10 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Daikyu Prime Lower Limb",
+    "drop_locations": [
+      "Axi C11 Uncommon",
+      "Meso A9 Uncommon",
+      "Axi C10 Uncommon (V)",
+      "Lith A8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Daikyu Prime String",
+    "drop_locations": [
+      "Lith N19 Common",
+      "Axi A20 Common (V)",
+      "Axi V12 Common (V)",
+      "Neo A15 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Daikyu Prime Upper Limb",
+    "drop_locations": [
+      "Meso E7 Uncommon",
+      "Neo C7 Uncommon",
+      "Meso P16 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Dakra Prime Blueprint",
+    "drop_locations": [
+      "Axi R1 Uncommon (V)",
+      "Lith M1 Uncommon (V)",
+      "Meso B3 Uncommon (V)",
+      "Neo B8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Dakra Prime Blade",
+    "drop_locations": [
+      "Axi D4 Rare (V)",
+      "Axi S4 Uncommon (V)",
+      "Neo B3 Uncommon (V)",
+      "Neo D1 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Dakra Prime Handle",
+    "drop_locations": [
+      "Lith M2 Common (V)",
+      "Lith M8 Common (V)",
+      "Meso B1 Common (V)",
+      "Meso M1 Common (V)",
+      "Neo N9 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Destreza Prime Blueprint",
+    "drop_locations": [
+      "Axi D3 Uncommon (V)",
+      "Axi K4 Uncommon (V)",
+      "Axi P2 Uncommon (V)",
+      "Lith M4 Uncommon (V)",
+      "Lith P7 Uncommon (V)",
+      "Meso R2 Uncommon (V)",
+      "Neo B5 Uncommon (V)",
+      "Neo S9 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Destreza Prime Blade",
+    "drop_locations": [
+      "Axi D1 Rare (V)",
+      "Axi D2 Rare (V)",
+      "Lith D5 Rare (V)",
+      "Meso D2 Rare (V)",
+      "Meso D3 Rare (V)",
+      "Neo D4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Destreza Prime Handle",
+    "drop_locations": [
+      "Axi D2 Common (V)",
+      "Axi M4 Common (V)",
+      "Axi O3 Common (V)",
+      "Axi O4 Common (V)",
+      "Axi R2 Common (V)",
+      "Lith L1 Common (V)",
+      "Meso E2 Common (V)",
+      "Meso E3 Common (V)",
+      "Meso P6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Dethcube Prime Blueprint",
+    "drop_locations": [
+      "Lith D1 Rare (V)",
+      "Lith D3 Rare (V)",
+      "Lith D4 Rare (V)",
+      "Neo D3 Rare (V)",
+      "Neo D6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Dethcube Prime Carapace",
+    "drop_locations": [
+      "Axi N7 Uncommon (V)",
+      "Lith M6 Uncommon (V)",
+      "Lith T4 Uncommon (V)",
+      "Lith V9 Uncommon (V)",
+      "Meso L1 Uncommon (V)",
+      "Meso R3 Uncommon (V)",
+      "Neo B7 Uncommon (V)",
+      "Neo T2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Dethcube Prime Cerebrum",
+    "drop_locations": [
+      "Lith D2 Rare (V)",
+      "Meso D4 Rare (V)",
+      "Meso D6 Rare (V)",
+      "Neo A7 Uncommon (V)",
+      "Neo D2 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Dethcube Prime Systems",
+    "drop_locations": [
+      "Axi I1 Common (V)",
+      "Axi P2 Common (V)",
+      "Lith B8 Common (V)",
+      "Lith S10 Common (V)",
+      "Meso T6 Common (V)",
+      "Neo E2 Common (V)",
+      "Neo G2 Common (V)",
+      "Neo I2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Dual Kamas Prime Blueprint",
+    "drop_locations": [
+      "Axi N3 Common (V)",
+      "Axi V1 Common (V)",
+      "Axi V5 Common (V)",
+      "Lith K4 Common (V)",
+      "Lith L3 Common (V)",
+      "Lith S6 Common (V)",
+      "Neo T1 Common (V)",
+      "Neo V1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Dual Kamas Prime Blade",
+    "drop_locations": [
+      "Axi D3 Rare (V)",
+      "Meso D1 Rare (V)",
+      "Meso D5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Dual Kamas Prime Handle",
+    "drop_locations": [
+      "Axi A1 Uncommon (V)",
+      "Meso F1 Uncommon (V)",
+      "Meso N1 Uncommon (V)",
+      "Neo D4 Uncommon (V)",
+      "Neo N12 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Dual Keres Prime Blueprint",
+    "drop_locations": [
+      "Axi D5 Rare (V)",
+      "Lith D6 Rare (V)",
+      "Meso D7 Rare (V)",
+      "Neo D5 Rare (V)",
+      "Neo D7 Rare (V)",
+      "Neo D8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Dual Keres Prime Blade",
+    "drop_locations": [
+      "Axi G8 Common (V)",
+      "Axi G9 Common (V)",
+      "Lith G9 Common (V)",
+      "Lith W3 Common (V)",
+      "Meso M4 Common (V)",
+      "Neo K8 Common (V)",
+      "Neo N22 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Dual Keres Prime Handle",
+    "drop_locations": [
+      "Lith T10 Uncommon (V)",
+      "Meso H8 Uncommon (V)",
+      "Meso P11 Uncommon (V)",
+      "Meso V7 Uncommon (V)",
+      "Neo W1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Dual Zoren Prime Blueprint",
+    "drop_locations": [
+      "Meso A10 Uncommon",
+      "Meso X1 Uncommon",
+      "Lith C13 Uncommon (V)",
+      "Lith S16 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Dual Zoren Prime Blade",
+    "drop_locations": [
+      "Axi D6 Rare",
+      "Neo D9 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Dual Zoren Prime Handle",
+    "drop_locations": [
+      "Axi S20 Common",
+      "Lith E2 Common",
+      "Meso D8 Common",
+      "Neo T10 Common",
+      "Axi P8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Ember Prime Blueprint",
+    "drop_locations": [
+      "Axi E1 Rare (V)",
+      "Lith E1 Rare (V)",
+      "Meso E1 Rare (V)",
+      "Neo E1 Rare (V)",
+      "Vanguard E1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Ember Prime Chassis Blueprint",
+    "drop_locations": [
+      "Meso B10 Common (V)",
+      "Meso F2 Common (V)",
+      "Neo F1 Common (V)",
+      "Vanguard C1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Ember Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Meso F3 Common (V)",
+      "Meso S14 Uncommon (V)",
+      "Neo S5 Common (V)",
+      "Vanguard M1 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Ember Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi R4 Uncommon (V)",
+      "Axi S2 Uncommon (V)",
+      "Lith G1 Uncommon (V)",
+      "Vanguard P1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Epitaph Prime Blueprint",
+    "drop_locations": [
+      "Axi C11 Common",
+      "Axi Y3 Common",
+      "Axi A19 Common (V)",
+      "Axi C10 Common (V)",
+      "Axi F3 Common (V)",
+      "Axi O6 Common (V)",
+      "Lith D7 Common (V)",
+      "Meso K7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Epitaph Prime Barrel",
+    "drop_locations": [
+      "Lith Q2 Uncommon",
+      "Neo V11 Uncommon",
+      "Axi P8 Uncommon (V)",
+      "Axi Y2 Uncommon (V)",
+      "Lith W4 Uncommon (V)",
+      "Neo P9 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Epitaph Prime Receiver",
+    "drop_locations": [
+      "Lith E2 Rare",
+      "Meso E7 Rare",
+      "Meso E6 Rare (V)",
+      "Neo E4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Equinox Prime Blueprint",
+    "drop_locations": [
+      "Axi K5 Uncommon (V)",
+      "Axi T3 Uncommon (V)",
+      "Axi T4 Uncommon (V)",
+      "Lith P4 Uncommon (V)",
+      "Lith S13 Uncommon (V)",
+      "Meso A2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Equinox Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi A8 Common (V)",
+      "Axi P1 Common (V)",
+      "Lith C6 Common (V)",
+      "Lith D2 Common (V)",
+      "Lith L2 Common (V)",
+      "Lith M4 Common (V)",
+      "Meso G2 Common (V)",
+      "Neo Z9 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Equinox Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi T9 Uncommon (V)",
+      "Lith L1 Uncommon (V)",
+      "Meso M3 Uncommon (V)",
+      "Neo A3 Uncommon (V)",
+      "Neo D2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Equinox Prime Systems Blueprint",
+    "drop_locations": [
+      "Meso E2 Rare (V)",
+      "Meso E3 Rare (V)",
+      "Meso E4 Rare (V)",
+      "Neo E2 Rare (V)",
+      "Neo E3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Euphona Prime Blueprint",
+    "drop_locations": [
+      "Axi B1 Common (V)",
+      "Axi H5 Common (V)",
+      "Axi N5 Common (V)",
+      "Axi O1 Common (V)",
+      "Neo B6 Common (V)",
+      "Neo H2 Common (V)",
+      "Neo K1 Common (V)",
+      "Neo L1 Common (V)",
+      "Neo N7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Euphona Prime Barrel",
+    "drop_locations": [
+      "Lith M7 Uncommon (V)",
+      "Meso N3 Uncommon (V)",
+      "Meso V5 Uncommon (V)",
+      "Neo M1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Euphona Prime Receiver",
+    "drop_locations": [
+      "Axi E2 Rare (V)",
+      "Meso E5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Fang Prime Blueprint",
+    "drop_locations": [
+      "Axi V14 Common",
+      "Axi Y1 Common",
+      "Axi A11 Common (V)",
+      "Axi G4 Common (V)",
+      "Axi K11 Common (V)",
+      "Axi L5 Common (V)",
+      "Axi P8 Common (V)",
+      "Axi Y2 Common (V)",
+      "Lith B6 Common (V)",
+      "Lith G4 Common (V)",
+      "Lith G8 Common (V)",
+      "Lith G9 Common (V)",
+      "Lith H5 Common (V)",
+      "Lith K1 Common (V)",
+      "Lith N11 Common (V)",
+      "Lith N13 Common (V)",
+      "Lith N15 Common (V)",
+      "Lith N16 Common (V)",
+      "Lith O3 Uncommon (V)",
+      "Lith R5 Common (V)",
+      "Lith T9 Common (V)",
+      "Lith V2 Common (V)",
+      "Meso B7 Common (V)",
+      "Meso C10 Uncommon (V)",
+      "Meso K5 Common (V)",
+      "Meso N1 Common (V)",
+      "Meso O4 Common (V)",
+      "Meso P8 Common (V)",
+      "Meso R2 Common (V)",
+      "Meso S4 Common (V)",
+      "Meso T1 Common (V)",
+      "Meso T6 Common (V)",
+      "Meso V9 Common (V)",
+      "Meso Z1 Common (V)",
+      "Neo A10 Common (V)",
+      "Neo A9 Common (V)",
+      "Neo B2 Common (V)",
+      "Neo G5 Uncommon (V)",
+      "Neo H2 Common (V)",
+      "Neo H4 Common (V)",
+      "Neo N2 Common (V)",
+      "Neo P9 Common (V)",
+      "Neo T2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Fang Prime Blade",
+    "drop_locations": [
+      "Neo S20 Common",
+      "Axi B1 Common (V)",
+      "Axi B2 Common (V)",
+      "Axi G14 Common (V)",
+      "Axi L6 Common (V)",
+      "Axi M3 Common (V)",
+      "Axi N1 Common (V)",
+      "Axi O2 Common (V)",
+      "Axi P7 Common (V)",
+      "Axi R3 Common (V)",
+      "Axi T9 Common (V)",
+      "Axi W4 Common (V)",
+      "Lith C1 Common (V)",
+      "Lith C6 Common (V)",
+      "Lith D5 Common (V)",
+      "Lith F1 Common (V)",
+      "Lith H10 Common (V)",
+      "Lith I1 Common (V)",
+      "Lith K10 Common (V)",
+      "Lith N1 Common (V)",
+      "Lith N6 Common (V)",
+      "Lith P1 Common (V)",
+      "Lith S11 Common (V)",
+      "Lith S5 Common (V)",
+      "Lith S6 Common (V)",
+      "Lith T11 Common (V)",
+      "Lith V10 Common (V)",
+      "Meso A7 Common (V)",
+      "Meso M2 Common (V)",
+      "Meso P17 Common (V)",
+      "Meso V11 Common (V)",
+      "Meso V8 Common (V)",
+      "Meso Z5 Common (V)",
+      "Neo F3 Common (V)",
+      "Neo G3 Common (V)",
+      "Neo G4 Common (V)",
+      "Neo I1 Common (V)",
+      "Neo K5 Common (V)",
+      "Neo N20 Common (V)",
+      "Neo N23 Common (V)",
+      "Neo S11 Common (V)",
+      "Neo S12 Common (V)",
+      "Neo S7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Fang Prime Handle",
+    "drop_locations": [
+      "Lith G14 Uncommon",
+      "Axi A16 Common (V)",
+      "Axi A4 Uncommon (V)",
+      "Axi B8 Uncommon (V)",
+      "Axi H2 Common (V)",
+      "Axi I3 Uncommon (V)",
+      "Axi L3 Common (V)",
+      "Axi N11 Uncommon (V)",
+      "Axi O5 Uncommon (V)",
+      "Axi P4 Common (V)",
+      "Axi S11 Common (V)",
+      "Axi V6 Uncommon (V)",
+      "Lith A5 Uncommon (V)",
+      "Lith D2 Uncommon (V)",
+      "Lith F2 Uncommon (V)",
+      "Lith F3 Common (V)",
+      "Lith G11 Uncommon (V)",
+      "Lith G7 Uncommon (V)",
+      "Lith L5 Uncommon (V)",
+      "Lith N17 Uncommon (V)",
+      "Lith R3 Uncommon (V)",
+      "Lith W1 Uncommon (V)",
+      "Lith W2 Uncommon (V)",
+      "Lith Z1 Common (V)",
+      "Meso D3 Common (V)",
+      "Meso H5 Common (V)",
+      "Meso M4 Uncommon (V)",
+      "Meso N1 Common (V)",
+      "Meso N16 Uncommon (V)",
+      "Meso N2 Common (V)",
+      "Meso S4 Uncommon (V)",
+      "Meso V7 Uncommon (V)",
+      "Meso W1 Uncommon (V)",
+      "Meso W2 Uncommon (V)",
+      "Neo E4 Uncommon (V)",
+      "Neo H3 Common (V)",
+      "Neo K6 Common (V)",
+      "Neo L4 Uncommon (V)",
+      "Neo N3 Uncommon (V)",
+      "Neo R5 Uncommon (V)",
+      "Neo S14 Uncommon (V)",
+      "Neo V2 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Fragor Prime Blueprint",
+    "drop_locations": [
+      "Axi A7 Uncommon (V)",
+      "Axi F1 Rare (V)",
+      "Lith F1 Rare (V)",
+      "Meso F1 Rare (V)",
+      "Meso H1 Uncommon (V)",
+      "Neo S8 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Fragor Prime Handle",
+    "drop_locations": [
+      "Axi C2 Uncommon (V)",
+      "Axi N4 Uncommon (V)",
+      "Lith V1 Rare (V)",
+      "Lith V8 Uncommon (V)",
+      "Neo D6 Uncommon (V)",
+      "Neo T1 Uncommon (V)",
+      "Neo V6 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Fragor Prime Head",
+    "drop_locations": [
+      "Axi A1 Common (V)",
+      "Axi B2 Common (V)",
+      "Axi H1 Common (V)",
+      "Lith V7 Common (V)",
+      "Meso V8 Common (V)",
+      "Neo H1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Frost Prime Blueprint",
+    "drop_locations": [
+      "Meso F2 Rare (V)",
+      "Meso F3 Rare (V)",
+      "Meso F4 Rare (V)",
+      "Neo F1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Frost Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith G1 Common (V)",
+      "Meso E1 Common (V)",
+      "Neo B8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Frost Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi D4 Common (V)",
+      "Axi E1 Common (V)",
+      "Neo E1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Frost Prime Systems Blueprint",
+    "drop_locations": [
+      "Lith G2 Uncommon (V)",
+      "Lith M8 Uncommon (V)",
+      "Neo S5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Fulmin Prime Blueprint",
+    "drop_locations": [
+      "Axi H8 Uncommon (V)",
+      "Lith A7 Uncommon (V)",
+      "Lith H9 Uncommon (V)",
+      "Meso A5 Uncommon (V)",
+      "Meso H7 Uncommon (V)",
+      "Neo H4 Uncommon (V)",
+      "Neo O2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Fulmin Prime Barrel",
+    "drop_locations": [
+      "Axi W4 Common (V)",
+      "Axi Z2 Common (V)",
+      "Lith G10 Common (V)",
+      "Meso P13 Common (V)",
+      "Meso V9 Common (V)",
+      "Neo G7 Common (V)",
+      "Neo G8 Common (V)",
+      "Neo K7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Fulmin Prime Receiver",
+    "drop_locations": [
+      "Axi F2 Rare (V)",
+      "Axi F3 Rare (V)",
+      "Lith F3 Rare (V)",
+      "Meso F5 Rare (V)",
+      "Neo F2 Rare (V)",
+      "Neo F3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Fulmin Prime Stock",
+    "drop_locations": [
+      "Axi H7 Uncommon (V)",
+      "Axi S19 Uncommon (V)",
+      "Lith C11 Uncommon (V)",
+      "Lith C12 Uncommon (V)",
+      "Lith G8 Uncommon (V)",
+      "Lith Q1 Uncommon (V)",
+      "Meso V10 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Galatine Prime Blueprint",
+    "drop_locations": [
+      "Axi G1 Rare (V)",
+      "Meso G1 Rare (V)",
+      "Neo G3 Rare (V)",
+      "Neo G5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Galatine Prime Blade",
+    "drop_locations": [
+      "Axi N4 Common (V)",
+      "Axi O2 Common (V)",
+      "Axi T11 Common (V)",
+      "Lith S7 Common (V)",
+      "Lith T3 Common (V)",
+      "Meso C2 Common (V)",
+      "Meso S2 Common (V)",
+      "Meso S4 Common (V)",
+      "Meso S6 Common (V)",
+      "Neo N6 Common (V)",
+      "Neo V2 Common (V)",
+      "Neo V3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Galatine Prime Handle",
+    "drop_locations": [
+      "Axi K2 Uncommon (V)",
+      "Axi O1 Uncommon (V)",
+      "Axi V6 Uncommon (V)",
+      "Lith H10 Uncommon (V)",
+      "Lith S5 Uncommon (V)",
+      "Meso O4 Uncommon (V)",
+      "Neo V2 Uncommon (V)",
+      "Neo Z1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Gara Prime Blueprint",
+    "drop_locations": [
+      "Axi G6 Rare (V)",
+      "Axi G9 Rare (V)",
+      "Lith G11 Rare (V)",
+      "Meso G3 Rare (V)",
+      "Neo G4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Gara Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi G8 Uncommon (V)",
+      "Axi I2 Uncommon (V)",
+      "Axi K7 Uncommon (V)",
+      "Axi S9 Uncommon (V)",
+      "Lith K6 Uncommon (V)",
+      "Meso A4 Uncommon (V)",
+      "Neo P5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Gara Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi S14 Uncommon (V)",
+      "Lith S12 Uncommon (V)",
+      "Meso C10 Uncommon (V)",
+      "Meso O5 Uncommon (V)",
+      "Meso P5 Uncommon (V)",
+      "Neo N18 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Gara Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi C8 Common (V)",
+      "Axi G7 Common (V)",
+      "Lith P6 Common (V)",
+      "Lith T7 Common (V)",
+      "Lith T8 Common (V)",
+      "Meso K5 Common (V)",
+      "Neo A5 Common (V)",
+      "Neo N21 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Garuda Prime Blueprint",
+    "drop_locations": [
+      "Axi H6 Common (V)",
+      "Lith C10 Common (V)",
+      "Lith H9 Common (V)",
+      "Meso K4 Common (V)",
+      "Meso P14 Common (V)",
+      "Meso P8 Common (V)",
+      "Meso S12 Common (V)",
+      "Neo A8 Common (V)",
+      "Neo C5 Common (V)",
+      "Neo N20 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Garuda Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi B6 Uncommon (V)",
+      "Axi G9 Uncommon (V)",
+      "Axi N11 Uncommon (V)",
+      "Lith R4 Uncommon (V)",
+      "Meso N13 Uncommon (V)",
+      "Meso P13 Uncommon (V)",
+      "Meso P7 Uncommon (V)",
+      "Neo N22 Uncommon (V)",
+      "Neo S15 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Garuda Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi G12 Rare (V)",
+      "Axi G13 Rare (V)",
+      "Lith G5 Rare (V)",
+      "Lith G6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Garuda Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi G10 Rare (V)",
+      "Axi G7 Rare (V)",
+      "Axi G8 Rare (V)",
+      "Neo K8 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Gauss Prime Blueprint",
+    "drop_locations": [
+      "Axi B7 Uncommon (V)",
+      "Axi Z2 Common (V)",
+      "Lith N16 Uncommon (V)",
+      "Neo A15 Common (V)",
+      "Neo D10 Uncommon (V)",
+      "Neo G10 Uncommon (V)",
+      "Neo G9 Common (V)",
+      "Neo M5 Uncommon (V)",
+      "Neo T9 Uncommon (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Gauss Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith C13 Common (V)",
+      "Lith M9 Common (V)",
+      "Meso A11 Common (V)",
+      "Meso P15 Common (V)",
+      "Neo A14 Common (V)",
+      "Neo O2 Common (V)",
+      "Neo P7 Common (V)",
+      "Neo W1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Gauss Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi P9 Uncommon (V)",
+      "Axi V12 Uncommon (V)",
+      "Axi V13 Uncommon (V)",
+      "Meso H5 Uncommon (V)",
+      "Meso T7 Uncommon (V)",
+      "Meso Z6 Uncommon (V)",
+      "Neo E4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Gauss Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi G15 Rare (V)",
+      "Lith G12 Rare (V)",
+      "Lith G9 Rare (V)",
+      "Meso G7 Rare (V)",
+      "Meso G9 Rare (V)",
+      "Neo G8 Rare (V)",
+      "Neo G9 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Glaive Prime Blueprint",
+    "drop_locations": [
+      "Lith G1 Rare (V)",
+      "Lith G2 Rare (V)",
+      "Neo G6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Glaive Prime Blade",
+    "drop_locations": [
+      "Axi E1 Uncommon (V)",
+      "Axi L1 Uncommon (V)",
+      "Meso B10 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Glaive Prime Disc",
+    "drop_locations": [
+      "Axi R4 Uncommon (V)",
+      "Meso F3 Uncommon (V)",
+      "Neo S5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Gram Prime Blueprint",
+    "drop_locations": [
+      "Axi A8 Uncommon (V)",
+      "Axi O4 Uncommon (V)",
+      "Axi T5 Uncommon (V)",
+      "Lith P2 Uncommon (V)",
+      "Meso N7 Uncommon (V)",
+      "Neo Z8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Gram Prime Blade",
+    "drop_locations": [
+      "Axi A9 Common (V)",
+      "Lith N4 Common (V)",
+      "Lith S8 Common (V)",
+      "Lith W1 Common (V)",
+      "Meso M3 Common (V)",
+      "Meso R4 Common (V)",
+      "Meso S8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Gram Prime Handle",
+    "drop_locations": [
+      "Axi G2 Rare (V)",
+      "Axi G3 Rare (V)",
+      "Axi G4 Rare (V)",
+      "Axi G5 Rare (V)",
+      "Neo G1 Rare (V)",
+      "Neo G2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Grendel Prime Blueprint",
+    "drop_locations": [
+      "Lith G8 Rare (V)",
+      "Meso G6 Rare (V)",
+      "Meso G8 Rare (V)",
+      "Neo G10 Rare (V)",
+      "Neo G7 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Grendel Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith A11 Uncommon (V)",
+      "Lith C12 Uncommon (V)",
+      "Lith G13 Uncommon (V)",
+      "Lith M10 Uncommon (V)",
+      "Neo S18 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Grendel Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi G15 Common (V)",
+      "Axi M6 Common (V)",
+      "Axi S17 Common (V)",
+      "Meso A5 Common (V)",
+      "Meso B8 Common (V)",
+      "Neo M5 Common (V)",
+      "Neo Q1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Grendel Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi G11 Rare (V)",
+      "Axi G14 Rare (V)",
+      "Neo M6 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Guandao Prime Blueprint",
+    "drop_locations": [
+      "Lith K9 Uncommon (V)",
+      "Lith P5 Uncommon (V)",
+      "Meso B5 Uncommon (V)",
+      "Meso I2 Uncommon (V)",
+      "Meso P7 Uncommon (V)",
+      "Meso Z5 Uncommon (V)",
+      "Neo T4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Guandao Prime Blade",
+    "drop_locations": [
+      "Axi S10 Common (V)",
+      "Axi S9 Common (V)",
+      "Lith K7 Common (V)",
+      "Lith O3 Common (V)",
+      "Meso H2 Common (V)",
+      "Neo P2 Common (V)",
+      "Neo V10 Common (V)",
+      "Neo Z6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Guandao Prime Handle",
+    "drop_locations": [
+      "Lith G3 Rare (V)",
+      "Lith G4 Rare (V)",
+      "Lith G7 Rare (V)",
+      "Meso G2 Rare (V)",
+      "Meso G4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Gunsen Prime Blueprint",
+    "drop_locations": [
+      "Axi P9 Common (V)",
+      "Lith C11 Common (V)",
+      "Lith L6 Common (V)",
+      "Lith N16 Common (V)",
+      "Meso F5 Common (V)",
+      "Neo C4 Common (V)",
+      "Neo P6 Common (V)",
+      "Neo Z10 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Gunsen Prime Blade",
+    "drop_locations": [
+      "Lith G10 Rare (V)",
+      "Lith G13 Rare (V)",
+      "Meso G10 Rare (V)",
+      "Meso G5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Gunsen Prime Handle",
+    "drop_locations": [
+      "Axi S19 Uncommon (V)",
+      "Axi T12 Uncommon (V)",
+      "Meso P15 Uncommon (V)",
+      "Meso W4 Uncommon (V)",
+      "Neo B9 Uncommon (V)",
+      "Neo K7 Uncommon (V)",
+      "Neo T7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Gyre Prime Blueprint",
+    "drop_locations": [
+      "Neo T10 Uncommon"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Gyre Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi T13 Uncommon"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Gyre Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Lith G14 Rare"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Gyre Prime Systems Blueprint",
+    "drop_locations": [
+      "Meso E7 Common",
+      "Meso V14 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Harrow Prime Blueprint",
+    "drop_locations": [
+      "Axi K6 Uncommon (V)",
+      "Lith B11 Uncommon (V)",
+      "Lith P6 Uncommon (V)",
+      "Lith S15 Uncommon (V)",
+      "Neo G5 Uncommon (V)",
+      "Neo L3 Uncommon (V)",
+      "Neo N21 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Harrow Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi N10 Common (V)",
+      "Axi S15 Common (V)",
+      "Meso G3 Common (V)",
+      "Meso N13 Common (V)",
+      "Meso O5 Common (V)",
+      "Meso P11 Common (V)",
+      "Neo T7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Harrow Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi A16 Uncommon (V)",
+      "Axi S12 Uncommon (V)",
+      "Axi T11 Uncommon (V)",
+      "Axi T8 Uncommon (V)",
+      "Lith B10 Uncommon (V)",
+      "Lith R3 Uncommon (V)",
+      "Meso C8 Uncommon (V)",
+      "Meso P10 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Harrow Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi H7 Rare (V)",
+      "Lith H10 Rare (V)",
+      "Lith H3 Rare (V)",
+      "Lith H4 Rare (V)",
+      "Lith H5 Rare (V)",
+      "Lith H7 Rare (V)",
+      "Meso H2 Rare (V)",
+      "Meso H4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Helios Prime Blueprint",
+    "drop_locations": [
+      "Lith C3 Uncommon (V)",
+      "Lith N2 Uncommon (V)",
+      "Lith V4 Uncommon (V)",
+      "Meso C3 Uncommon (V)",
+      "Meso E5 Uncommon (V)",
+      "Meso Z1 Uncommon (V)",
+      "Neo K1 Uncommon (V)",
+      "Neo M1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Helios Prime Carapace",
+    "drop_locations": [
+      "Axi A3 Common (V)",
+      "Axi C3 Common (V)",
+      "Axi H3 Common (V)",
+      "Lith K5 Common (V)",
+      "Lith P1 Common (V)",
+      "Meso E5 Common (V)",
+      "Meso S6 Common (V)",
+      "Neo N5 Common (V)",
+      "Neo S7 Common (V)",
+      "Neo V5 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Helios Prime Cerebrum",
+    "drop_locations": [
+      "Axi H1 Rare (V)",
+      "Axi H2 Rare (V)",
+      "Axi H5 Rare (V)",
+      "Lith H1 Rare (V)",
+      "Lith H2 Rare (V)",
+      "Meso H1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Helios Prime Systems",
+    "drop_locations": [
+      "Axi A12 Uncommon (V)",
+      "Axi N5 Uncommon (V)",
+      "Axi O2 Uncommon (V)",
+      "Lith V3 Uncommon (V)",
+      "Lith Z2 Uncommon (V)",
+      "Meso D2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Hikou Prime Blueprint",
+    "drop_locations": [
+      "Axi S8 Common",
+      "Lith S1 Common (V)",
+      "Meso N2 Common (V)",
+      "Neo R1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Hikou Prime Pouch",
+    "drop_locations": [
+      "Lith C7 Common",
+      "Axi K1 Common (V)",
+      "Axi V2 Common (V)",
+      "Meso N6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Hikou Prime Stars",
+    "drop_locations": [
+      "Axi V10 Common",
+      "Axi S3 Common (V)",
+      "Lith F2 Common (V)",
+      "Neo N1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Hildryn Prime Blueprint",
+    "drop_locations": [
+      "Axi H6 Rare (V)",
+      "Axi H8 Rare (V)",
+      "Meso H5 Rare (V)",
+      "Meso H7 Rare (V)",
+      "Neo H4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Hildryn Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi A18 Uncommon (V)",
+      "Axi L6 Uncommon (V)",
+      "Meso G10 Uncommon (V)",
+      "Meso P11 Uncommon (V)",
+      "Neo G7 Uncommon (V)",
+      "Neo Q1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Hildryn Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi W4 Uncommon (V)",
+      "Lith G10 Uncommon (V)",
+      "Lith M9 Uncommon (V)",
+      "Meso P14 Uncommon (V)",
+      "Neo C4 Uncommon (V)",
+      "Neo P7 Uncommon (V)",
+      "Neo S17 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Hildryn Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi P6 Common (V)",
+      "Axi S17 Common (V)",
+      "Axi S19 Common (V)",
+      "Axi T12 Common (V)",
+      "Lith A6 Common (V)",
+      "Lith H8 Common (V)",
+      "Lith P9 Common (V)",
+      "Lith W3 Common (V)",
+      "Meso C9 Common (V)",
+      "Neo S18 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Hydroid Prime Blueprint",
+    "drop_locations": [
+      "Axi K5 Uncommon (V)",
+      "Meso B2 Uncommon (V)",
+      "Meso N5 Uncommon (V)",
+      "Meso Z2 Uncommon (V)",
+      "Neo A6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Hydroid Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi C3 Common (V)",
+      "Axi C4 Common (V)",
+      "Lith R1 Common (V)",
+      "Meso H1 Common (V)",
+      "Neo B4 Common (V)",
+      "Neo N8 Common (V)",
+      "Neo S11 Common (V)",
+      "Neo S8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Hydroid Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi A3 Uncommon (V)",
+      "Axi M3 Uncommon (V)",
+      "Axi N4 Uncommon (V)",
+      "Neo G1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Hydroid Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi H3 Rare (V)",
+      "Axi H4 Rare (V)",
+      "Neo H1 Rare (V)",
+      "Neo H2 Rare (V)",
+      "Neo H3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Hystrix Prime Blueprint",
+    "drop_locations": [
+      "Axi B7 Uncommon (V)",
+      "Axi G10 Uncommon (V)",
+      "Axi K9 Uncommon (V)",
+      "Neo C5 Uncommon (V)",
+      "Neo K6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Hystrix Prime Barrel",
+    "drop_locations": [
+      "Axi G13 Common (V)",
+      "Axi P6 Common (V)",
+      "Lith N14 Common (V)",
+      "Lith S15 Common (V)",
+      "Meso K6 Common (V)",
+      "Meso R5 Common (V)",
+      "Meso W3 Common (V)",
+      "Neo G4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Hystrix Prime Receiver",
+    "drop_locations": [
+      "Lith H6 Rare (V)",
+      "Lith H8 Rare (V)",
+      "Lith H9 Rare (V)",
+      "Meso H3 Rare (V)",
+      "Meso H6 Rare (V)",
+      "Meso H8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Inaros Prime Blueprint",
+    "drop_locations": [
+      "Axi K12 Uncommon (V)",
+      "Axi W1 Uncommon (V)",
+      "Axi W2 Uncommon (V)",
+      "Lith G4 Uncommon (V)",
+      "Lith N10 Uncommon (V)",
+      "Meso N12 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Inaros Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi K6 Uncommon (V)",
+      "Axi O5 Uncommon (V)",
+      "Lith H4 Uncommon (V)",
+      "Lith N6 Uncommon (V)",
+      "Neo A10 Uncommon (V)",
+      "Neo P3 Uncommon (V)",
+      "Neo T3 Uncommon (V)",
+      "Neo V10 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Inaros Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi I1 Rare (V)",
+      "Axi I2 Rare (V)",
+      "Axi I3 Rare (V)",
+      "Meso I1 Rare (V)",
+      "Meso I2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Inaros Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi A13 Common (V)",
+      "Axi G7 Common (V)",
+      "Axi T7 Common (V)",
+      "Lith M6 Common (V)",
+      "Meso C7 Common (V)",
+      "Neo K4 Common (V)",
+      "Neo N13 Common (V)",
+      "Neo T5 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Ivara Prime Blueprint",
+    "drop_locations": [
+      "Axi B4 Uncommon (V)",
+      "Axi S13 Uncommon (V)",
+      "Lith B8 Uncommon (V)",
+      "Lith N4 Uncommon (V)",
+      "Lith N5 Uncommon (V)",
+      "Lith N7 Uncommon (V)",
+      "Meso N9 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Ivara Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith I1 Rare (V)",
+      "Neo I1 Rare (V)",
+      "Neo I2 Rare (V)",
+      "Neo I3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Ivara Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Lith D3 Common (V)",
+      "Meso B5 Common (V)",
+      "Meso C4 Common (V)",
+      "Meso D6 Common (V)",
+      "Meso N10 Common (V)",
+      "Meso O6 Common (V)",
+      "Neo M3 Common (V)",
+      "Neo T4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Ivara Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi A15 Uncommon (V)",
+      "Axi A9 Uncommon (V)",
+      "Axi C6 Uncommon (V)",
+      "Lith A4 Uncommon (V)",
+      "Lith T7 Uncommon (V)",
+      "Meso P2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Karyst Prime Blueprint",
+    "drop_locations": [
+      "Axi C6 Common (V)",
+      "Axi G6 Common (V)",
+      "Axi I3 Common (V)",
+      "Axi K7 Common (V)",
+      "Meso B5 Common (V)",
+      "Meso I2 Common (V)",
+      "Meso P3 Common (V)",
+      "Neo P4 Common (V)",
+      "Neo S14 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Karyst Prime Blade",
+    "drop_locations": [
+      "Axi K12 Rare (V)",
+      "Axi K6 Rare (V)",
+      "Lith K6 Rare (V)",
+      "Lith K7 Rare (V)",
+      "Meso K3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Karyst Prime Handle",
+    "drop_locations": [
+      "Axi A14 Uncommon (V)",
+      "Axi B4 Uncommon (V)",
+      "Lith I1 Uncommon (V)",
+      "Lith T4 Uncommon (V)",
+      "Meso C7 Uncommon (V)",
+      "Meso G3 Uncommon (V)",
+      "Neo A5 Uncommon (V)",
+      "Neo N20 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Kavasa Prime Band",
+    "drop_locations": [
+      "Lith C1 Uncommon (V)",
+      "Lith L3 Uncommon (V)",
+      "Lith N2 Uncommon (V)",
+      "Lith S2 Uncommon (V)",
+      "Lith S6 Uncommon (V)",
+      "Meso V3 Uncommon (V)",
+      "Neo N12 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Kavasa Prime Buckle",
+    "drop_locations": [
+      "Axi B1 Uncommon (V)",
+      "Axi K1 Rare (V)",
+      "Lith K1 Rare (V)",
+      "Lith K4 Rare (V)",
+      "Lith K8 Rare (V)",
+      "Neo S6 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Kavasa Prime Kubrow Collar Blueprint",
+    "drop_locations": [
+      "Axi G1 Uncommon (V)",
+      "Axi S7 Uncommon (V)",
+      "Lith S4 Uncommon (V)",
+      "Meso P6 Uncommon (V)",
+      "Neo N1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Kestrel Prime Blueprint",
+    "drop_locations": [
+      "Neo N24 Uncommon",
+      "Meso P17 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Kestrel Prime Blade",
+    "drop_locations": [
+      "Lith C14 Common",
+      "Lith D7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Kestrel Prime Grip",
+    "drop_locations": [
+      "Neo K9 Rare"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Khora Prime Blueprint",
+    "drop_locations": [
+      "Lith K9 Rare (V)",
+      "Meso K4 Rare (V)",
+      "Neo C5 Uncommon (V)",
+      "Neo K6 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Khora Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi G13 Uncommon (V)",
+      "Lith C10 Uncommon (V)",
+      "Lith G9 Uncommon (V)",
+      "Lith S15 Uncommon (V)",
+      "Neo D7 Uncommon (V)",
+      "Neo N21 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Khora Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi K8 Rare (V)",
+      "Neo K5 Rare (V)",
+      "Neo K7 Rare (V)",
+      "Neo K8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Khora Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi N11 Common (V)",
+      "Lith H7 Common (V)",
+      "Lith R4 Common (V)",
+      "Meso A5 Common (V)",
+      "Meso G5 Common (V)",
+      "Meso P8 Common (V)",
+      "Meso P9 Common (V)",
+      "Neo F3 Common (V)",
+      "Neo L2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Knell Prime Blueprint",
+    "drop_locations": [
+      "Axi B5 Common (V)",
+      "Axi P4 Common (V)",
+      "Axi W3 Common (V)",
+      "Lith B11 Common (V)",
+      "Lith S14 Common (V)",
+      "Meso N12 Common (V)",
+      "Meso S13 Common (V)",
+      "Meso V7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Knell Prime Barrel",
+    "drop_locations": [
+      "Axi K10 Rare (V)",
+      "Axi K11 Rare (V)",
+      "Axi K7 Rare (V)",
+      "Axi K9 Rare (V)",
+      "Lith K11 Rare (V)",
+      "Meso K5 Rare (V)",
+      "Neo K4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Knell Prime Receiver",
+    "drop_locations": [
+      "Axi S15 Uncommon (V)",
+      "Lith G6 Uncommon (V)",
+      "Lith K10 Rare (V)",
+      "Meso A3 Uncommon (V)",
+      "Meso H4 Uncommon (V)",
+      "Meso K4 Uncommon (V)",
+      "Meso K6 Rare (V)",
+      "Neo D7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Kogake Prime Blueprint",
+    "drop_locations": [
+      "Axi C4 Uncommon (V)",
+      "Axi K4 Uncommon (V)",
+      "Axi P1 Uncommon (V)",
+      "Axi V7 Uncommon (V)",
+      "Meso M3 Uncommon (V)",
+      "Neo B6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Kogake Prime Boot",
+    "drop_locations": [
+      "Axi A12 Common (V)",
+      "Axi A3 Common (V)",
+      "Axi T2 Common (V)",
+      "Lith L1 Common (V)",
+      "Lith M7 Common (V)",
+      "Meso M2 Common (V)",
+      "Neo G1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Kogake Prime Gauntlet",
+    "drop_locations": [
+      "Lith K2 Rare (V)",
+      "Lith K5 Rare (V)",
+      "Meso K1 Rare (V)",
+      "Neo K1 Rare (V)",
+      "Neo K2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Kompressa Prime Blueprint",
+    "drop_locations": [
+      "Neo C7 Common",
+      "Neo S20 Common",
+      "Axi Y2 Common (V)",
+      "Neo G9 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Kompressa Prime Barrel",
+    "drop_locations": [
+      "Lith K12 Rare",
+      "Meso K7 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Kompressa Prime Receiver",
+    "drop_locations": [
+      "Axi V14 Uncommon",
+      "Axi A20 Uncommon (V)",
+      "Axi N13 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Kronen Prime Blueprint",
+    "drop_locations": [
+      "Axi H3 Common (V)",
+      "Axi L3 Common (V)",
+      "Meso N7 Common (V)",
+      "Neo A2 Common (V)",
+      "Neo C1 Common (V)",
+      "Neo L1 Common (V)",
+      "Neo Z4 Common (V)",
+      "Neo Z8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Kronen Prime Blade",
+    "drop_locations": [
+      "Axi K2 Rare (V)",
+      "Axi K3 Rare (V)",
+      "Axi K4 Rare (V)",
+      "Axi K5 Rare (V)",
+      "Lith K3 Rare (V)",
+      "Meso K2 Rare (V)",
+      "Neo K3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Kronen Prime Handle",
+    "drop_locations": [
+      "Axi G3 Uncommon (V)",
+      "Axi L5 Uncommon (V)",
+      "Lith T6 Uncommon (V)",
+      "Meso A1 Uncommon (V)",
+      "Meso B2 Uncommon (V)",
+      "Meso D3 Uncommon (V)",
+      "Neo B4 Uncommon (V)",
+      "Neo S11 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Larkspur Prime Blueprint",
+    "drop_locations": [
+      "Axi S16 Common (V)",
+      "Lith T12 Common (V)",
+      "Lith X1 Common (V)",
+      "Meso B9 Common (V)",
+      "Meso H4 Common (V)",
+      "Meso K6 Common (V)",
+      "Meso M4 Common (V)",
+      "Neo H4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Larkspur Prime Barrel",
+    "drop_locations": [
+      "Axi L6 Rare (V)",
+      "Lith L6 Rare (V)",
+      "Neo L2 Rare (V)",
+      "Neo L3 Rare (V)",
+      "Neo L4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Larkspur Prime Receiver",
+    "drop_locations": [
+      "Axi A19 Uncommon (V)",
+      "Axi G10 Uncommon (V)",
+      "Lith G12 Uncommon (V)",
+      "Lith P9 Uncommon (V)",
+      "Meso G10 Uncommon (V)",
+      "Neo D8 Uncommon (V)",
+      "Neo F3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Larkspur Prime Stock",
+    "drop_locations": [
+      "Axi D5 Uncommon (V)",
+      "Lith F3 Uncommon (V)",
+      "Lith K10 Uncommon (V)",
+      "Lith W3 Uncommon (V)",
+      "Meso W3 Uncommon (V)",
+      "Neo A12 Uncommon (V)",
+      "Neo P7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Latron Prime Blueprint",
+    "drop_locations": [
+      "Axi L1 Common (V)",
+      "Lith G1 Common (V)",
+      "Lith L4 Rare (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Latron Prime Barrel",
+    "drop_locations": [
+      "Axi D4 Common (V)",
+      "Axi E1 Common (V)",
+      "Meso E1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Latron Prime Receiver",
+    "drop_locations": [
+      "Axi S2 Common (V)",
+      "Neo B8 Uncommon (V)",
+      "Neo S5 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Latron Prime Stock",
+    "drop_locations": [
+      "Lith G2 Common (V)",
+      "Meso F2 Common (V)",
+      "Meso F4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Lavos Prime Blueprint",
+    "drop_locations": [
+      "Axi Y1 Uncommon",
+      "Lith C14 Uncommon",
+      "Axi F3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Lavos Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi D6 Common",
+      "Lith G14 Common",
+      "Axi C10 Common (V)",
+      "Neo X1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Lavos Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Neo N24 Uncommon",
+      "Axi A20 Uncommon (V)",
+      "Meso A8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Lavos Prime Systems Blueprint",
+    "drop_locations": [
+      "Meso L4 Rare",
+      "Lith L5 Rare (V)",
+      "Lith L7 Rare (V)",
+      "Meso L3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Lex Prime Blueprint",
+    "drop_locations": [
+      "Axi A2 Uncommon (B)",
+      "Neo T10 Common",
+      "Neo V9 Uncommon",
+      "Axi A9 Common (V)",
+      "Axi D3 Common (V)",
+      "Axi F1 Common (V)",
+      "Axi G3 Common (V)",
+      "Axi O4 Common (V)",
+      "Axi S14 Common (V)",
+      "Axi T12 Common (V)",
+      "Axi Z2 Common (V)",
+      "Lith A3 Common (V)",
+      "Lith B11 Common (V)",
+      "Lith C3 Common (V)",
+      "Lith D6 Uncommon (V)",
+      "Lith K11 Uncommon (V)",
+      "Lith N11 Common (V)",
+      "Lith P5 Common (V)",
+      "Lith P9 Common (V)",
+      "Lith R2 Common (V)",
+      "Lith S4 Common (V)",
+      "Lith S7 Common (V)",
+      "Lith T11 Uncommon (V)",
+      "Lith V5 Common (V)",
+      "Meso C3 Common (V)",
+      "Meso D1 Common (V)",
+      "Meso D4 Uncommon (V)",
+      "Meso H7 Common (V)",
+      "Meso M4 Common (V)",
+      "Meso N15 Uncommon (V)",
+      "Meso O6 Uncommon (V)",
+      "Meso P3 Common (V)",
+      "Neo A11 Common (V)",
+      "Neo A9 Uncommon (V)",
+      "Neo C4 Common (V)",
+      "Neo D10 Common (V)",
+      "Neo E3 Uncommon (V)",
+      "Neo N2 Common (V)",
+      "Neo P3 Common (V)",
+      "Neo S10 Common (V)",
+      "Neo Z2 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Lex Prime Barrel",
+    "drop_locations": [
+      "Axi A2 Common (B)",
+      "Axi V14 Common",
+      "Meso N11 Common",
+      "Axi B6 Common (V)",
+      "Axi G13 Common (V)",
+      "Axi K1 Common (V)",
+      "Axi M1 Common (V)",
+      "Axi N5 Common (V)",
+      "Axi V7 Common (V)",
+      "Lith A2 Common (V)",
+      "Lith B6 Common (V)",
+      "Lith B9 Common (V)",
+      "Lith H2 Common (V)",
+      "Lith L3 Common (V)",
+      "Lith N12 Common (V)",
+      "Lith N13 Common (V)",
+      "Lith N17 Common (V)",
+      "Lith N7 Common (V)",
+      "Lith P8 Common (V)",
+      "Lith S14 Common (V)",
+      "Lith T2 Common (V)",
+      "Lith V2 Common (V)",
+      "Lith Y1 Common (V)",
+      "Meso C10 Common (V)",
+      "Meso C6 Common (V)",
+      "Meso L2 Common (V)",
+      "Meso P13 Common (V)",
+      "Meso P14 Common (V)",
+      "Meso S11 Common (V)",
+      "Meso S13 Common (V)",
+      "Meso S5 Common (V)",
+      "Meso S9 Common (V)",
+      "Meso T2 Common (V)",
+      "Meso T3 Common (V)",
+      "Meso V4 Common (V)",
+      "Meso Z5 Common (V)",
+      "Neo A13 Common (V)",
+      "Neo A3 Common (V)",
+      "Neo D6 Common (V)",
+      "Neo N3 Common (V)",
+      "Neo O3 Common (V)",
+      "Neo Q1 Common (V)",
+      "Neo S1 Common (V)",
+      "Neo Z5 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Lex Prime Receiver",
+    "drop_locations": [
+      "Axi A2 Common (B)",
+      "Axi D6 Common",
+      "Axi V10 Common",
+      "Axi V8 Common (B)",
+      "Neo K9 Common",
+      "Axi C1 Common (V)",
+      "Axi C7 Common (V)",
+      "Axi E2 Common (V)",
+      "Axi H2 Common (V)",
+      "Axi N2 Common (V)",
+      "Axi N6 Common (V)",
+      "Axi O5 Common (V)",
+      "Axi R2 Common (V)",
+      "Axi S12 Common (V)",
+      "Axi S15 Common (V)",
+      "Axi S16 Common (V)",
+      "Axi T9 Common (V)",
+      "Lith B5 Common (V)",
+      "Lith B7 Common (V)",
+      "Lith D1 Common (V)",
+      "Lith G5 Common (V)",
+      "Lith G7 Common (V)",
+      "Lith H5 Common (V)",
+      "Lith K8 Common (V)",
+      "Lith M1 Common (V)",
+      "Lith P7 Common (V)",
+      "Lith X1 Common (V)",
+      "Meso A6 Common (V)",
+      "Meso D2 Common (V)",
+      "Meso H8 Common (V)",
+      "Meso N14 Common (V)",
+      "Meso N5 Common (V)",
+      "Meso T8 Common (V)",
+      "Meso W4 Common (V)",
+      "Neo A7 Common (V)",
+      "Neo A8 Common (V)",
+      "Neo D8 Common (V)",
+      "Neo D9 Common (V)",
+      "Neo L3 Common (V)",
+      "Neo S16 Common (V)",
+      "Neo W1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Limbo Prime Blueprint",
+    "drop_locations": [
+      "Meso T3 Uncommon (V)",
+      "Meso Z1 Uncommon (V)",
+      "Neo A9 Uncommon (V)",
+      "Neo D4 Uncommon (V)",
+      "Neo I1 Uncommon (V)",
+      "Neo M2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Limbo Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi L3 Rare (V)",
+      "Axi L5 Rare (V)",
+      "Lith L3 Rare (V)",
+      "Meso L1 Rare (V)",
+      "Meso L2 Rare (V)",
+      "Neo L1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Limbo Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi L2 Rare (V)",
+      "Axi M4 Uncommon (V)",
+      "Lith K8 Uncommon (V)",
+      "Lith L1 Rare (V)",
+      "Lith L2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Limbo Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi D3 Common (V)",
+      "Axi T3 Common (V)",
+      "Lith B3 Common (V)",
+      "Lith B6 Common (V)",
+      "Meso N7 Common (V)",
+      "Neo A2 Common (V)",
+      "Neo C1 Common (V)",
+      "Neo R3 Common (V)",
+      "Neo R5 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Loki Prime Blueprint",
+    "drop_locations": [
+      "Axi S2 Common (V)",
+      "Meso F3 Common (V)",
+      "Neo V8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Loki Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith G2 Uncommon (V)",
+      "Lith O2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Loki Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Meso O3 Common (V)",
+      "Neo E1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Loki Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi L1 Rare (V)",
+      "Axi L4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Mag Prime Blueprint",
+    "drop_locations": [
+      "Lith M1 Rare (V)",
+      "Lith M2 Rare (V)",
+      "Lith M8 Rare (V)",
+      "Meso M1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Mag Prime Chassis Blueprint",
+    "drop_locations": [
+      "Meso B1 Uncommon (V)",
+      "Meso B3 Uncommon (V)",
+      "Meso F4 Uncommon (V)",
+      "Neo B3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Mag Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi D4 Uncommon (V)",
+      "Axi V2 Common (V)",
+      "Lith B1 Common (V)",
+      "Neo N9 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Mag Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi R1 Common (V)",
+      "Axi S4 Common (V)",
+      "Lith L4 Common (V)",
+      "Neo D1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Magnus Prime Blueprint",
+    "drop_locations": [
+      "Axi M5 Common (B)",
+      "Axi C7 Common (V)",
+      "Axi K10 Common (V)",
+      "Axi S14 Common (V)",
+      "Axi T10 Common (V)",
+      "Lith H8 Common (V)",
+      "Lith Z3 Common (V)",
+      "Meso B6 Common (V)",
+      "Meso S15 Common (V)",
+      "Neo N18 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Magnus Prime Barrel",
+    "drop_locations": [
+      "Axi M5 Rare (B)",
+      "Axi M2 Rare (V)",
+      "Meso M5 Rare (V)",
+      "Neo M4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Magnus Prime Receiver",
+    "drop_locations": [
+      "Axi M5 Uncommon (B)",
+      "Axi T8 Uncommon (V)",
+      "Neo C2 Uncommon (V)",
+      "Neo C3 Uncommon (V)",
+      "Neo G4 Uncommon (V)",
+      "Neo N19 Uncommon (V)",
+      "Neo N22 Uncommon (V)",
+      "Neo T5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Masseter Prime Blueprint",
+    "drop_locations": [
+      "Axi G12 Uncommon (V)",
+      "Axi P6 Uncommon (V)",
+      "Lith A8 Uncommon (V)",
+      "Lith W4 Uncommon (V)",
+      "Meso A11 Uncommon (V)",
+      "Meso E6 Uncommon (V)",
+      "Neo G9 Uncommon (V)",
+      "Neo P6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Masseter Prime Blade",
+    "drop_locations": [
+      "Axi M6 Rare (V)",
+      "Lith M10 Rare (V)",
+      "Lith M9 Rare (V)",
+      "Meso M4 Rare (V)",
+      "Neo M5 Rare (V)",
+      "Neo M6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Masseter Prime Handle",
+    "drop_locations": [
+      "Axi F2 Common (V)",
+      "Lith A6 Common (V)",
+      "Lith C10 Common (V)",
+      "Lith G13 Common (V)",
+      "Lith S16 Common (V)",
+      "Meso K7 Common (V)",
+      "Meso N17 Common (V)",
+      "Neo G10 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Mesa Prime Blueprint",
+    "drop_locations": [
+      "Lith C6 Uncommon (V)",
+      "Lith D1 Uncommon (V)",
+      "Lith N9 Uncommon (V)",
+      "Lith P7 Uncommon (V)",
+      "Meso P3 Uncommon (V)",
+      "Meso R2 Uncommon (V)",
+      "Neo Z2 Uncommon (V)",
+      "Neo Z3 Uncommon (V)",
+      "Vanguard P1 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Mesa Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi H4 Common (V)",
+      "Axi M1 Common (V)",
+      "Lith R1 Common (V)",
+      "Lith S10 Common (V)",
+      "Meso C4 Common (V)",
+      "Meso L2 Common (V)",
+      "Neo A3 Common (V)",
+      "Neo C1 Common (V)",
+      "Neo R4 Common (V)",
+      "Vanguard E1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Mesa Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi M3 Rare (V)",
+      "Axi M4 Rare (V)",
+      "Lith M3 Rare (V)",
+      "Lith M4 Rare (V)",
+      "Lith M5 Rare (V)",
+      "Vanguard M1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Mesa Prime Systems Blueprint",
+    "drop_locations": [
+      "Lith D5 Uncommon (V)",
+      "Lith M6 Rare (V)",
+      "Neo H3 Uncommon (V)",
+      "Neo M2 Rare (V)",
+      "Neo M3 Rare (V)",
+      "Vanguard C1 Uncommon (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Mirage Prime Blueprint",
+    "drop_locations": [
+      "Axi M1 Rare (V)",
+      "Lith M7 Rare (V)",
+      "Meso M2 Rare (V)",
+      "Meso M3 Rare (V)",
+      "Neo M1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Mirage Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi A12 Common (V)",
+      "Axi H4 Common (V)",
+      "Lith K5 Common (V)",
+      "Lith S7 Common (V)",
+      "Meso K2 Common (V)",
+      "Neo L1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Mirage Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi T2 Common (V)",
+      "Lith W1 Common (V)",
+      "Lith Z1 Common (V)",
+      "Meso E5 Common (V)",
+      "Meso H1 Common (V)",
+      "Neo B6 Common (V)",
+      "Neo G1 Common (V)",
+      "Neo S9 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Mirage Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi H5 Uncommon (V)",
+      "Axi R2 Uncommon (V)",
+      "Meso O2 Uncommon (V)",
+      "Neo K2 Uncommon (V)",
+      "Neo S12 Uncommon (V)",
+      "Neo V6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Nagantaka Prime Blueprint",
+    "drop_locations": [
+      "Axi N11 Rare (V)",
+      "Lith N14 Rare (V)",
+      "Meso N12 Rare (V)",
+      "Neo N21 Rare (V)",
+      "Neo N22 Rare (V)",
+      "Neo N23 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Nagantaka Prime Barrel",
+    "drop_locations": [
+      "Axi K9 Common (V)",
+      "Axi S10 Common (V)",
+      "Axi S14 Common (V)",
+      "Meso C8 Common (V)",
+      "Meso H4 Common (V)",
+      "Meso H8 Common (V)",
+      "Meso K4 Common (V)",
+      "Neo D8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Nagantaka Prime Receiver",
+    "drop_locations": [
+      "Axi B5 Uncommon (V)",
+      "Axi G13 Uncommon (V)",
+      "Lith C10 Uncommon (V)",
+      "Meso D7 Uncommon (V)",
+      "Meso O5 Uncommon (V)",
+      "Meso P9 Uncommon (V)",
+      "Neo F2 Uncommon (V)",
+      "Neo M4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Nagantaka Prime Stock",
+    "drop_locations": [
+      "Lith D6 Uncommon (V)",
+      "Lith H6 Uncommon (V)",
+      "Lith H8 Uncommon (V)",
+      "Lith Z3 Uncommon (V)",
+      "Meso G5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Nami Skyla Prime Blueprint",
+    "drop_locations": [
+      "Axi L2 Common (V)",
+      "Axi L3 Common (V)",
+      "Axi V7 Common (V)",
+      "Lith Z2 Common (V)",
+      "Meso C3 Common (V)",
+      "Neo A6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Nami Skyla Prime Blade",
+    "drop_locations": [
+      "Axi N5 Rare (V)",
+      "Lith N9 Rare (V)",
+      "Neo N10 Rare (V)",
+      "Neo N8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Nami Skyla Prime Handle",
+    "drop_locations": [
+      "Lith C2 Uncommon (V)",
+      "Lith H1 Uncommon (V)",
+      "Meso D3 Uncommon (V)",
+      "Meso S7 Uncommon (V)",
+      "Neo H3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Nautilus Prime Blueprint",
+    "drop_locations": [
+      "Lith N18 Rare",
+      "Neo N24 Rare",
+      "Lith N17 Rare (V)",
+      "Meso N17 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Nautilus Prime Carapace",
+    "drop_locations": [
+      "Neo P10 Common",
+      "Axi V13 Common (V)",
+      "Lith A7 Common (V)",
+      "Lith L7 Common (V)",
+      "Lith Y1 Common (V)",
+      "Neo G7 Common (V)",
+      "Neo W2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Nautilus Prime Cerebrum",
+    "drop_locations": [
+      "Lith N19 Rare",
+      "Axi N13 Rare (V)",
+      "Lith N15 Rare (V)",
+      "Lith N16 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Nautilus Prime Systems",
+    "drop_locations": [
+      "Lith Q2 Uncommon",
+      "Meso A10 Uncommon",
+      "Neo T10 Uncommon",
+      "Axi S16 Uncommon (V)",
+      "Lith Q1 Uncommon (V)",
+      "Meso V11 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Nekros Prime Blueprint",
+    "drop_locations": [
+      "Axi N3 Rare (V)",
+      "Lith H10 Uncommon (V)",
+      "Lith N3 Rare (V)",
+      "Lith T3 Uncommon (V)",
+      "Meso N3 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Nekros Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi G1 Common (V)",
+      "Axi N4 Common (V)",
+      "Axi S6 Common (V)",
+      "Lith N1 Common (V)",
+      "Lith V4 Common (V)",
+      "Meso K1 Common (V)",
+      "Meso S3 Common (V)",
+      "Neo G5 Common (V)",
+      "Neo Z1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Nekros Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi N5 Uncommon (V)",
+      "Lith K11 Uncommon (V)",
+      "Meso F1 Uncommon (V)",
+      "Meso O4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Nekros Prime Systems Blueprint",
+    "drop_locations": [
+      "Lith N2 Rare (V)",
+      "Meso N16 Rare (V)",
+      "Meso N5 Rare (V)",
+      "Neo N11 Rare (V)",
+      "Neo N3 Rare (V)",
+      "Neo N7 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Nezha Prime Blueprint",
+    "drop_locations": [
+      "Axi G6 Uncommon (V)",
+      "Axi M2 Uncommon (V)",
+      "Axi S9 Uncommon (V)",
+      "Lith H4 Uncommon (V)",
+      "Lith O3 Uncommon (V)",
+      "Meso C6 Uncommon (V)",
+      "Meso D6 Uncommon (V)",
+      "Meso H2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Nezha Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi N7 Rare (V)",
+      "Lith N11 Rare (V)",
+      "Meso N15 Rare (V)",
+      "Neo N13 Rare (V)",
+      "Neo N17 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Nezha Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi N8 Rare (V)",
+      "Lith N10 Rare (V)",
+      "Lith N6 Rare (V)",
+      "Lith N8 Rare (V)",
+      "Neo N15 Rare (V)",
+      "Neo N20 Rare (V)",
+      "Neo T8 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Nezha Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi O5 Common (V)",
+      "Axi S12 Common (V)",
+      "Lith G7 Common (V)",
+      "Lith H3 Common (V)",
+      "Lith N12 Common (V)",
+      "Meso P7 Common (V)",
+      "Neo D2 Common (V)",
+      "Neo D3 Common (V)",
+      "Neo N16 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Nidus Prime Blueprint",
+    "drop_locations": [
+      "Axi A14 Uncommon (V)",
+      "Lith K10 Uncommon (V)",
+      "Lith R2 Uncommon (V)",
+      "Lith S17 Uncommon (V)",
+      "Lith T9 Uncommon (V)",
+      "Meso N12 Uncommon (V)",
+      "Meso P8 Uncommon (V)",
+      "Meso R5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Nidus Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi N12 Rare (V)",
+      "Lith N12 Rare (V)",
+      "Lith N7 Rare (V)",
+      "Meso N13 Rare (V)",
+      "Meso N14 Rare (V)",
+      "Neo N18 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Nidus Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi N10 Rare (V)",
+      "Axi N9 Rare (V)",
+      "Neo N16 Rare (V)",
+      "Neo S19 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Nidus Prime Systems Blueprint",
+    "drop_locations": [
+      "Meso A3 Common (V)",
+      "Meso B5 Common (V)",
+      "Meso D7 Common (V)",
+      "Meso H2 Common (V)",
+      "Meso P9 Common (V)",
+      "Neo A8 Common (V)",
+      "Neo C2 Common (V)",
+      "Neo N19 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Nikana Prime Blueprint",
+    "drop_locations": [
+      "Axi A1 Rare (V)",
+      "Axi N12 Common (V)",
+      "Axi N6 Common (V)",
+      "Lith V6 Common (V)",
+      "Neo N5 Rare (V)",
+      "Neo S13 Common (V)",
+      "Neo S8 Uncommon (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Nikana Prime Blade",
+    "drop_locations": [
+      "Axi S5 Uncommon (V)",
+      "Meso N4 Rare (V)",
+      "Meso S15 Uncommon (V)",
+      "Meso V2 Rare (V)",
+      "Neo N4 Rare (V)",
+      "Neo S10 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Nikana Prime Hilt",
+    "drop_locations": [
+      "Axi N2 Rare (V)",
+      "Axi N4 Rare (V)",
+      "Axi N6 Rare (V)",
+      "Meso N8 Rare (V)",
+      "Neo N19 Rare (V)",
+      "Neo N6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Ninkondi Prime Blueprint",
+    "drop_locations": [
+      "Axi G3 Common (V)",
+      "Axi T9 Common (V)",
+      "Meso K3 Common (V)",
+      "Meso L1 Common (V)",
+      "Meso T4 Common (V)",
+      "Neo P1 Common (V)",
+      "Neo R2 Common (V)",
+      "Neo S14 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Ninkondi Prime Chain",
+    "drop_locations": [
+      "Axi P1 Uncommon (V)",
+      "Lith D1 Uncommon (V)",
+      "Lith D3 Uncommon (V)",
+      "Lith D4 Uncommon (V)",
+      "Neo R3 Uncommon (V)",
+      "Neo R4 Uncommon (V)",
+      "Neo Z9 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Ninkondi Prime Handle",
+    "drop_locations": [
+      "Lith N13 Rare (V)",
+      "Lith N4 Rare (V)",
+      "Lith N5 Rare (V)",
+      "Meso N10 Rare (V)",
+      "Meso N7 Rare (V)",
+      "Meso N9 Rare (V)",
+      "Neo N14 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Nova Prime Blueprint",
+    "drop_locations": [
+      "Axi S4 Uncommon (V)",
+      "Meso D5 Uncommon (V)",
+      "Neo N2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Nova Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith N1 Rare (V)",
+      "Neo N12 Rare (V)",
+      "Neo N9 Rare (V)",
+      "Neo V1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Nova Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Lith C1 Common (V)",
+      "Lith K4 Common (V)",
+      "Lith M2 Common (V)",
+      "Meso C1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Nova Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi S7 Common (V)",
+      "Lith C1 Common (V)",
+      "Meso B3 Common (V)",
+      "Meso S1 Common (V)",
+      "Neo S2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Nyx Prime Blueprint",
+    "drop_locations": [
+      "Neo V9 Common",
+      "Lith B4 Common (V)",
+      "Lith S2 Common (V)",
+      "Neo V1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Nyx Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi S8 Uncommon",
+      "Neo N1 Rare (V)",
+      "Neo R1 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Nyx Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Meso N11 Rare",
+      "Meso N1 Rare (V)",
+      "Meso N6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Nyx Prime Systems Blueprint",
+    "drop_locations": [
+      "Lith C7 Uncommon",
+      "Axi S3 Uncommon (V)",
+      "Neo S2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Oberon Prime Blueprint",
+    "drop_locations": [
+      "Lith H2 Uncommon (V)",
+      "Lith M3 Uncommon (V)",
+      "Lith S9 Uncommon (V)",
+      "Meso H1 Uncommon (V)",
+      "Meso N4 Uncommon (V)",
+      "Neo B5 Uncommon (V)",
+      "Neo S16 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Oberon Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi H2 Common (V)",
+      "Axi N5 Common (V)",
+      "Lith B5 Common (V)",
+      "Lith B9 Common (V)",
+      "Lith T3 Common (V)",
+      "Meso B2 Common (V)",
+      "Meso P1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Oberon Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Lith O1 Rare (V)",
+      "Meso O1 Rare (V)",
+      "Meso O2 Rare (V)",
+      "Meso O4 Rare (V)",
+      "Meso O6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Oberon Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi A15 Uncommon (V)",
+      "Axi O1 Rare (V)",
+      "Axi O2 Rare (V)",
+      "Axi O3 Rare (V)",
+      "Axi O4 Rare (V)",
+      "Neo N11 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Octavia Prime Blueprint",
+    "drop_locations": [
+      "Axi O5 Rare (V)",
+      "Lith O3 Rare (V)",
+      "Meso O5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Octavia Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi K8 Uncommon (V)",
+      "Axi S11 Uncommon (V)",
+      "Lith K7 Uncommon (V)",
+      "Meso N15 Uncommon (V)",
+      "Meso S11 Uncommon (V)",
+      "Neo A5 Uncommon (V)",
+      "Neo Z7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Octavia Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi K6 Common (V)",
+      "Axi P5 Common (V)",
+      "Lith G3 Common (V)",
+      "Lith G4 Common (V)",
+      "Lith G5 Common (V)",
+      "Meso B6 Common (V)",
+      "Neo S15 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Octavia Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi N7 Common (V)",
+      "Lith C9 Common (V)",
+      "Lith N7 Common (V)",
+      "Lith R2 Common (V)",
+      "Meso D6 Common (V)",
+      "Meso G4 Common (V)",
+      "Meso H3 Common (V)",
+      "Neo T8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Odonata Prime Blueprint",
+    "drop_locations": [
+      "Axi V8 Uncommon (B)",
+      "Axi L4 Uncommon (V)",
+      "Lith F1 Uncommon (V)",
+      "Meso C2 Uncommon (V)",
+      "Meso S1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Odonata Prime Harness Blueprint",
+    "drop_locations": [
+      "Neo O1 Common (B)",
+      "Axi K1 Common (V)",
+      "Axi T1 Common (V)",
+      "Axi V4 Common (V)",
+      "Lith K1 Common (V)",
+      "Neo V8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Odonata Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi V8 Common (B)",
+      "Axi V1 Common (V)",
+      "Lith F2 Common (V)",
+      "Meso O3 Common (V)",
+      "Neo N3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Odonata Prime Wings Blueprint",
+    "drop_locations": [
+      "Neo O1 Rare (B)",
+      "Axi N1 Uncommon (V)",
+      "Lith O2 Rare (V)",
+      "Meso O3 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Okina Prime Blueprint",
+    "drop_locations": [
+      "Axi O6 Rare (V)",
+      "Lith O4 Rare (V)",
+      "Neo O2 Rare (V)",
+      "Neo O3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Okina Prime Blade",
+    "drop_locations": [
+      "Axi B8 Common (V)",
+      "Axi C10 Common (V)",
+      "Axi N13 Common (V)",
+      "Lith C12 Common (V)",
+      "Lith L5 Common (V)",
+      "Lith L7 Common (V)",
+      "Meso T7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Okina Prime Handle",
+    "drop_locations": [
+      "Lith Z4 Uncommon (V)",
+      "Meso A8 Uncommon (V)",
+      "Meso G7 Uncommon (V)",
+      "Meso L3 Uncommon (V)",
+      "Meso Y1 Uncommon (V)",
+      "Neo G8 Uncommon (V)",
+      "Neo Z11 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Orthos Prime Blueprint",
+    "drop_locations": [
+      "Axi S20 Uncommon",
+      "Axi A13 Uncommon (V)",
+      "Axi A17 Uncommon (V)",
+      "Axi B2 Uncommon (V)",
+      "Axi C1 Uncommon (V)",
+      "Axi M1 Uncommon (V)",
+      "Axi V3 Uncommon (V)",
+      "Lith B6 Uncommon (V)",
+      "Lith B7 Uncommon (V)",
+      "Lith H2 Uncommon (V)",
+      "Lith S10 Uncommon (V)",
+      "Lith S11 Uncommon (V)",
+      "Lith S8 Uncommon (V)",
+      "Meso B1 Uncommon (V)",
+      "Meso R6 Uncommon (V)",
+      "Neo C2 Uncommon (V)",
+      "Neo D9 Uncommon (V)",
+      "Neo L3 Uncommon (V)",
+      "Neo Q1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Orthos Prime Blade",
+    "drop_locations": [
+      "Axi D6 Uncommon",
+      "Axi T10 Uncommon (V)",
+      "Lith A9 Uncommon (V)",
+      "Lith B2 Uncommon (V)",
+      "Lith B3 Uncommon (V)",
+      "Lith B5 Uncommon (V)",
+      "Lith C4 Uncommon (V)",
+      "Lith T12 Uncommon (V)",
+      "Meso A7 Uncommon (V)",
+      "Meso D1 Uncommon (V)",
+      "Meso I1 Uncommon (V)",
+      "Meso K6 Uncommon (V)",
+      "Meso W3 Uncommon (V)",
+      "Neo N16 Uncommon (V)",
+      "Neo P9 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Orthos Prime Handle",
+    "drop_locations": [
+      "Meso A10 Common",
+      "Axi A6 Common (V)",
+      "Axi G10 Common (V)",
+      "Axi G11 Common (V)",
+      "Axi K2 Common (V)",
+      "Axi K9 Common (V)",
+      "Axi L2 Common (V)",
+      "Axi P6 Common (V)",
+      "Axi P9 Common (V)",
+      "Axi Y2 Common (V)",
+      "Lith A3 Common (V)",
+      "Lith D4 Common (V)",
+      "Lith M10 Common (V)",
+      "Lith M9 Common (V)",
+      "Lith N10 Common (V)",
+      "Meso A1 Common (V)",
+      "Meso B1 Common (V)",
+      "Meso D1 Common (V)",
+      "Meso D4 Common (V)",
+      "Meso F5 Common (V)",
+      "Meso G2 Common (V)",
+      "Meso K1 Common (V)",
+      "Meso K2 Common (V)",
+      "Meso K3 Common (V)",
+      "Meso N4 Common (V)",
+      "Meso P5 Common (V)",
+      "Meso V14 Common (V)",
+      "Neo A12 Common (V)",
+      "Neo H1 Common (V)",
+      "Neo M4 Common (V)",
+      "Neo P3 Common (V)",
+      "Neo P8 Common (V)",
+      "Neo T7 Common (V)",
+      "Neo Z1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Pandero Prime Blueprint",
+    "drop_locations": [
+      "Axi N9 Common (V)",
+      "Axi P4 Common (V)",
+      "Lith I1 Common (V)",
+      "Lith N11 Common (V)",
+      "Lith N8 Common (V)",
+      "Meso N15 Common (V)",
+      "Neo G4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Pandero Prime Barrel",
+    "drop_locations": [
+      "Axi C6 Uncommon (V)",
+      "Axi N8 Uncommon (V)",
+      "Lith C9 Uncommon (V)",
+      "Lith H5 Uncommon (V)",
+      "Neo N16 Uncommon (V)",
+      "Neo N20 Uncommon (V)",
+      "Neo T8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Pandero Prime Receiver",
+    "drop_locations": [
+      "Axi P5 Rare (V)",
+      "Meso P8 Rare (V)",
+      "Meso P9 Rare (V)",
+      "Neo P2 Rare (V)",
+      "Neo P4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Pangolin Prime Blueprint",
+    "drop_locations": [
+      "Axi P4 Rare (V)",
+      "Lith P5 Rare (V)",
+      "Meso P3 Rare (V)",
+      "Neo P1 Rare (V)",
+      "Neo P3 Rare (V)",
+      "Neo P5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Pangolin Prime Blade",
+    "drop_locations": [
+      "Axi A11 Uncommon (V)",
+      "Axi A13 Uncommon (V)",
+      "Axi C8 Uncommon (V)",
+      "Axi G4 Uncommon (V)",
+      "Axi T7 Uncommon (V)",
+      "Lith N7 Uncommon (V)",
+      "Lith S11 Uncommon (V)",
+      "Neo S14 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Pangolin Prime Handle",
+    "drop_locations": [
+      "Axi C6 Common (V)",
+      "Axi I1 Common (V)",
+      "Axi V11 Common (V)",
+      "Meso N10 Common (V)",
+      "Meso R3 Common (V)",
+      "Meso S11 Common (V)",
+      "Neo N13 Common (V)",
+      "Neo N17 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Panthera Prime Blueprint",
+    "drop_locations": [
+      "Axi C5 Common (V)",
+      "Axi I1 Common (V)",
+      "Axi I3 Common (V)",
+      "Axi O5 Common (V)",
+      "Axi S11 Common (V)",
+      "Axi Z1 Common (V)",
+      "Neo K4 Common (V)",
+      "Neo P3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Panthera Prime Barrel",
+    "drop_locations": [
+      "Lith P3 Rare (V)",
+      "Lith P4 Rare (V)",
+      "Meso P12 Rare (V)",
+      "Meso P4 Rare (V)",
+      "Meso P7 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Panthera Prime Receiver",
+    "drop_locations": [
+      "Meso P2 Rare (V)",
+      "Meso P5 Rare (V)",
+      "Neo A10 Uncommon (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Panthera Prime Stock",
+    "drop_locations": [
+      "Axi M2 Uncommon (V)",
+      "Axi S10 Uncommon (V)",
+      "Lith G3 Uncommon (V)",
+      "Lith V10 Uncommon (V)",
+      "Meso G3 Uncommon (V)",
+      "Meso N10 Uncommon (V)",
+      "Meso T5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Paris Prime Blueprint",
+    "drop_locations": [
+      "Neo V11 Common",
+      "Axi A14 Common (V)",
+      "Axi A19 Common (V)",
+      "Axi E2 Common (V)",
+      "Axi G1 Common (V)",
+      "Axi K3 Common (V)",
+      "Axi K4 Common (V)",
+      "Axi K7 Common (V)",
+      "Axi K9 Common (V)",
+      "Axi L6 Common (V)",
+      "Axi O1 Common (V)",
+      "Axi S17 Common (V)",
+      "Axi V4 Common (V)",
+      "Lith F1 Common (V)",
+      "Lith H1 Common (V)",
+      "Lith M3 Common (V)",
+      "Lith M4 Common (V)",
+      "Lith S4 Common (V)",
+      "Meso D6 Common (V)",
+      "Meso E4 Common (V)",
+      "Meso G5 Common (V)",
+      "Meso H1 Common (V)",
+      "Meso H5 Common (V)",
+      "Meso S1 Common (V)",
+      "Meso S11 Common (V)",
+      "Meso V2 Common (V)",
+      "Neo C6 Common (V)",
+      "Neo G10 Common (V)",
+      "Neo N15 Common (V)",
+      "Neo N22 Common (V)",
+      "Neo S19 Common (V)",
+      "Neo Z1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Paris Prime Grip",
+    "drop_locations": [
+      "Meso X1 Uncommon",
+      "Axi A10 Uncommon (V)",
+      "Axi G15 Uncommon (V)",
+      "Lith A10 Uncommon (V)",
+      "Lith K6 Uncommon (V)",
+      "Lith S1 Uncommon (V)",
+      "Lith S16 Uncommon (V)",
+      "Lith S7 Uncommon (V)",
+      "Meso B6 Uncommon (V)",
+      "Meso F5 Uncommon (V)",
+      "Meso G6 Uncommon (V)",
+      "Meso S15 Uncommon (V)",
+      "Meso S2 Uncommon (V)",
+      "Meso S7 Uncommon (V)",
+      "Meso T4 Uncommon (V)",
+      "Neo C3 Uncommon (V)",
+      "Neo G1 Uncommon (V)",
+      "Neo G4 Uncommon (V)",
+      "Neo K4 Uncommon (V)",
+      "Neo N23 Uncommon (V)",
+      "Neo R2 Uncommon (V)",
+      "Neo R3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Paris Prime Lower Limb",
+    "drop_locations": [
+      "Axi D6 Common",
+      "Lith G14 Common",
+      "Axi A18 Common (V)",
+      "Axi B3 Common (V)",
+      "Axi B4 Common (V)",
+      "Axi B5 Common (V)",
+      "Axi H7 Common (V)",
+      "Axi S12 Common (V)",
+      "Axi T3 Common (V)",
+      "Axi T8 Common (V)",
+      "Lith A11 Common (V)",
+      "Lith B2 Common (V)",
+      "Lith C4 Common (V)",
+      "Lith K7 Common (V)",
+      "Lith S17 Common (V)",
+      "Lith T4 Common (V)",
+      "Lith T5 Common (V)",
+      "Lith V1 Common (V)",
+      "Lith V2 Common (V)",
+      "Lith V3 Common (V)",
+      "Lith Z3 Common (V)",
+      "Meso C9 Common (V)",
+      "Meso D2 Common (V)",
+      "Meso F1 Common (V)",
+      "Meso G8 Common (V)",
+      "Meso O1 Common (V)",
+      "Meso O2 Common (V)",
+      "Meso P9 Common (V)",
+      "Meso T2 Common (V)",
+      "Meso T3 Common (V)",
+      "Neo D3 Common (V)",
+      "Neo E4 Common (V)",
+      "Neo P1 Common (V)",
+      "Neo S17 Common (V)",
+      "Neo S2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Paris Prime String",
+    "drop_locations": [
+      "Axi S20 Common",
+      "Axi N12 Common (V)",
+      "Axi O2 Common (V)",
+      "Axi S18 Common (V)",
+      "Axi T6 Common (V)",
+      "Lith H3 Common (V)",
+      "Lith H4 Common (V)",
+      "Lith H9 Common (V)",
+      "Lith K10 Common (V)",
+      "Lith S1 Common (V)",
+      "Lith S3 Common (V)",
+      "Meso A7 Common (V)",
+      "Meso B8 Common (V)",
+      "Meso E6 Common (V)",
+      "Meso H6 Common (V)",
+      "Meso K2 Common (V)",
+      "Meso M2 Common (V)",
+      "Meso M3 Common (V)",
+      "Meso N12 Common (V)",
+      "Meso N9 Common (V)",
+      "Meso S10 Common (V)",
+      "Meso S2 Common (V)",
+      "Meso Z6 Common (V)",
+      "Neo A12 Common (V)",
+      "Neo A5 Common (V)",
+      "Neo B1 Common (V)",
+      "Neo D9 Common (V)",
+      "Neo M1 Common (V)",
+      "Neo N21 Common (V)",
+      "Neo N3 Common (V)",
+      "Neo N4 Common (V)",
+      "Neo N8 Common (V)",
+      "Neo P9 Common (V)",
+      "Neo V3 Common (V)",
+      "Neo V5 Common (V)",
+      "Neo Z4 Common (V)",
+      "Neo Z6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Paris Prime Upper Limb",
+    "drop_locations": [
+      "Axi Y1 Uncommon",
+      "Lith N19 Common",
+      "Axi D5 Common (V)",
+      "Axi H4 Common (V)",
+      "Axi H6 Common (V)",
+      "Axi N3 Common (V)",
+      "Axi S11 Uncommon (V)",
+      "Lith C2 Common (V)",
+      "Lith C9 Common (V)",
+      "Lith F2 Common (V)",
+      "Lith G3 Common (V)",
+      "Lith K3 Common (V)",
+      "Lith L5 Common (V)",
+      "Lith N14 Uncommon (V)",
+      "Lith N2 Common (V)",
+      "Lith T12 Common (V)",
+      "Lith V1 Common (V)",
+      "Lith V2 Uncommon (V)",
+      "Meso A11 Common (V)",
+      "Meso B4 Common (V)",
+      "Meso B9 Uncommon (V)",
+      "Meso H2 Uncommon (V)",
+      "Meso I1 Common (V)",
+      "Meso L3 Common (V)",
+      "Meso N4 Common (V)",
+      "Meso P10 Uncommon (V)",
+      "Meso R1 Common (V)",
+      "Meso S1 Uncommon (V)",
+      "Meso T1 Uncommon (V)",
+      "Meso T5 Common (V)",
+      "Meso V10 Uncommon (V)",
+      "Neo C4 Uncommon (V)",
+      "Neo D5 Common (V)",
+      "Neo N17 Common (V)",
+      "Neo N19 Uncommon (V)",
+      "Neo O3 Common (V)",
+      "Neo P4 Common (V)",
+      "Neo P7 Common (V)",
+      "Neo S12 Common (V)",
+      "Neo S2 Uncommon (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Perigale Prime Blueprint",
+    "drop_locations": [
+      "Meso L4 Common"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Perigale Prime Barrel",
+    "drop_locations": [
+      "Neo P10 Rare"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Perigale Prime Receiver",
+    "drop_locations": [
+      "Lith C14 Uncommon"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Perigale Prime Stock",
+    "drop_locations": [
+      "Axi C11 Common"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Phantasma Prime Blueprint",
+    "drop_locations": [
+      "Axi N10 Uncommon (V)",
+      "Axi N9 Uncommon (V)",
+      "Lith A9 Uncommon (V)",
+      "Lith C11 Uncommon (V)",
+      "Meso G5 Uncommon (V)",
+      "Meso W5 Uncommon (V)",
+      "Neo Z10 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Phantasma Prime Barrel",
+    "drop_locations": [
+      "Lith P8 Rare (V)",
+      "Meso P10 Rare (V)",
+      "Meso P13 Rare (V)",
+      "Neo P8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Phantasma Prime Receiver",
+    "drop_locations": [
+      "Lith B10 Common (V)",
+      "Lith T10 Common (V)",
+      "Lith T13 Common (V)",
+      "Meso C8 Common (V)",
+      "Meso K4 Common (V)",
+      "Meso N14 Common (V)",
+      "Meso W3 Common (V)",
+      "Neo F3 Common (V)",
+      "Neo O2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Phantasma Prime Stock",
+    "drop_locations": [
+      "Axi C9 Uncommon (V)",
+      "Axi P6 Rare (V)",
+      "Lith P6 Rare (V)",
+      "Meso P11 Rare (V)",
+      "Meso P14 Rare (V)",
+      "Neo P6 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Protea Prime Blueprint",
+    "drop_locations": [
+      "Axi N13 Common (V)",
+      "Axi V13 Common (V)",
+      "Lith W4 Common (V)",
+      "Meso K7 Common (V)",
+      "Meso V10 Common (V)",
+      "Meso V14 Common (V)",
+      "Meso W4 Common (V)",
+      "Neo C6 Common (V)",
+      "Vanguard C1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Protea Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi P7 Rare (V)",
+      "Axi P8 Rare (V)",
+      "Meso P17 Rare (V)",
+      "Neo P7 Rare (V)",
+      "Vanguard M1 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Protea Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi S16 Uncommon (V)",
+      "Axi T12 Uncommon (V)",
+      "Lith D7 Uncommon (V)",
+      "Lith O4 Uncommon (V)",
+      "Meso T8 Uncommon (V)",
+      "Neo D9 Uncommon (V)",
+      "Neo P6 Uncommon (V)",
+      "Vanguard E1 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Protea Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi P9 Rare (V)",
+      "Lith P9 Rare (V)",
+      "Meso P15 Rare (V)",
+      "Meso P16 Rare (V)",
+      "Neo P9 Rare (V)",
+      "Vanguard P1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Pyrana Prime Blueprint",
+    "drop_locations": [
+      "Axi P1 Rare (V)",
+      "Axi P2 Rare (V)",
+      "Axi P3 Rare (V)",
+      "Lith P1 Rare (V)",
+      "Lith P2 Rare (V)",
+      "Lith P7 Rare (V)",
+      "Meso P1 Rare (V)",
+      "Meso P6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Pyrana Prime Barrel",
+    "drop_locations": [
+      "Axi A8 Common (V)",
+      "Axi C4 Common (V)",
+      "Lith L2 Common (V)",
+      "Lith L3 Common (V)",
+      "Meso E2 Common (V)",
+      "Meso N7 Common (V)",
+      "Neo A2 Common (V)",
+      "Neo A9 Common (V)",
+      "Neo V7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Pyrana Prime Receiver",
+    "drop_locations": [
+      "Axi C3 Uncommon (V)",
+      "Axi D3 Uncommon (V)",
+      "Axi K3 Uncommon (V)",
+      "Lith D5 Uncommon (V)",
+      "Neo C1 Uncommon (V)",
+      "Neo G2 Uncommon (V)",
+      "Neo Z2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Quassus Prime Blueprint",
+    "drop_locations": [
+      "Lith N18 Uncommon",
+      "Meso L4 Uncommon",
+      "Meso G8 Uncommon (V)",
+      "Neo A15 Uncommon (V)",
+      "Neo X1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Quassus Prime Blade",
+    "drop_locations": [
+      "Lith Q2 Rare",
+      "Lith Q1 Rare (V)",
+      "Neo Q1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Quassus Prime Handle",
+    "drop_locations": [
+      "Axi T13 Common",
+      "Axi Y3 Common",
+      "Axi G14 Common (V)",
+      "Axi N13 Common (V)",
+      "Meso A8 Common (V)",
+      "Meso V12 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Reaper Prime Blueprint",
+    "drop_locations": [
+      "Axi L1 Common (V)",
+      "Lith L4 Uncommon (V)",
+      "Neo S5 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Reaper Prime Blade",
+    "drop_locations": [
+      "Lith M8 Uncommon (V)",
+      "Meso F2 Uncommon (V)",
+      "Neo E1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Reaper Prime Handle",
+    "drop_locations": [
+      "Lith G1 Common (V)",
+      "Meso F3 Common (V)",
+      "Meso F4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Redeemer Prime Blueprint",
+    "drop_locations": [
+      "Axi G2 Uncommon (V)",
+      "Axi M4 Uncommon (V)",
+      "Lith B6 Uncommon (V)",
+      "Lith D2 Uncommon (V)",
+      "Meso B4 Uncommon (V)",
+      "Meso B7 Uncommon (V)",
+      "Neo C1 Uncommon (V)",
+      "Neo Z4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Redeemer Prime Blade",
+    "drop_locations": [
+      "Lith D5 Common (V)",
+      "Lith L2 Common (V)",
+      "Lith M5 Common (V)",
+      "Lith N9 Common (V)",
+      "Meso Z2 Common (V)",
+      "Neo G2 Common (V)",
+      "Neo N10 Common (V)",
+      "Neo P1 Common (V)",
+      "Neo S12 Common (V)",
+      "Neo T3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Redeemer Prime Handle",
+    "drop_locations": [
+      "Axi R2 Rare (V)",
+      "Axi R3 Rare (V)",
+      "Lith R1 Rare (V)",
+      "Neo R3 Rare (V)",
+      "Neo R4 Rare (V)",
+      "Neo R5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Revenant Prime Blueprint",
+    "drop_locations": [
+      "Lith R2 Rare (V)",
+      "Lith R3 Rare (V)",
+      "Lith R4 Rare (V)",
+      "Lith R5 Rare (V)",
+      "Meso R5 Rare (V)",
+      "Meso R6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Revenant Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi C9 Common (V)",
+      "Axi F2 Common (V)",
+      "Axi G12 Common (V)",
+      "Meso H6 Common (V)",
+      "Meso N13 Common (V)",
+      "Neo A11 Common (V)",
+      "Neo K5 Common (V)",
+      "Neo N23 Common (V)",
+      "Neo S17 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Revenant Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi D5 Uncommon (V)",
+      "Lith S14 Uncommon (V)",
+      "Lith T13 Uncommon (V)",
+      "Neo A12 Uncommon (V)",
+      "Neo Z10 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Revenant Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi A16 Uncommon (V)",
+      "Axi B8 Uncommon (V)",
+      "Meso C9 Uncommon (V)",
+      "Meso H5 Uncommon (V)",
+      "Meso K5 Uncommon (V)",
+      "Meso P9 Uncommon (V)",
+      "Neo P8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Rhino Prime Blueprint",
+    "drop_locations": [
+      "Axi R1 Rare (V)",
+      "Axi R4 Rare (V)",
+      "Neo R1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Rhino Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith E1 Uncommon (V)",
+      "Meso M1 Uncommon (V)",
+      "Meso N6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Rhino Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Lith B1 Uncommon (V)",
+      "Lith B4 Uncommon (V)",
+      "Meso S14 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Rhino Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi S3 Common (V)",
+      "Neo B3 Common (V)",
+      "Neo G6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Rubico Prime Blueprint",
+    "drop_locations": [
+      "Meso R1 Rare (V)",
+      "Meso R2 Rare (V)",
+      "Meso R3 Rare (V)",
+      "Meso R4 Rare (V)",
+      "Neo R2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Rubico Prime Barrel",
+    "drop_locations": [
+      "Axi M1 Uncommon (V)",
+      "Lith S8 Uncommon (V)",
+      "Lith T6 Common (V)",
+      "Meso Z2 Uncommon (V)",
+      "Meso Z3 Uncommon (V)",
+      "Neo H2 Uncommon (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Rubico Prime Receiver",
+    "drop_locations": [
+      "Axi T5 Common (V)",
+      "Lith A3 Common (V)",
+      "Lith K2 Common (V)",
+      "Lith K3 Common (V)",
+      "Lith O1 Common (V)",
+      "Lith W2 Common (V)",
+      "Neo K3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Rubico Prime Stock",
+    "drop_locations": [
+      "Axi A9 Common (V)",
+      "Axi D2 Uncommon (V)",
+      "Axi L5 Common (V)",
+      "Axi P2 Uncommon (V)",
+      "Lith B5 Uncommon (V)",
+      "Lith C8 Uncommon (V)",
+      "Lith M3 Uncommon (V)",
+      "Meso E2 Uncommon (V)",
+      "Neo P1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Sarofang Prime Blueprint",
+    "drop_locations": [
+      "Meso E7 Uncommon"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Sarofang Prime Blade",
+    "drop_locations": [
+      "Axi S20 Rare"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Sarofang Prime Handle",
+    "drop_locations": [
+      "Neo S20 Common"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Saryn Prime Blueprint",
+    "drop_locations": [
+      "Axi N12 Uncommon (V)",
+      "Axi N6 Uncommon (V)",
+      "Lith S4 Rare (V)",
+      "Lith V6 Uncommon (V)",
+      "Meso C3 Uncommon (V)",
+      "Meso S4 Rare (V)",
+      "Neo S1 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Saryn Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith S17 Rare (V)",
+      "Meso S2 Rare (V)",
+      "Neo S10 Rare (V)",
+      "Neo S13 Rare (V)",
+      "Neo S2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Saryn Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi V9 Common (V)",
+      "Lith A1 Uncommon (V)",
+      "Lith C5 Common (V)",
+      "Meso S5 Uncommon (V)",
+      "Meso S9 Uncommon (V)",
+      "Neo S19 Uncommon (V)",
+      "Neo V4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Saryn Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi G1 Common (V)",
+      "Axi S5 Common (V)",
+      "Axi T1 Common (V)",
+      "Lith H1 Common (V)",
+      "Meso C1 Common (V)",
+      "Meso F1 Common (V)",
+      "Meso M5 Common (V)",
+      "Meso N4 Common (V)",
+      "Neo N5 Common (V)",
+      "Neo S10 Common (V)",
+      "Neo S13 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Scindo Prime Blueprint",
+    "drop_locations": [
+      "Lith C7 Uncommon",
+      "Lith B4 Uncommon (V)",
+      "Lith F1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Scindo Prime Blade",
+    "drop_locations": [
+      "Axi S8 Rare",
+      "Axi S1 Rare (V)",
+      "Axi S3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Scindo Prime Handle",
+    "drop_locations": [
+      "Meso N11 Common",
+      "Meso C1 Uncommon (V)",
+      "Meso N6 Uncommon (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Scourge Prime Blueprint",
+    "drop_locations": [
+      "Axi S11 Rare (V)",
+      "Axi S12 Rare (V)",
+      "Axi S15 Rare (V)",
+      "Axi S9 Rare (V)",
+      "Lith S14 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Scourge Prime Barrel",
+    "drop_locations": [
+      "Axi S10 Rare (V)",
+      "Axi S14 Rare (V)",
+      "Meso S11 Rare (V)",
+      "Meso S12 Rare (V)",
+      "Meso S13 Rare (V)",
+      "Neo S15 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Scourge Prime Blade",
+    "drop_locations": [
+      "Axi A16 Common (V)",
+      "Lith R2 Common (V)",
+      "Lith R3 Common (V)",
+      "Meso A4 Common (V)",
+      "Meso N16 Common (V)",
+      "Meso V7 Common (V)",
+      "Neo C4 Common (V)",
+      "Neo M4 Common (V)",
+      "Neo N18 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Scourge Prime Handle",
+    "drop_locations": [
+      "Axi K11 Uncommon (V)",
+      "Axi T11 Uncommon (V)",
+      "Lith C9 Uncommon (V)",
+      "Meso C8 Uncommon (V)",
+      "Meso G4 Uncommon (V)",
+      "Neo K5 Uncommon (V)",
+      "Neo T6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Sevagoth Prime Blueprint",
+    "drop_locations": [
+      "Axi Y3 Uncommon",
+      "Axi Z2 Uncommon (V)",
+      "Lith L7 Uncommon (V)",
+      "Lith Z4 Uncommon (V)",
+      "Meso V12 Uncommon (V)",
+      "Neo A13 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Sevagoth Prime Chassis Blueprint",
+    "drop_locations": [
+      "Neo S20 Rare",
+      "Axi S17 Rare (V)",
+      "Axi S18 Rare (V)",
+      "Lith S16 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Sevagoth Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi Y1 Common",
+      "Meso A9 Common",
+      "Meso L4 Common",
+      "Neo K9 Common",
+      "Axi G14 Common (V)",
+      "Meso A7 Common (V)",
+      "Meso L3 Common (V)",
+      "Neo T9 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Sevagoth Prime Systems Blueprint",
+    "drop_locations": [
+      "Lith C14 Common",
+      "Lith E2 Common",
+      "Lith A7 Common (V)",
+      "Lith C12 Common (V)",
+      "Lith D7 Common (V)",
+      "Lith M10 Common (V)",
+      "Meso G8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Shade Prime Blueprint",
+    "drop_locations": [
+      "Axi A17 Uncommon (V)",
+      "Axi H8 Uncommon (V)",
+      "Axi W3 Uncommon (V)",
+      "Axi W4 Uncommon (V)",
+      "Meso B9 Uncommon (V)",
+      "Meso N14 Uncommon (V)",
+      "Neo Z11 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Shade Prime Carapace",
+    "drop_locations": [
+      "Axi S16 Rare (V)",
+      "Axi S19 Rare (V)",
+      "Lith S15 Rare (V)",
+      "Neo S18 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Shade Prime Cerebrum",
+    "drop_locations": [
+      "Axi G11 Common (V)",
+      "Lith C12 Common (V)",
+      "Lith F3 Common (V)",
+      "Lith M9 Common (V)",
+      "Meso W5 Common (V)",
+      "Neo F2 Common (V)",
+      "Neo N22 Common (V)",
+      "Neo W1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Shade Prime Systems",
+    "drop_locations": [
+      "Axi B6 Uncommon (V)",
+      "Lith A6 Uncommon (V)",
+      "Lith L6 Uncommon (V)",
+      "Lith X1 Uncommon (V)",
+      "Meso F5 Uncommon (V)",
+      "Meso P14 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Sicarus Prime Blueprint",
+    "drop_locations": [
+      "Axi E1 Common (V)",
+      "Meso B10 Uncommon (V)",
+      "Neo F1 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Sicarus Prime Barrel",
+    "drop_locations": [
+      "Meso F2 Common (V)",
+      "Neo F1 Common (V)",
+      "Neo G6 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Sicarus Prime Receiver",
+    "drop_locations": [
+      "Axi S2 Rare (V)",
+      "Meso S14 Rare (V)",
+      "Neo S5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Silva & Aegis Prime Blueprint",
+    "drop_locations": [
+      "Axi V7 Uncommon (V)",
+      "Lith B9 Uncommon (V)",
+      "Lith T2 Uncommon (V)",
+      "Lith Z2 Uncommon (V)",
+      "Meso P1 Uncommon (V)",
+      "Meso V5 Uncommon (V)",
+      "Neo G3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Silva & Aegis Prime Blade",
+    "drop_locations": [
+      "Axi C2 Uncommon (V)",
+      "Axi S6 Uncommon (V)",
+      "Meso G1 Uncommon (V)",
+      "Meso M2 Uncommon (V)",
+      "Meso O6 Uncommon (V)",
+      "Neo L1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Silva & Aegis Prime Guard",
+    "drop_locations": [
+      "Lith S9 Rare (V)",
+      "Neo S16 Rare (V)",
+      "Neo S6 Rare (V)",
+      "Neo S7 Rare (V)",
+      "Neo S9 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Silva & Aegis Prime Hilt",
+    "drop_locations": [
+      "Lith C3 Common (V)",
+      "Lith M3 Common (V)",
+      "Meso B2 Common (V)",
+      "Meso O4 Common (V)",
+      "Neo I3 Common (V)",
+      "Neo K1 Common (V)",
+      "Neo V5 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Soma Prime Blueprint",
+    "drop_locations": [
+      "Lith M1 Uncommon (V)",
+      "Meso B3 Common (V)",
+      "Neo N12 Common (V)",
+      "Neo S1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Soma Prime Barrel",
+    "drop_locations": [
+      "Lith M2 Common (V)",
+      "Meso D5 Common (V)",
+      "Neo S3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Soma Prime Receiver",
+    "drop_locations": [
+      "Lith K4 Uncommon (V)",
+      "Lith S3 Uncommon (V)",
+      "Neo N1 Uncommon (V)",
+      "Neo N9 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Soma Prime Stock",
+    "drop_locations": [
+      "Axi S4 Rare (V)",
+      "Axi S7 Rare (V)",
+      "Lith S2 Rare (V)",
+      "Meso S1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Spira Prime Blueprint",
+    "drop_locations": [
+      "Lith C5 Common (V)",
+      "Lith N2 Common (V)",
+      "Lith S17 Common (V)",
+      "Lith V4 Common (V)",
+      "Meso S9 Common (V)",
+      "Meso V1 Common (V)",
+      "Meso V3 Common (V)",
+      "Meso V5 Common (V)",
+      "Neo S13 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Spira Prime Blade",
+    "drop_locations": [
+      "Axi V9 Uncommon (V)",
+      "Lith S5 Rare (V)",
+      "Meso M5 Uncommon (V)",
+      "Meso S6 Rare (V)",
+      "Neo S10 Uncommon (V)",
+      "Neo S3 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Spira Prime Pouch",
+    "drop_locations": [
+      "Axi S5 Rare (V)",
+      "Lith S1 Rare (V)",
+      "Lith S3 Rare (V)",
+      "Lith S6 Rare (V)",
+      "Meso S15 Rare (V)",
+      "Meso S3 Rare (V)",
+      "Meso S9 Rare (V)",
+      "Neo S8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Stradavar Prime Blueprint",
+    "drop_locations": [
+      "Lith S10 Rare (V)",
+      "Lith S13 Rare (V)",
+      "Lith S8 Rare (V)",
+      "Neo S11 Rare (V)",
+      "Neo S12 Rare (V)",
+      "Neo S14 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Stradavar Prime Barrel",
+    "drop_locations": [
+      "Lith M4 Uncommon (V)",
+      "Lith M5 Uncommon (V)",
+      "Lith N6 Uncommon (V)",
+      "Meso E3 Uncommon (V)",
+      "Neo E3 Uncommon (V)",
+      "Neo I2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Stradavar Prime Receiver",
+    "drop_locations": [
+      "Axi A10 Common (V)",
+      "Axi W1 Common (V)",
+      "Lith D3 Common (V)",
+      "Lith W2 Common (V)",
+      "Meso W2 Common (V)",
+      "Meso Z3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Stradavar Prime Stock",
+    "drop_locations": [
+      "Axi B3 Common (V)",
+      "Axi R3 Common (V)",
+      "Axi T2 Common (V)",
+      "Lith N13 Common (V)",
+      "Lith N5 Common (V)",
+      "Lith P3 Common (V)",
+      "Meso C5 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Strun Prime Blueprint",
+    "drop_locations": [
+      "Lith S11 Rare (V)",
+      "Lith S12 Rare (V)",
+      "Meso S10 Rare (V)",
+      "Neo S17 Rare (V)",
+      "Neo S19 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Strun Prime Barrel",
+    "drop_locations": [
+      "Axi N12 Uncommon (V)",
+      "Axi N8 Uncommon (V)",
+      "Axi P4 Uncommon (V)",
+      "Lith B10 Uncommon (V)",
+      "Lith H5 Uncommon (V)",
+      "Lith N12 Uncommon (V)",
+      "Lith T7 Uncommon (V)",
+      "Meso H4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Strun Prime Receiver",
+    "drop_locations": [
+      "Axi I2 Common (V)",
+      "Axi T8 Common (V)",
+      "Meso G3 Common (V)",
+      "Meso P10 Common (V)",
+      "Neo C3 Common (V)",
+      "Neo D5 Common (V)",
+      "Neo L2 Common (V)",
+      "Neo M4 Common (V)",
+      "Neo S19 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Strun Prime Stock",
+    "drop_locations": [
+      "Axi K10 Uncommon (V)",
+      "Lith G5 Uncommon (V)",
+      "Lith H6 Uncommon (V)",
+      "Meso D7 Uncommon (V)",
+      "Meso M5 Uncommon (V)",
+      "Meso S11 Uncommon (V)",
+      "Neo A8 Uncommon (V)",
+      "Neo N17 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Sybaris Prime Blueprint",
+    "drop_locations": [
+      "Axi B2 Common (V)",
+      "Axi K2 Common (V)",
+      "Lith C3 Common (V)",
+      "Meso O6 Common (V)",
+      "Meso Z2 Common (V)",
+      "Neo N11 Common (V)",
+      "Neo N8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Sybaris Prime Barrel",
+    "drop_locations": [
+      "Axi S13 Rare (V)",
+      "Axi S6 Rare (V)",
+      "Lith S7 Rare (V)",
+      "Meso S5 Rare (V)",
+      "Meso S7 Rare (V)",
+      "Meso S8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Sybaris Prime Receiver",
+    "drop_locations": [
+      "Axi C4 Uncommon (V)",
+      "Neo G3 Uncommon (V)",
+      "Neo I3 Uncommon (V)",
+      "Neo N6 Uncommon (V)",
+      "Neo S7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Sybaris Prime Stock",
+    "drop_locations": [
+      "Axi A15 Common (V)",
+      "Axi K4 Common (V)",
+      "Lith N3 Common (V)",
+      "Lith P1 Common (V)",
+      "Lith S9 Common (V)",
+      "Meso A1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Tatsu Prime Blueprint",
+    "drop_locations": [
+      "Axi N10 Common (V)",
+      "Axi P7 Common (V)",
+      "Lith A9 Common (V)",
+      "Lith H6 Common (V)",
+      "Meso G6 Common (V)",
+      "Meso S12 Common (V)",
+      "Neo D8 Common (V)",
+      "Neo L3 Common (V)",
+      "Neo S18 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Tatsu Prime Blade",
+    "drop_locations": [
+      "Axi C9 Uncommon (V)",
+      "Lith G6 Uncommon (V)",
+      "Lith R5 Uncommon (V)",
+      "Meso B8 Uncommon (V)",
+      "Meso G7 Uncommon (V)",
+      "Neo T6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Tatsu Prime Handle",
+    "drop_locations": [
+      "Axi T10 Rare (V)",
+      "Lith T10 Rare (V)",
+      "Lith T12 Rare (V)",
+      "Lith T13 Rare (V)",
+      "Neo T7 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Tekko Prime Blueprint",
+    "drop_locations": [
+      "Lith L2 Uncommon (V)",
+      "Lith P5 Uncommon (V)",
+      "Meso E4 Uncommon (V)",
+      "Meso V8 Uncommon (V)",
+      "Neo B7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Tekko Prime Blade",
+    "drop_locations": [
+      "Axi T6 Rare (V)",
+      "Axi T7 Rare (V)",
+      "Meso T6 Rare (V)",
+      "Neo T2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Tekko Prime Gauntlet",
+    "drop_locations": [
+      "Axi C5 Common (V)",
+      "Axi G4 Common (V)",
+      "Axi W2 Common (V)",
+      "Lith A5 Common (V)",
+      "Lith T4 Common (V)",
+      "Meso N9 Common (V)",
+      "Meso T5 Common (V)",
+      "Meso W1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Tenora Prime Blueprint",
+    "drop_locations": [
+      "Axi I2 Common (V)",
+      "Axi K10 Common (V)",
+      "Lith O3 Common (V)",
+      "Meso A3 Common (V)",
+      "Meso P5 Common (V)",
+      "Neo B7 Common (V)",
+      "Neo N20 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Tenora Prime Barrel",
+    "drop_locations": [
+      "Lith T5 Rare (V)",
+      "Lith T9 Rare (V)",
+      "Meso T5 Rare (V)",
+      "Meso Z5 Uncommon (V)",
+      "Neo T5 Rare (V)",
+      "Neo T6 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Tenora Prime Receiver",
+    "drop_locations": [
+      "Axi T8 Rare (V)",
+      "Meso T4 Rare (V)",
+      "Neo T4 Rare (V)",
+      "Neo T8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Tenora Prime Stock",
+    "drop_locations": [
+      "Axi C7 Uncommon (V)",
+      "Axi G7 Uncommon (V)",
+      "Axi P5 Uncommon (V)",
+      "Axi S12 Uncommon (V)",
+      "Axi T6 Uncommon (V)",
+      "Lith R2 Uncommon (V)",
+      "Meso Z4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Tiberon Prime Blueprint",
+    "drop_locations": [
+      "Axi L2 Uncommon (V)",
+      "Axi O2 Uncommon (V)",
+      "Axi O4 Uncommon (V)",
+      "Lith A3 Uncommon (V)",
+      "Lith C8 Common (V)",
+      "Lith K3 Uncommon (V)",
+      "Neo R2 Uncommon (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Tiberon Prime Barrel",
+    "drop_locations": [
+      "Meso T1 Rare (V)",
+      "Neo K3 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Tiberon Prime Receiver",
+    "drop_locations": [
+      "Axi D1 Common (V)",
+      "Axi G5 Common (V)",
+      "Axi K3 Common (V)",
+      "Axi P2 Common (V)",
+      "Meso O2 Common (V)",
+      "Meso R1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Tiberon Prime Stock",
+    "drop_locations": [
+      "Lith T2 Rare (V)",
+      "Lith T6 Rare (V)",
+      "Meso T2 Rare (V)",
+      "Meso T3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Tigris Prime Blueprint",
+    "drop_locations": [
+      "Axi T1 Rare (V)",
+      "Axi T11 Rare (V)",
+      "Lith T1 Rare (V)",
+      "Lith T3 Rare (V)",
+      "Neo T1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Tigris Prime Barrel",
+    "drop_locations": [
+      "Axi S6 Uncommon (V)",
+      "Lith K1 Uncommon (V)",
+      "Lith V3 Uncommon (V)",
+      "Lith V4 Uncommon (V)",
+      "Meso N16 Uncommon (V)",
+      "Neo B4 Uncommon (V)",
+      "Neo H1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Tigris Prime Receiver",
+    "drop_locations": [
+      "Axi V5 Uncommon (V)",
+      "Lith S9 Uncommon (V)",
+      "Meso K1 Uncommon (V)",
+      "Meso N5 Uncommon (V)",
+      "Meso S13 Uncommon (V)",
+      "Meso S6 Uncommon (V)",
+      "Meso T2 Uncommon (V)",
+      "Neo S6 Uncommon (V)",
+      "Neo V3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Tigris Prime Stock",
+    "drop_locations": [
+      "Lith B2 Common (V)",
+      "Lith K11 Common (V)",
+      "Meso S1 Common (V)",
+      "Neo B2 Common (V)",
+      "Neo N11 Common (V)",
+      "Neo V4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Tipedo Prime Blueprint",
+    "drop_locations": [
+      "Lith B7 Common (V)",
+      "Lith P2 Common (V)",
+      "Meso A2 Common (V)",
+      "Meso C5 Common (V)",
+      "Meso L1 Common (V)",
+      "Meso N10 Common (V)",
+      "Meso W1 Common (V)",
+      "Meso W2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Tipedo Prime Handle",
+    "drop_locations": [
+      "Axi T2 Rare (V)",
+      "Axi T3 Rare (V)",
+      "Axi T4 Rare (V)",
+      "Axi T9 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Tipedo Prime Ornament",
+    "drop_locations": [
+      "Axi A6 Uncommon (V)",
+      "Axi C5 Uncommon (V)",
+      "Axi G2 Uncommon (V)",
+      "Lith N13 Uncommon (V)",
+      "Neo N10 Uncommon (V)",
+      "Neo Z6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Titania Prime Blueprint",
+    "drop_locations": [
+      "Axi V11 Uncommon (V)",
+      "Lith H3 Uncommon (V)",
+      "Lith M5 Uncommon (V)",
+      "Meso S10 Uncommon (V)",
+      "Neo D2 Uncommon (V)",
+      "Neo P2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Titania Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi M2 Common (V)",
+      "Axi S9 Common (V)",
+      "Lith G11 Common (V)",
+      "Lith P4 Common (V)",
+      "Meso I1 Common (V)",
+      "Meso Z4 Common (V)",
+      "Neo M3 Common (V)",
+      "Neo N14 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Titania Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Lith G4 Uncommon (V)",
+      "Lith N10 Uncommon (V)",
+      "Lith N8 Uncommon (V)",
+      "Lith T5 Uncommon (V)",
+      "Meso A6 Uncommon (V)",
+      "Meso E4 Uncommon (V)",
+      "Meso P4 Uncommon (V)",
+      "Neo Z6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Titania Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi T5 Rare (V)",
+      "Lith T11 Rare (V)",
+      "Lith T4 Rare (V)",
+      "Lith T7 Rare (V)",
+      "Lith T8 Rare (V)",
+      "Neo T3 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Trinity Prime Blueprint",
+    "drop_locations": [
+      "Axi S1 Uncommon (V)",
+      "Lith K1 Uncommon (V)",
+      "Lith K4 Uncommon (V)",
+      "Meso P6 Uncommon (V)",
+      "Meso S4 Uncommon (V)",
+      "Neo N6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Trinity Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi H1 Uncommon (V)",
+      "Axi H2 Uncommon (V)",
+      "Axi S7 Uncommon (V)",
+      "Lith L3 Uncommon (V)",
+      "Lith S4 Uncommon (V)",
+      "Neo S1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Trinity Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi C1 Common (V)",
+      "Axi V3 Common (V)",
+      "Lith K8 Uncommon (V)",
+      "Meso D5 Common (V)",
+      "Neo D1 Uncommon (V)",
+      "Neo N7 Common (V)",
+      "Neo S6 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Trinity Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi A1 Common (V)",
+      "Axi C2 Common (V)",
+      "Axi V2 Common (V)",
+      "Axi V3 Common (V)",
+      "Axi V4 Common (V)",
+      "Neo B1 Common (V)",
+      "Neo D4 Common (V)",
+      "Neo N12 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Trumna Prime Blueprint",
+    "drop_locations": [
+      "Lith K12 Common",
+      "Lith Q2 Common",
+      "Meso V15 Common",
+      "Axi P9 Common (V)",
+      "Meso P16 Common (V)",
+      "Meso Y1 Common (V)",
+      "Neo W2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Trumna Prime Barrel",
+    "drop_locations": [
+      "Axi T13 Rare",
+      "Meso T7 Rare (V)",
+      "Meso T8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Trumna Prime Receiver",
+    "drop_locations": [
+      "Neo T10 Rare",
+      "Axi T12 Rare (V)",
+      "Neo T9 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Trumna Prime Stock",
+    "drop_locations": [
+      "Neo P10 Uncommon",
+      "Lith N16 Uncommon (V)",
+      "Lith Y1 Uncommon (V)",
+      "Meso G9 Uncommon (V)",
+      "Meso V14 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Vadarya Prime Blueprint",
+    "drop_locations": [
+      "Meso V15 Rare",
+      "Meso V12 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Vadarya Prime Barrel",
+    "drop_locations": [
+      "Axi Y3 Uncommon",
+      "Lith L7 Uncommon (V)",
+      "Neo A15 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Vadarya Prime Receiver",
+    "drop_locations": [
+      "Lith G14 Uncommon",
+      "Neo C7 Uncommon",
+      "Neo S20 Uncommon",
+      "Axi S18 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Vadarya Prime Stock",
+    "drop_locations": [
+      "Lith N19 Common",
+      "Meso X1 Common",
+      "Lith O4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Valkyr Prime Blueprint",
+    "drop_locations": [
+      "Lith C7 Common",
+      "Axi V7 Common (V)",
+      "Axi V9 Common (V)",
+      "Lith A2 Common (V)",
+      "Lith N3 Common (V)",
+      "Lith T2 Common (V)",
+      "Meso N8 Common (V)",
+      "Meso S3 Common (V)",
+      "Meso S6 Common (V)",
+      "Neo K1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Valkyr Prime Chassis Blueprint",
+    "drop_locations": [
+      "Neo V9 Rare",
+      "Axi V5 Rare (V)",
+      "Axi V6 Rare (V)",
+      "Lith V6 Rare (V)",
+      "Neo V7 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Valkyr Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Meso N11 Uncommon",
+      "Lith C5 Uncommon (V)",
+      "Lith S6 Uncommon (V)",
+      "Lith T1 Uncommon (V)",
+      "Meso C2 Uncommon (V)",
+      "Meso D2 Uncommon (V)",
+      "Meso N8 Uncommon (V)",
+      "Meso V4 Uncommon (V)",
+      "Neo N7 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Valkyr Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi V10 Uncommon",
+      "Axi V9 Uncommon (V)",
+      "Lith V3 Rare (V)",
+      "Lith V5 Rare (V)",
+      "Meso V3 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Vasto Prime Blueprint",
+    "drop_locations": [
+      "Axi A5 Uncommon (B)",
+      "Axi P5 Uncommon (V)",
+      "Axi S15 Uncommon (V)",
+      "Lith L4 Uncommon (V)",
+      "Meso A6 Uncommon (V)",
+      "Meso D5 Uncommon (V)",
+      "Meso L2 Uncommon (V)",
+      "Meso V8 Uncommon (V)",
+      "Neo S3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Vasto Prime Barrel",
+    "drop_locations": [
+      "Axi A5 Common (B)",
+      "Axi M4 Common (V)",
+      "Axi P5 Common (V)",
+      "Axi S7 Common (V)",
+      "Axi V3 Common (V)",
+      "Lith A5 Common (V)",
+      "Lith K11 Common (V)",
+      "Lith M8 Common (V)",
+      "Lith T11 Common (V)",
+      "Neo D1 Common (V)",
+      "Neo N2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Vasto Prime Receiver",
+    "drop_locations": [
+      "Axi A5 Common (B)",
+      "Lith A1 Common (V)",
+      "Lith G11 Common (V)",
+      "Lith V9 Common (V)",
+      "Meso N16 Common (V)",
+      "Meso V2 Common (V)",
+      "Neo B8 Common (V)",
+      "Neo N12 Common (V)",
+      "Neo R5 Common (V)",
+      "Neo T8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Vauban Prime Blueprint",
+    "drop_locations": [
+      "Axi F1 Uncommon (V)",
+      "Lith F2 Rare (V)",
+      "Meso V6 Uncommon (V)",
+      "Neo V2 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Vauban Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi V1 Rare (V)",
+      "Lith V4 Rare (V)",
+      "Meso T6 Uncommon (V)",
+      "Meso V4 Rare (V)",
+      "Neo A4 Common (V)",
+      "Neo V6 Rare (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Vauban Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Lith V7 Rare (V)",
+      "Meso N2 Rare (V)",
+      "Meso V8 Rare (V)",
+      "Neo V3 Rare (V)",
+      "Neo V5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Vauban Prime Systems Blueprint",
+    "drop_locations": [
+      "Lith V2 Rare (V)",
+      "Lith V8 Rare (V)",
+      "Lith V9 Rare (V)",
+      "Neo N2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Vectis Prime Blueprint",
+    "drop_locations": [
+      "Lith A1 Uncommon (V)",
+      "Meso C7 Uncommon (V)",
+      "Neo A1 Uncommon (V)",
+      "Neo A4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Vectis Prime Barrel",
+    "drop_locations": [
+      "Axi C1 Common (V)",
+      "Axi H1 Common (V)",
+      "Axi T1 Common (V)",
+      "Lith V7 Common (V)",
+      "Meso P12 Common (V)",
+      "Neo N1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Vectis Prime Receiver",
+    "drop_locations": [
+      "Lith V10 Rare (V)",
+      "Meso V1 Rare (V)",
+      "Meso V6 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Vectis Prime Stock",
+    "drop_locations": [
+      "Axi K12 Uncommon (V)",
+      "Axi V2 Rare (V)",
+      "Axi V3 Rare (V)",
+      "Axi V4 Rare (V)",
+      "Lith V8 Uncommon (V)",
+      "Neo B1 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Velox Prime Blueprint",
+    "drop_locations": [
+      "Axi F2 Uncommon (V)",
+      "Axi S18 Uncommon (V)",
+      "Lith D7 Uncommon (V)",
+      "Meso N17 Uncommon (V)",
+      "Neo C6 Uncommon (V)",
+      "Neo D10 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Velox Prime Barrel",
+    "drop_locations": [
+      "Axi V12 Rare (V)",
+      "Meso V10 Rare (V)",
+      "Meso V11 Rare (V)",
+      "Meso V14 Rare (V)",
+      "Meso V9 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Velox Prime Receiver",
+    "drop_locations": [
+      "Axi A20 Common (V)",
+      "Axi P8 Common (V)",
+      "Lith T12 Common (V)",
+      "Lith Z4 Common (V)",
+      "Meso V12 Common (V)",
+      "Neo B9 Common (V)",
+      "Neo L4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Venato Prime Blueprint",
+    "drop_locations": [
+      "Lith E2 Uncommon",
+      "Meso A9 Uncommon"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Venato Prime Blade",
+    "drop_locations": [
+      "Meso V13 Rare",
+      "Axi V13 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Venato Prime Handle",
+    "drop_locations": [
+      "Meso V15 Common",
+      "Neo N24 Common",
+      "Meso G9 Common (V)",
+      "Meso P17 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Venka Prime Blueprint",
+    "drop_locations": [
+      "Axi S8 Uncommon",
+      "Axi O3 Uncommon (V)",
+      "Lith C5 Uncommon (V)",
+      "Neo B2 Uncommon (V)",
+      "Neo N4 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Venka Prime Blades",
+    "drop_locations": [
+      "Neo V9 Common",
+      "Axi S5 Common (V)",
+      "Axi V5 Common (V)",
+      "Lith C2 Common (V)",
+      "Lith V4 Common (V)",
+      "Lith V6 Common (V)",
+      "Meso G1 Common (V)",
+      "Meso S7 Common (V)",
+      "Neo N7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Venka Prime Gauntlet",
+    "drop_locations": [
+      "Axi V10 Rare",
+      "Axi V7 Rare (V)",
+      "Axi V9 Rare (V)",
+      "Meso V5 Rare (V)",
+      "Neo V4 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Volnus Prime Blueprint",
+    "drop_locations": [
+      "Axi A14 Common (V)",
+      "Lith G5 Common (V)",
+      "Lith H6 Common (V)",
+      "Lith H7 Common (V)",
+      "Lith S11 Common (V)",
+      "Meso Z4 Common (V)",
+      "Neo D5 Common (V)",
+      "Neo P5 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Volnus Prime Handle",
+    "drop_locations": [
+      "Axi V11 Rare (V)",
+      "Meso V7 Rare (V)",
+      "Neo V10 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Volnus Prime Head",
+    "drop_locations": [
+      "Axi B5 Uncommon (V)",
+      "Axi C7 Uncommon (V)",
+      "Axi C8 Uncommon (V)",
+      "Axi I1 Uncommon (V)",
+      "Axi K9 Uncommon (V)",
+      "Lith P6 Uncommon (V)",
+      "Lith Z3 Uncommon (V)",
+      "Meso B5 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Volt Prime Blueprint",
+    "drop_locations": [
+      "Neo O1 Common (B)",
+      "Axi N3 Uncommon (V)",
+      "Lith O2 Common (V)",
+      "Neo V1 Uncommon (V)",
+      "Vanguard C1 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Volt Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi V8 Uncommon (B)",
+      "Meso O3 Uncommon (V)",
+      "Meso V2 Uncommon (V)",
+      "Meso V3 Uncommon (V)",
+      "Vanguard E1 Common (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Volt Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi V8 Rare (B)",
+      "Axi V1 Uncommon (V)",
+      "Neo V8 Rare (V)",
+      "Vanguard P1 Uncommon (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Volt Prime Systems Blueprint",
+    "drop_locations": [
+      "Neo O1 Uncommon (B)",
+      "Axi L4 Uncommon (V)",
+      "Lith V1 Uncommon (V)",
+      "Vanguard M1 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Voruna Prime Blueprint",
+    "drop_locations": [
+      "Axi V14 Rare"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Voruna Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith N19 Uncommon"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Voruna Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Meso D8 Uncommon"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Voruna Prime Systems Blueprint",
+    "drop_locations": [
+      "Neo V11 Rare"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Wisp Prime Blueprint",
+    "drop_locations": [
+      "Axi W3 Rare (V)",
+      "Axi W4 Rare (V)",
+      "Meso W3 Rare (V)",
+      "Meso W4 Rare (V)",
+      "Neo W2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Wisp Prime Chassis Blueprint",
+    "drop_locations": [
+      "Lith W3 Rare (V)",
+      "Lith W4 Rare (V)",
+      "Meso W5 Rare (V)",
+      "Neo H4 Uncommon (V)",
+      "Neo W1 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Wisp Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi F2 Uncommon (V)",
+      "Lith A7 Uncommon (V)",
+      "Lith G13 Uncommon (V)",
+      "Lith L6 Uncommon (V)",
+      "Meso K6 Uncommon (V)",
+      "Neo A13 Uncommon (V)",
+      "Neo K6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Wisp Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi A17 Common (V)",
+      "Axi B7 Common (V)",
+      "Lith N15 Common (V)",
+      "Lith Q1 Common (V)",
+      "Meso G10 Common (V)",
+      "Meso G7 Common (V)",
+      "Meso T7 Common (V)",
+      "Neo D7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Wukong Prime Blueprint",
+    "drop_locations": [
+      "Axi W1 Rare (V)",
+      "Axi W2 Rare (V)",
+      "Lith W1 Rare (V)",
+      "Lith W2 Rare (V)",
+      "Meso W1 Rare (V)",
+      "Meso W2 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Wukong Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi A10 Uncommon (V)",
+      "Axi T6 Uncommon (V)",
+      "Lith K3 Uncommon (V)",
+      "Lith N13 Uncommon (V)",
+      "Meso B4 Uncommon (V)",
+      "Meso K3 Uncommon (V)",
+      "Neo N13 Uncommon (V)",
+      "Neo S12 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Wukong Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi G2 Common (V)",
+      "Axi T4 Common (V)",
+      "Axi Z1 Common (V)",
+      "Lith D2 Common (V)",
+      "Lith S13 Common (V)",
+      "Neo I1 Common (V)",
+      "Neo T2 Common (V)",
+      "Neo Z7 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Wukong Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi A11 Uncommon (V)",
+      "Axi P3 Uncommon (V)",
+      "Axi R3 Uncommon (V)",
+      "Meso K2 Uncommon (V)",
+      "Meso T4 Uncommon (V)",
+      "Neo I2 Uncommon (V)",
+      "Neo Z9 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Wyrm Prime Blueprint",
+    "drop_locations": [
+      "Axi S2 Common (V)",
+      "Neo E1 Common (V)",
+      "Neo V8 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Wyrm Prime Carapace",
+    "drop_locations": [
+      "Axi L1 Common (V)",
+      "Axi L4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Wyrm Prime Cerebrum",
+    "drop_locations": [
+      "Lith G2 Common (V)",
+      "Lith O2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Wyrm Prime Systems",
+    "drop_locations": [
+      "Meso E1 Uncommon (V)",
+      "Meso O3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Xaku Prime Blueprint",
+    "drop_locations": [
+      "Meso X1 Rare",
+      "Lith X1 Rare (V)",
+      "Neo X1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Xaku Prime Chassis Blueprint",
+    "drop_locations": [
+      "Neo K9 Uncommon",
+      "Neo V11 Uncommon",
+      "Axi V12 Uncommon (V)",
+      "Lith O4 Uncommon (V)",
+      "Neo G8 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Xaku Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi T13 Common",
+      "Meso A10 Common",
+      "Lith N17 Common (V)",
+      "Lith S16 Common (V)",
+      "Meso E6 Common (V)",
+      "Meso T8 Common (V)",
+      "Meso V11 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Xaku Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi S20 Uncommon",
+      "Axi A19 Uncommon (V)",
+      "Axi M6 Uncommon (V)",
+      "Lith A10 Uncommon (V)",
+      "Neo O3 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Yareli Prime Blueprint",
+    "drop_locations": [
+      "Meso D8 Uncommon",
+      "Meso P17 Uncommon (V)",
+      "Neo A14 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Yareli Prime Chassis Blueprint",
+    "drop_locations": [
+      "Meso X1 Common",
+      "Neo V11 Common",
+      "Lith A10 Common (V)",
+      "Lith Z4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Yareli Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi Y3 Rare",
+      "Axi Y2 Rare (V)",
+      "Lith Y1 Rare (V)",
+      "Meso Y1 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Yareli Prime Systems Blueprint",
+    "drop_locations": [
+      "Axi Y1 Rare"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Zakti Prime Blueprint",
+    "drop_locations": [
+      "Axi Z1 Rare (V)",
+      "Lith Z3 Rare (V)",
+      "Meso Z4 Rare (V)",
+      "Meso Z5 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Zakti Prime Barrel",
+    "drop_locations": [
+      "Lith D4 Uncommon (V)",
+      "Lith G7 Uncommon (V)",
+      "Lith N11 Uncommon (V)",
+      "Lith N8 Uncommon (V)",
+      "Lith T9 Uncommon (V)",
+      "Meso P8 Uncommon (V)",
+      "Neo D3 Uncommon (V)",
+      "Neo E2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Zakti Prime Receiver",
+    "drop_locations": [
+      "Axi A14 Common (V)",
+      "Axi T6 Common (V)",
+      "Lith T4 Common (V)",
+      "Lith T8 Common (V)",
+      "Meso H3 Common (V)",
+      "Meso N12 Common (V)",
+      "Meso N15 Common (V)",
+      "Meso P5 Common (V)",
+      "Neo P4 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Zephyr Prime Blueprint",
+    "drop_locations": [
+      "Axi G5 Uncommon (V)",
+      "Meso Z1 Rare (V)",
+      "Neo Z1 Rare (V)",
+      "Neo Z2 Rare (V)",
+      "Neo Z4 Rare (V)"
+    ],
+    "ducat_value": 65
+  },
+  {
+    "part": "Zephyr Prime Chassis Blueprint",
+    "drop_locations": [
+      "Axi L3 Uncommon (V)",
+      "Axi O3 Uncommon (V)",
+      "Meso A2 Uncommon (V)",
+      "Meso R4 Common (V)",
+      "Meso W1 Uncommon (V)",
+      "Neo A2 Uncommon (V)",
+      "Neo K1 Uncommon (V)"
+    ],
+    "ducat_value": 25
+  },
+  {
+    "part": "Zephyr Prime Neuroptics Blueprint",
+    "drop_locations": [
+      "Axi A4 Common (V)",
+      "Axi O4 Common (V)",
+      "Axi R3 Common (V)",
+      "Lith C8 Common (V)",
+      "Lith H2 Common (V)",
+      "Lith K2 Common (V)",
+      "Neo N10 Common (V)",
+      "Neo Z3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Zephyr Prime Systems Blueprint",
+    "drop_locations": [
+      "Lith Z1 Rare (V)",
+      "Lith Z2 Rare (V)",
+      "Meso Z2 Rare (V)",
+      "Meso Z3 Rare (V)",
+      "Neo Z8 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Zhuge Prime Blueprint",
+    "drop_locations": [
+      "Axi A6 Uncommon (V)",
+      "Axi T4 Uncommon (V)",
+      "Axi T9 Uncommon (V)",
+      "Axi Z1 Uncommon (V)",
+      "Lith L1 Uncommon (V)",
+      "Lith T5 Uncommon (V)",
+      "Meso P2 Uncommon (V)",
+      "Neo G2 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Zhuge Prime Barrel",
+    "drop_locations": [
+      "Neo Z3 Rare (V)",
+      "Neo Z5 Rare (V)",
+      "Neo Z6 Rare (V)",
+      "Neo Z7 Rare (V)",
+      "Neo Z9 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Zhuge Prime Grip",
+    "drop_locations": [
+      "Axi P3 Common (V)",
+      "Lith N6 Common (V)",
+      "Lith S13 Common (V)",
+      "Meso A2 Common (V)",
+      "Meso P3 Common (V)",
+      "Meso R3 Common (V)",
+      "Meso T4 Common (V)",
+      "Neo A3 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Zhuge Prime Receiver",
+    "drop_locations": [
+      "Axi B3 Uncommon (V)",
+      "Axi D1 Uncommon (V)",
+      "Meso W2 Uncommon (V)",
+      "Neo N14 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  },
+  {
+    "part": "Zhuge Prime String",
+    "drop_locations": [
+      "Axi A11 Common (V)",
+      "Axi M1 Common (V)",
+      "Axi T5 Common (V)",
+      "Lith G3 Common (V)",
+      "Lith N5 Common (V)",
+      "Meso W1 Common (V)",
+      "Neo E3 Common (V)",
+      "Neo I1 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Zylok Prime Blueprint",
+    "drop_locations": [
+      "Axi Z2 Rare (V)",
+      "Lith Z4 Rare (V)",
+      "Meso Z6 Rare (V)",
+      "Neo Z10 Rare (V)",
+      "Neo Z11 Rare (V)"
+    ],
+    "ducat_value": 100
+  },
+  {
+    "part": "Zylok Prime Barrel",
+    "drop_locations": [
+      "Axi H8 Common (V)",
+      "Axi L6 Common (V)",
+      "Axi V12 Common (V)",
+      "Lith A11 Common (V)",
+      "Lith G12 Common (V)",
+      "Lith Q1 Common (V)",
+      "Lith R5 Common (V)",
+      "Meso P15 Common (V)",
+      "Neo O2 Common (V)"
+    ],
+    "ducat_value": 15
+  },
+  {
+    "part": "Zylok Prime Receiver",
+    "drop_locations": [
+      "Axi G14 Uncommon (V)",
+      "Axi G15 Uncommon (V)",
+      "Axi O6 Uncommon (V)",
+      "Lith L5 Uncommon (V)",
+      "Lith R4 Uncommon (V)",
+      "Lith Y1 Uncommon (V)",
+      "Meso G6 Uncommon (V)"
+    ],
+    "ducat_value": 45
+  }
+];
