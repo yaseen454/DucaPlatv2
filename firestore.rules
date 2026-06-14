@@ -90,13 +90,17 @@ service cloud.firestore {
             && (existing().verification == null || existing().verification.status != 'verified')
           )
           || (
-            // Client is resetting/disconnecting verification back to unverified
+            // Client is resetting/disconnecting verification back to unverified (clears backend fields too)
             incoming().verification.status == 'unverified'
             && incoming().verification.claimedIGN == ''
             && incoming().verification.normalizedIGN == ''
             && incoming().verification.verifiedIGN == null
             && incoming().verification.token == null
             && incoming().verification.updatedAt is timestamp
+            // Allow backend fields to be cleared when resetting
+            && (!incoming().keys().hasAll(['wfmId']) || incoming().verification.wfmId == null)
+            && (!incoming().keys().hasAll(['verificationCode']) || incoming().verification.verificationCode == null)
+            && (!incoming().keys().hasAll(['verifiedAt']) || incoming().verification.verifiedAt == null)
           )
         );
       
