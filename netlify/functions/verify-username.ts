@@ -35,13 +35,24 @@ export const handler: Handler = async (event) => {
 
   try {
     const body = event.body ? JSON.parse(event.body) : {};
-    const { uid, claimedIGN } = body;
+    const { uid, claimedIGN, htmlSource } = body;
 
     if (!uid || !claimedIGN) {
       return {
         statusCode: 400,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ error: "Missing uid or claimedIGN in request body." }),
+      };
+    }
+
+    if (!htmlSource || typeof htmlSource !== "string" || !htmlSource.trim()) {
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          success: false,
+          error: "Please paste your warframe.market profile page source (CTRL+U/CMD+U code) in the box below before verifying."
+        }),
       };
     }
 
@@ -121,58 +132,55 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // We will attempt to fetch the profile's HTML page on warframe.market.
-    // The profile page URL parameter is fully-lowercased to avoid 404.
-    const profilePageUrl = `https://warframe.market/profile/${encodeURIComponent(normalizedIGN)}`;
+    // Limit input length to prevent memory bloated parsing or excessive regex backtracking.
+    // The `<head>` block containing meta descriptions, titles, and canonical links is always at 
+    // the very start and comfortably fits inside 50,000 characters.
+    const html = htmlSource.substring(0, 50000);
 
-    console.log(`Fetching WFM profile HTML: ${profilePageUrl}`);
-    let response: Response;
-    try {
-      response = await fetchWithRetry(profilePageUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.5"
-        },
-      });
-    } catch (fetchErr: any) {
-      console.error("WFM Profile Page HTML fetch failed:", fetchErr);
-      return {
-        statusCode: 200,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          success: false,
-          error: `Could not reach Warframe.market. Verify your connection and try again.`
-        }),
-      };
-    }
-
-    // Check if the profile page was found
-    if (!response.ok) {
-      console.error(`WFM profile load failed with HTTP status: ${response.status}`);
-      let humanReadableError = `Warframe.market returned HTTP error ${response.status}.`;
-      if (response.status === 404) {
-        humanReadableError = `Warframe.market profile "${parsedSlug}" was not found. Ensure the spelling exactly matches your warframe.market username.`;
-      } else if (response.status === 429) {
-        humanReadableError = `Warframe.market is busy (Rate Limit). Please wait a few seconds and try again.`;
-      } else if (response.status === 403) {
-        humanReadableError = "Warframe.market's Cloudflare protection blocked the verification query. Try again in a moment.";
-      }
-      return {
-        statusCode: 200,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          success: false,
-          error: humanReadableError
-        }),
-      };
-    }
-
-    const html = await response.text();
-
-    // Extract exact case-sensitive username from title: <title>Profile - ShyKnees2 | Orders</title>
+    // Extract exact case-sensitive username from title or page links
+    let verifiedIGN = "";
+    // 1. Try Title tag (e.g. <title>Profile - TennoMerchant | Orders</title> or translated equivalents)
     const titleMatch = html.match(/<title>Profile\s*-\s*(.*?)\s*\|\s*Orders<\/title>/i);
-    const verifiedIGN = titleMatch ? titleMatch[1].trim() : parsedSlug;
+    if (titleMatch) {
+      verifiedIGN = titleMatch[1].trim();
+    } else {
+      // 2. Try canonical URL or open graph tags to get the name
+      // <link rel="canonical" href="https://warframe.market/profile/tennomerchant">
+      const canonicalMatch = html.match(/<link\s+rel="canonical"\s+href="[^"]*?warframe\.market\/(?:[a-z]{2}\/)?profile\/([a-zA-Z0-9_-]+)"/i);
+      if (canonicalMatch) {
+        verifiedIGN = canonicalMatch[1].trim();
+      } else {
+        // 3. Try to locate profile active tab link or other links
+        // href="/profile/the_user" or href="/en/profile/the_user"
+        const linkMatch = html.match(/href="(?:\/[a-z]{2})?\/profile\/([a-zA-Z0-9_-]+)"/i);
+        if (linkMatch) {
+          verifiedIGN = linkMatch[1].trim();
+        }
+      }
+    }
+
+    if (!verifiedIGN) {
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          success: false,
+          error: `Could not parse the profile owner's username from the pasted page source. Please make sure you copy the entire raw HTML page source (use CTRL+U/CMD+U, then CTRL+A/CMD+A, then copy) and try again.`
+        }),
+      };
+    }
+
+    // Now check if verifiedIGN matches normalizedIGN (case-insensitive)
+    if (verifiedIGN.toLowerCase() !== normalizedIGN) {
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          success: false,
+          error: `The pasted page source belongs to "${verifiedIGN}", which does not match your claimed username of "${parsedSlug}". Please view page source (CTRL+U/CMD+U) on your own profile (https://warframe.market/profile/${normalizedIGN}) and copy that source code instead.`
+        }),
+      };
+    }
 
     // Search for meta description first (where the "About Me" / Biography text of the profile is embedded as standard SEO metadata)
     const descMatch = html.match(/<meta\s+name="description"\s+content="([\s\S]*?)">/i);
@@ -186,7 +194,7 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    // Ultimate fallback: if for any reason description tag parsing fails, search the whole page body safely.
+    // Ultimate fallback: if description tag parsing is not matching, search the whole page body safely.
     if (!aboutText) {
       aboutText = html;
     }
@@ -203,7 +211,7 @@ export const handler: Handler = async (event) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           success: false,
-          error: `Verification token not found in your warframe.market 'About' text. Ensure you paste and save "${token}" inside your 'About' / 'Custom biography' field on your warframe.market profile settings, and try again.`
+          error: `Verification token "${token}" was not found in the pasted page source. Ensure you saved "${token}" in your warframe.market "About" (biography) settings, refreshed your profile page, and then copied the NEW page source (CTRL+U).`
         }),
       };
     }
