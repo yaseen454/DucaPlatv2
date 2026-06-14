@@ -82,8 +82,11 @@ service cloud.firestore {
           || ('verification' in existing() && incoming().verification == existing().verification)
           || (
             // Client is initiating verification (transition to pending with null verifiedIGN)
+            // Two-step verification: claimedIGN (in-game name) + profileSlug (URL slug for API lookup)
             incoming().verification.status == 'pending'
             && incoming().verification.verifiedIGN == null
+            && incoming().verification.claimedIGN is string && incoming().verification.claimedIGN.size() > 0
+            && incoming().verification.profileSlug is string && incoming().verification.profileSlug.size() > 0
             && incoming().verification.updatedAt is timestamp
             // 🛡️ Guard 2: Safe evaluation using short-circuit if map is completely missing
             && (!('verification' in existing()) || existing().verification.status != 'verified')

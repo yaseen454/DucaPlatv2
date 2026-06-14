@@ -226,6 +226,7 @@ export default function MarketTab({
   // Local UI / Form states
   const [marketSubTab, setMarketSubTab] = useState<'browse' | 'manage' | 'saved'>('browse');
   const [claimedInput, setClaimedInput] = useState('');
+  const [profileSlugInput, setProfileSlugInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'WTS' | 'WTB'>('all');
   const [verifiedFilter, setVerifiedFilter] = useState<boolean>(false);
@@ -375,13 +376,14 @@ export default function MarketTab({
     return () => unsubProfile();
   }, [user]);
 
-  // Guard: Clear input only when transitioning FROM pending TO unverified
+  // Guard: Clear inputs only when transitioning FROM pending TO unverified
   useEffect(() => {
     const wasInPending = prevVerificationStatusRef.current === 'pending';
     const nowUnverified = userVerification.status === 'unverified';
     
     if (wasInPending && nowUnverified) {
       setClaimedInput('');
+      setProfileSlugInput('');
     }
     
     // Always update ref for next check
@@ -431,37 +433,44 @@ export default function MarketTab({
     setItemSuggestions(Array.from(suggestionsSet).slice(0, 5));
   }, [itemName]);
 
-  // Request token block generation (unverified state)
+  // Request token block generation (unverified state) - Two-step verification
   const handleInitiateVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    const claimed = claimedInput.trim();
-    if (!claimed) {
-      setErrorMsg('Please enter a valid claimed Warframe.market Username or Profile Link.');
+    const inGameName = claimedInput.trim();
+    const profileSlug = profileSlugInput.trim();
+
+    if (!inGameName) {
+      setErrorMsg('Please enter your in-game Warframe username.');
+      return;
+    }
+
+    if (!profileSlug) {
+      setErrorMsg('Please enter your Warframe Market profile URL slug.');
       return;
     }
 
     setActionLoading(true);
     const token = generateVerifyToken();
-    const parsedSlug = extractWFMProfileUsername(claimed);
-    const normalized = parsedSlug.toLowerCase();
+    const normalizedSlug = profileSlug.toLowerCase();
 
     try {
       const userRef = doc(db, 'users', user.uid);
-      // Use field-level update instead of object merge to ensure Firestore rules accept it
+      // Two-step verification: in-game name + profile slug for API lookup
       await updateDoc(userRef, {
         'verification.status': 'pending',
-        'verification.claimedIGN': parsedSlug,
-        'verification.normalizedIGN': normalized,
+        'verification.claimedIGN': inGameName,
+        'verification.profileSlug': normalizedSlug,
+        'verification.normalizedIGN': normalizedSlug,
         'verification.verifiedIGN': null,
         'verification.token': token,
         'verification.updatedAt': serverTimestamp()
       });
       setSuccessMsg(`✓ Verification token successfully created! Code: ${token}`);
-      // Keep claimedInput populated so user can see what they submitted
+      // Keep inputs populated so user can see what they submitted
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
       setErrorMsg('Failed to create verification token. Try again.');
@@ -498,6 +507,7 @@ export default function MarketTab({
         body: JSON.stringify({
           uid: user.uid,
           claimedIGN: userVerification.claimedIGN,
+          profileSlug: userVerification.profileSlug,
           verificationCode: code
         })
       });
@@ -530,6 +540,7 @@ export default function MarketTab({
     
     // Clear input state IMMEDIATELY (before async Firestore call)
     setClaimedInput('');
+    setProfileSlugInput('');
 
     try {
       const userRef = doc(db, 'users', user.uid);
@@ -566,6 +577,7 @@ export default function MarketTab({
       batch.update(userRef, {
         'verification.status': 'unverified',
         'verification.claimedIGN': '',
+        'verification.profileSlug': '',
         'verification.normalizedIGN': '',
         'verification.verifiedIGN': null,
         'verification.token': null,
@@ -584,6 +596,7 @@ export default function MarketTab({
       await batch.commit();
       setShowConfirmReset(false);
       setClaimedInput('');
+      setProfileSlugInput('');
       setSuccessMsg('Profile and active listings reset successfully.');
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}/reset`);
@@ -1654,24 +1667,47 @@ export default function MarketTab({
               <>
                 {/* 1. STATE: UNVERIFIED */}
                 {userVerification.status === 'unverified' && (
-                  <form onSubmit={handleInitiateVerification} className="space-y-3">
+                  <form onSubmit={handleInitiateVerification} className="space-y-4">
                     <p className="text-xs text-[#8e9299] leading-relaxed">
-                      To safely post trades, prove you own your In-Game Name. Enter your <strong>exact warframe.market Username</strong> below (capitalization must match exactly):
+                      To safely post trades, prove you own your Warframe account. We need <strong>two pieces of information</strong> because some in-game names have special characters that don't appear in Warframe Market URLs.
                     </p>
+
+                    {/* Step 1: In-Game Name */}
                     <div className="space-y-2">
-                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">Your exact warframe.market Username</label>
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                        Step 1: Your exact in-game username (as shown in Warframe)
+                      </label>
                       <input
                         type="text"
-                        placeholder="e.g. TennoMerchant (case-sensitive)"
+                        placeholder="e.g. [DaRK_BoSS] or TennoMerchant"
                         value={claimedInput}
                         onChange={(e) => setClaimedInput(e.target.value)}
                         className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder:text-zinc-700"
                         required
                       />
-                      <p className="text-[10px] text-amber-500/80 leading-normal">
-                        ⚠️ Note: The warframe.market API requires your exact capitalization (e.g., if your name has capital letters, enter them exactly).
+                      <p className="text-[10px] text-zinc-400 leading-normal">
+                        Enter your username exactly as it appears in-game, including any brackets, underscores, or special characters.
                       </p>
                     </div>
+
+                    {/* Step 2: Profile Slug */}
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                        Step 2: Your Warframe Market profile URL slug
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. dark-boss (from warframe.market/profile/dark-boss)"
+                        value={profileSlugInput}
+                        onChange={(e) => setProfileSlugInput(e.target.value)}
+                        className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder:text-zinc-700"
+                        required
+                      />
+                      <p className="text-[10px] text-zinc-400 leading-normal">
+                        Visit your <a href="https://warframe.market/profile" target="_blank" rel="noreferrer" className="text-[#d4af37] hover:underline">Warframe Market profile</a> and copy the name from the URL (after <code className="bg-[#0c0d10] px-1">/profile/</code>). This is typically lowercase with hyphens.
+                      </p>
+                    </div>
+
                     <button
                       type="submit"
                       disabled={actionLoading}

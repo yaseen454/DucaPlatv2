@@ -52,7 +52,7 @@ export const handler: Handler = async (event) => {
 
   try {
     const body = event.body ? JSON.parse(event.body) : {};
-    const { uid, claimedIGN, verificationCode, action } = body;
+    const { uid, claimedIGN, profileSlug, verificationCode, action } = body;
 
     if (!uid) {
       return {
@@ -170,27 +170,28 @@ export const handler: Handler = async (event) => {
 
     /**
      * ACTION: Primary verification via WFM v2 API
+     * Requires two-step input: claimedIGN (in-game name) + profileSlug (URL slug for API lookup)
      */
-    if (!claimedIGN || !verificationCode) {
+    if (!claimedIGN || !profileSlug || !verificationCode) {
       return {
         statusCode: 400,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Missing claimedIGN or verification code." }),
+        body: JSON.stringify({ error: "Missing claimedIGN, profileSlug, or verification code." }),
       };
     }
 
-    const normalizedIGN = claimedIGN.toLowerCase().trim();
+    const normalizedSlug = profileSlug.toLowerCase().trim();
 
     // Prevent duplicate verification (username already verified by another user)
     const dupeQuery = await db.collection("users")
       .where("verification.status", "==", "verified")
-      .where("verification.normalizedIGN", "==", normalizedIGN)
+      .where("verification.normalizedIGN", "==", normalizedSlug)
       .get();
 
     if (!dupeQuery.empty) {
       const conflicts = dupeQuery.docs.filter((doc) => doc.id !== uid);
       if (conflicts.length > 0) {
-        console.warn(`[Verifier] Attempted duplicate claim of verified name: ${normalizedIGN}`);
+        console.warn(`[Verifier] Attempted duplicate claim of verified name: ${normalizedSlug}`);
         return {
           statusCode: 409,
           headers: { "Content-Type": "application/json" },
@@ -203,9 +204,9 @@ export const handler: Handler = async (event) => {
     }
 
     /**
-     * Query WFM v2 API with JWT authorization
+     * Query WFM v2 API with JWT authorization using profileSlug
      */
-    const wfmApiUrl = `https://api.warframe.market/v2/user/${encodeURIComponent(normalizedIGN)}`;
+    const wfmApiUrl = `https://api.warframe.market/v2/user/${encodeURIComponent(normalizedSlug)}`;
     const wfmJwtToken = process.env.WFM_JWT_TOKEN;
 
     if (!wfmJwtToken) {
@@ -220,7 +221,7 @@ export const handler: Handler = async (event) => {
     let wfmUserData: WfmUserProfile | null = null;
 
     try {
-      console.log(`[Verifier] Fetching WFM v2 profile: ${normalizedIGN}`);
+      console.log(`[Verifier] Fetching WFM v2 profile: ${normalizedSlug}`);
       const wfmResponse = await fetchWithRetry(wfmApiUrl, {
         method: "GET",
         headers: {
@@ -231,13 +232,13 @@ export const handler: Handler = async (event) => {
       });
 
       if (wfmResponse.status === 404) {
-        console.warn(`[Verifier] WFM profile not found: ${normalizedIGN}`);
+        console.warn(`[Verifier] WFM profile not found: ${normalizedSlug}`);
         return {
           statusCode: 404,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             success: false,
-            error: "Warframe.Market profile not found. Please check your username.",
+            error: "Warframe.Market profile not found. Please check your profile URL slug.",
           }),
         };
       }
@@ -298,7 +299,7 @@ export const handler: Handler = async (event) => {
 
     if (!aboutText.includes(codeToFind)) {
       console.warn(
-        `[Verifier] Verification code not found in profile bio for: ${normalizedIGN}`
+        `[Verifier] Verification code not found in profile bio for: ${normalizedSlug}`
       );
       return {
         statusCode: 200,
@@ -318,8 +319,9 @@ export const handler: Handler = async (event) => {
 
     batch.update(userDocRef, {
       "verification.status": "verified",
-      "verification.verifiedIGN": wfmUserData.ingameName, // Maps official spelling from API
-      "verification.normalizedIGN": normalizedIGN,
+      "verification.verifiedIGN": claimedIGN, // Preserves original user's claimed spelling
+      "verification.normalizedIGN": normalizedSlug, // Stores the URL slug used for lookup
+      "verification.profileSlug": normalizedSlug, // Explicit slug storage for future lookups
       "verification.wfmId": wfmUserData.id,
       "verification.verificationCode": null,
       "verification.verifiedAt": FieldValue.serverTimestamp(),
@@ -328,7 +330,7 @@ export const handler: Handler = async (event) => {
     await batch.commit();
 
     console.log(
-      `[Verifier] Verification SUCCESS: ${uid} -> ${wfmUserData.ingameName}`
+      `[Verifier] Verification SUCCESS: ${uid} -> ${claimedIGN} (slug: ${normalizedSlug})`
     );
 
     return {
@@ -336,7 +338,7 @@ export const handler: Handler = async (event) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         success: true,
-        verifiedIGN: wfmUserData.ingameName,
+        verifiedIGN: claimedIGN,
       }),
     };
   } catch (error: any) {
