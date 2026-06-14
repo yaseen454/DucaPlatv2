@@ -121,56 +121,40 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Modern API headers for warframe.market public profile fetch
-    const wfmHeaders = {
-      "Authorization": "JWT",       // required header even for public endpoints
-      "language": "en",
-      "platform": "pc",
-      "User-Agent": "WFJunkMarket/1.0",
-      "Accept": "application/json"
-    };
+    // We will attempt to fetch the profile's HTML page on warframe.market.
+    // The profile page URL parameter is fully-lowercased to avoid 404.
+    const profilePageUrl = `https://warframe.market/profile/${encodeURIComponent(normalizedIGN)}`;
 
-    // We will attempt with actual user capitalization (parsedSlug) first,
-    // and if that fails with a 404, try the fully-lowercased version (normalizedIGN) as a fallback.
-    const firstUrl = `https://api.warframe.market/v1/profile/${encodeURIComponent(parsedSlug)}`;
-
-    console.log(`Fetching WFM profile: ${firstUrl}`);
+    console.log(`Fetching WFM profile HTML: ${profilePageUrl}`);
     let response: Response;
     try {
-      response = await fetchWithRetry(firstUrl, {
-        headers: wfmHeaders,
+      response = await fetchWithRetry(profilePageUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5"
+        },
       });
-
-      if (response.status === 404 && parsedSlug !== normalizedIGN) {
-        console.log(`Exact capitalized username not found (HTTP 404). Trying lowercased fallback: ${normalizedIGN}`);
-        const fallbackUrl = `https://api.warframe.market/v1/profile/${encodeURIComponent(normalizedIGN)}`;
-        const fallbackRes = await fetchWithRetry(fallbackUrl, {
-          headers: wfmHeaders,
-        });
-        if (fallbackRes.ok || fallbackRes.status !== 404) {
-          response = fallbackRes;
-        }
-      }
     } catch (fetchErr: any) {
-      console.error("WFM API fetch failed:", fetchErr);
+      console.error("WFM Profile Page HTML fetch failed:", fetchErr);
       return {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           success: false,
-          error: `Could not reach Warframe.market API. Verify your connection and try again.`
+          error: `Could not reach Warframe.market. Verify your connection and try again.`
         }),
       };
     }
 
-    // Check if the response was successful (e.g. 200 OK)
+    // Check if the profile page was found
     if (!response.ok) {
       console.error(`WFM profile load failed with HTTP status: ${response.status}`);
-      let humanReadableError = `Warframe.market API returned HTTP error ${response.status}.`;
+      let humanReadableError = `Warframe.market returned HTTP error ${response.status}.`;
       if (response.status === 404) {
         humanReadableError = `Warframe.market profile "${parsedSlug}" was not found. Ensure the spelling exactly matches your warframe.market username.`;
       } else if (response.status === 429) {
-        humanReadableError = `Warframe.market API is busy (Rate Limit). Please wait a few seconds and try again.`;
+        humanReadableError = `Warframe.market is busy (Rate Limit). Please wait a few seconds and try again.`;
       } else if (response.status === 403) {
         humanReadableError = "Warframe.market's Cloudflare protection blocked the verification query. Try again in a moment.";
       }
@@ -184,13 +168,28 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const data = await response.json();
-    console.log("WFM Profile Response Payload:", JSON.stringify(data?.payload?.profile || {}, null, 2));
+    const html = await response.text();
 
-    const wfmProfile = data?.payload?.profile || {};
-    const aboutText = wfmProfile.about || wfmProfile.about_raw || wfmProfile.about_formatted || "";
-    // Correct actual casing of username from the response if available
-    const verifiedIGN = wfmProfile.ingame_name || wfmProfile.username || parsedSlug;
+    // Extract exact case-sensitive username from title: <title>Profile - ShyKnees2 | Orders</title>
+    const titleMatch = html.match(/<title>Profile\s*-\s*(.*?)\s*\|\s*Orders<\/title>/i);
+    const verifiedIGN = titleMatch ? titleMatch[1].trim() : parsedSlug;
+
+    // Search for meta description first (where the "About Me" / Biography text of the profile is embedded as standard SEO metadata)
+    const descMatch = html.match(/<meta\s+name="description"\s+content="([\s\S]*?)">/i);
+    let aboutText = descMatch ? descMatch[1] : "";
+
+    // Fallback to og:description if name="description" was empty or not matched
+    if (!aboutText) {
+      const ogDescMatch = html.match(/<meta\s+property="og:description"\s+content="([\s\S]*?)">/i);
+      if (ogDescMatch) {
+        aboutText = ogDescMatch[1];
+      }
+    }
+
+    // Ultimate fallback: if for any reason description tag parsing fails, search the whole page body safely.
+    if (!aboutText) {
+      aboutText = html;
+    }
 
     const lowercaseToken = token.trim().toLowerCase();
     const lowercaseAboutText = aboutText.toLowerCase();

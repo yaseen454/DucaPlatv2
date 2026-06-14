@@ -579,7 +579,7 @@ export default function MarketTab() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <a
-                        href={`https://warframe.market/profile/${encodeURIComponent(userVerification.claimedIGN || userVerification.normalizedIGN)}/`}
+                        href={`https://warframe.market/profile/${encodeURIComponent((userVerification.claimedIGN || userVerification.normalizedIGN || '').toLowerCase())}`}
                         target="_blank"
                         rel="noreferrer"
                         className="py-2.5 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] text-zinc-300 uppercase tracking-wider font-semibold flex items-center justify-center gap-1.5 transition select-none cursor-pointer"
