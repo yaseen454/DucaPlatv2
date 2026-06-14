@@ -1679,7 +1679,7 @@ export default function MarketTab({
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. [DaRK_BoSS] or TennoMerchant"
+                        placeholder="e.g. TENno_BoSS"
                         value={claimedInput}
                         onChange={(e) => setClaimedInput(e.target.value)}
                         className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder:text-zinc-700"
@@ -1697,7 +1697,7 @@ export default function MarketTab({
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. dark-boss (from warframe.market/profile/dark-boss)"
+                        placeholder="e.g. tenno-boss (from warframe.market/profile/tenno-boss)"
                         value={profileSlugInput}
                         onChange={(e) => setProfileSlugInput(e.target.value)}
                         className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder:text-zinc-700"
