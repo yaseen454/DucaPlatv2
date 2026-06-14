@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   collection, 
   query, 
@@ -305,6 +305,9 @@ export default function MarketTab({
     'Gold Prime Junk (100d)',
   ];
 
+  // Track previous verification status to detect transitions
+  const prevVerificationStatusRef = useRef<string>('unverified');
+
   // 1. Listen to global active listings
   useEffect(() => {
     const q = query(
@@ -371,6 +374,19 @@ export default function MarketTab({
 
     return () => unsubProfile();
   }, [user]);
+
+  // Guard: Clear input only when transitioning FROM pending TO unverified
+  useEffect(() => {
+    const wasInPending = prevVerificationStatusRef.current === 'pending';
+    const nowUnverified = userVerification.status === 'unverified';
+    
+    if (wasInPending && nowUnverified) {
+      setClaimedInput('');
+    }
+    
+    // Always update ref for next check
+    prevVerificationStatusRef.current = userVerification.status;
+  }, [userVerification.status]);
 
   // 3. Manage verification cooldown timer (30-second countdown)
   useEffect(() => {
@@ -511,6 +527,9 @@ export default function MarketTab({
     setErrorMsg(null);
     setSuccessMsg(null);
     setActionLoading(true);
+    
+    // Clear input state IMMEDIATELY (before async Firestore call)
+    setClaimedInput('');
 
     try {
       const userRef = doc(db, 'users', user.uid);
@@ -523,7 +542,6 @@ export default function MarketTab({
         'verification.token': null,
         'verification.updatedAt': serverTimestamp()
       });
-      setClaimedInput('');
       setSuccessMsg('Ready to try a different username.');
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}/verification`);
