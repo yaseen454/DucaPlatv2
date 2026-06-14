@@ -38,7 +38,8 @@ import {
   Loader2,
   TrendingUp,
   Bookmark,
-  Clock
+  Clock,
+  ArrowLeft
 } from 'lucide-react';
 import { PRIME_ITEMS } from '../data/primeData';
 import { InventoryCount } from '../types';
@@ -371,13 +372,6 @@ export default function MarketTab({
     return () => unsubProfile();
   }, [user]);
 
-  // 2.5 Clear input field when transitioning away from unverified state
-  useEffect(() => {
-    if (userVerification.status !== 'unverified') {
-      setClaimedInput('');
-    }
-  }, [userVerification.status]);
-
   // 3. Manage verification cooldown timer (30-second countdown)
   useEffect(() => {
     if (!verificationCooldown || cooldownSeconds <= 0) return;
@@ -511,6 +505,34 @@ export default function MarketTab({
     }
   };
 
+  // Retry with different username (pending state) - clears verification without affecting listings
+  const handleRetryDifferentUsername = async () => {
+    if (!user) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setActionLoading(true);
+
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      // Reset verification ONLY using field-level updates (listings remain active)
+      await updateDoc(userRef, {
+        'verification.status': 'unverified',
+        'verification.claimedIGN': '',
+        'verification.normalizedIGN': '',
+        'verification.verifiedIGN': null,
+        'verification.token': null,
+        'verification.updatedAt': serverTimestamp()
+      });
+      setClaimedInput('');
+      setSuccessMsg('Ready to try a different username.');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}/verification`);
+      setErrorMsg('Failed to reset verification. Try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Confirmation Reset function (verified state)
   const handlePerformReset = async () => {
     if (!user) return;
@@ -524,14 +546,12 @@ export default function MarketTab({
       // 1. Reset user verification block
       const userRef = doc(db, 'users', user.uid);
       batch.update(userRef, {
-        verification: {
-          status: 'unverified',
-          claimedIGN: '',
-          normalizedIGN: '',
-          verifiedIGN: null,
-          token: null,
-          updatedAt: serverTimestamp()
-        }
+        'verification.status': 'unverified',
+        'verification.claimedIGN': '',
+        'verification.normalizedIGN': '',
+        'verification.verifiedIGN': null,
+        'verification.token': null,
+        'verification.updatedAt': serverTimestamp()
       });
 
       // 2. Set user's active listings to cancelled status
@@ -1715,14 +1735,25 @@ export default function MarketTab({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={handleRetryDifferentUsername}
+                        disabled={actionLoading}
+                        className="py-2.5 bg-orange-900/60 hover:bg-orange-900 disabled:opacity-50 border border-orange-800 rounded-lg text-[10px] text-orange-300 uppercase tracking-wider font-semibold flex items-center justify-center gap-1 transition select-none cursor-pointer"
+                        title="Try a different Warframe username without resetting your listings"
+                      >
+                        {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+                        Back
+                      </button>
                       <button
                         type="button"
                         onClick={handlePerformReset}
                         className="py-2.5 bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] text-zinc-400 uppercase tracking-wider font-semibold flex items-center justify-center gap-1 transition select-none cursor-pointer"
+                        title="Reset verification and cancel all active listings"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
-                        Reset
+                        Reset All
                       </button>
                       <button
                         type="button"
