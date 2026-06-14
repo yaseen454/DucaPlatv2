@@ -187,108 +187,111 @@ export default function ManualInput({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
+      <div className="space-y-2">
         {categories.map((cat) => (
           <div 
             key={cat.key} 
-            className="p-4 bg-[#0c0d10] border border-[#2a2c33]/40 rounded-lg hover:border-[#d4af37]/40 transition"
+            className="flex items-center justify-between p-2 pb-[10px] bg-[#0c0d10] hover:bg-[#0c0d10]/80 border border-[#2a2c33]/40 hover:border-[#d4af37]/20 rounded-xl transition gap-3"
           >
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`text-[10px] px-2.5 py-1 rounded-full font-semibold border inline-block whitespace-nowrap ${cat.color}`}>
-                    {cat.label}
+            <div className="flex items-center gap-2 px-1 min-w-0">
+              <span className={`w-2 h-2 rounded-full mt-0.5 shrink-0 ${
+                cat.key.startsWith('bronze') ? 'bg-[#cd7f32]' : cat.key.startsWith('silver') ? 'bg-[#c0c0c0]' : 'bg-[#d4af37]'
+              }`} />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-semibold text-[#e0e1e6] whitespace-nowrap">
+                    {cat.key === 'bronze15' ? 'Bronze 15s' : cat.key === 'bronze25' ? 'Bronze 25s' : cat.key === 'silver45' ? 'Silver 45s' : cat.key === 'silver65' ? 'Silver 65s' : 'Gold 100s'}
                   </span>
-                  <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-[#d4af37] px-1.5 py-0.5 rounded font-mono font-medium flex items-center">
-                    <PlatValue val={getPricingValue(cat.key)} size="w-2.5 h-2.5" className="text-[#d4af37]" />
+                  <span className="text-[10px] text-[#efcb68] bg-[#d4af37]/5 px-1 rounded font-mono leading-none">
+                    {getPricingValue(cat.key)}p
                   </span>
                 </div>
-                <p className="text-[11px] text-[#8e9299] mt-2 min-h-[32px]">{cat.desc}</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <input
-                  type="number"
-                  min="0"
-                  value={counts[cat.key]}
-                  onChange={(e) => updateField(cat.key, parseInt(e.target.value) || 0)}
-                  className="w-16 bg-[#14161c] border border-[#2a2c33] rounded text-center text-sm font-semibold p-1 hover:border-[#d4af37]/60 focus:border-[#d4af37] text-[#e0e1e6] focus:outline-none"
-                />
+                <p className="text-[10.5px] text-[#8e9299] truncate max-w-[170px] sm:max-w-xs">{cat.desc}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 mt-4">
+            <div className="flex items-center gap-1 shrink-0">
               <button 
+                type="button"
                 onClick={() => decrement(cat.key)}
-                className="flex-1 bg-[#14161c] hover:bg-[#1a1c22] text-[#8e9299] hover:text-white text-xs py-1.5 rounded border border-[#2a2c33] hover:border-[#2a2c33]/80 transition active:scale-95 cursor-pointer"
+                disabled={counts[cat.key] === 0}
+                className="w-7 h-7 flex items-center justify-center bg-[#14161c] hover:bg-[#1c1e26] text-[#8e9299] hover:text-white border border-[#2a2c33] rounded-lg transition active:scale-95 disabled:opacity-30 disabled:pointer-events-none cursor-pointer text-xs"
               >
-                -1
+                -
               </button>
+              <input
+                type="number"
+                min="0"
+                value={counts[cat.key] || ''}
+                placeholder="0"
+                onChange={(e) => updateField(cat.key, parseInt(e.target.value) || 0)}
+                className="w-10 h-7 bg-[#14161c] border border-[#2a2c33] focus:border-[#d4af37]/60 text-center text-xs font-mono font-bold text-[#e0e1e6] focus:outline-none rounded-lg p-0"
+              />
               <button 
+                type="button"
                 onClick={() => increment(cat.key)}
-                className="flex-1 bg-[#14161c] hover:bg-[#1a1c22] text-white text-xs py-1.5 rounded border border-[#2a2c33] hover:border-[#2a2c33]/80 transition active:scale-95 cursor-pointer"
+                className="w-7 h-7 flex items-center justify-center bg-[#14161c] hover:bg-[#1c1e26] text-white border border-[#2a2c33] rounded-lg transition active:scale-95 cursor-pointer text-xs"
               >
-                +1
+                +
               </button>
-              <button
-                onClick={() => updateField(cat.key, 0)}
-                className="px-2 text-[10px] text-[#8e9299] hover:text-red-400 transition cursor-pointer"
-              >
-                Clear
-              </button>
+              {counts[cat.key] > 0 && (
+                <button
+                  type="button"
+                  onClick={() => updateField(cat.key, 0)}
+                  className="text-[11px] text-zinc-500 hover:text-red-400 transition cursor-pointer ml-1 px-1 font-mono hover:font-bold"
+                  title="Clear"
+                >
+                  ×
+                </button>
+              )}
             </div>
           </div>
         ))}
       </div>
 
-      <div className="pt-4 border-t border-[#2a2c33] space-y-3.5">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <input
-            type="text"
-            placeholder="Set name (optional)..."
-            value={saveName}
-            onChange={(e) => setSaveName(e.target.value)}
-            disabled={totalItems === 0}
-            className="flex-1 bg-[#0c0d10] border border-[#2a2c33] hover:border-[#2a2c33]/80 focus:border-[#d4af37]/60 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none placeholder-zinc-600 disabled:opacity-40"
-          />
+      <div className="pt-3 border-t border-[#2a2c33]/60 space-y-2.5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          <div className="flex items-stretch gap-1.5 flex-1 min-w-0">
+            <input
+              type="text"
+              placeholder="Set name (optional)..."
+              value={saveName}
+              onChange={(e) => setSaveName(e.target.value)}
+              disabled={totalItems === 0}
+              className="flex-1 min-w-[100px] bg-[#0c0d10] border border-[#2a2c33] hover:border-[#2a2c33]/80 focus:border-[#d4af37]/60 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none placeholder-zinc-650 disabled:opacity-40"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (onSaveToItems) {
+                  onSaveToItems(counts, saveName.trim() || undefined);
+                  setSaveName('');
+                  setSaveSuccess(true);
+                  setTimeout(() => setSaveSuccess(false), 2200);
+                }
+              }}
+              disabled={totalItems === 0}
+              className="px-2.5 py-1.5 bg-[#161820] hover:bg-[#1f222b] text-[#c4c5cc] hover:text-white border border-[#2a2c33] hover:border-[#2a2c33]/80 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition active:scale-95 disabled:scale-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0"
+            >
+              <Bookmark className="w-3 h-3 text-[#d4af37]" />
+              Save Set
+            </button>
+          </div>
+
           <button
-            onClick={() => {
-              if (onSaveToItems) {
-                onSaveToItems(counts, saveName.trim() || undefined);
-                setSaveName('');
-                setSaveSuccess(true);
-                setTimeout(() => setSaveSuccess(false), 2200);
-              }
-            }}
-            disabled={totalItems === 0}
-            className="px-3.5 py-1.5 bg-[#161820] hover:bg-[#1f222b] text-[#c4c5cc] hover:text-white border border-[#2a2c33] hover:border-[#2a2c33]/80 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-95 disabled:scale-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0"
+            type="button"
+            onClick={() => onChange({ bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })}
+            className="text-[11px] text-[#8e9299] hover:text-red-400 px-3 py-1.5 rounded-lg border border-[#2a2c33]/80 hover:border-red-400/25 bg-[#0c0d10]/40 hover:bg-red-400/5 transition cursor-pointer select-none font-medium text-center shrink-0"
           >
-            <Bookmark className="w-3.5 h-3.5 text-[#d4af37]" />
-            Save to Items
+            Reset Counters
           </button>
         </div>
 
         {saveSuccess && (
-          <div className="text-[11px] text-emerald-400 text-center animate-pulse py-0.5">
+          <div className="text-[10px] text-emerald-400 text-center animate-pulse py-0.5">
             ✓ Set saved successfully in history!
           </div>
         )}
-
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={() => onChange({ bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })}
-            className="px-4 py-2.5 text-xs font-semibold text-[#8e9299] hover:text-white border border-[#2a2c33] rounded-lg hover:bg-[#16181f] transition duration-150 cursor-pointer"
-          >
-            Reset All Counters
-          </button>
-          <button
-            onClick={onCalculate}
-            disabled={totalItems === 0}
-            className="px-6 py-2.5 bg-[#d4af37] hover:bg-[#b08d26] text-black font-semibold text-xs rounded-lg shadow-lg flex items-center gap-2 transition duration-200 active:scale-95 disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed cursor-pointer uppercase tracking-widest"
-          >
-            <TrendingUp className="w-4 h-4" />
-            Analyze Expected Profits
-          </button>
-        </div>
       </div>
     </div>
   );

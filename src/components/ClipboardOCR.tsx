@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { OcrResultItem, InventoryCount } from '../types';
 import { PRIME_ITEMS } from '../data/primeData';
+import { createWorker } from 'tesseract.js';
 import { Image as ImageIcon, Sparkles, Wand2, Plus, Minus, Trash2, ArrowRight, HelpCircle, Check, Loader, Clipboard, Eye, EyeOff, Bookmark, X } from 'lucide-react';
 import PrimePartsImage from '../data/Prime_Parts.png';
 import ducatIcon from '../data/480px-OrokinDucats.png';
@@ -149,6 +150,94 @@ export default function ClipboardOCR({
     e.preventDefault();
   };
 
+  const runNativeOcrFallback = async (imageSrc: string): Promise<any[]> => {
+    // Notify the user of client-side fallback
+    setFeedback("Gemini server offline or unavailable. Switched to Native Client-Side OCR scanner...");
+    
+    // Initialize the worker
+    const worker = await createWorker('eng');
+    const { data: { text } } = await worker.recognize(imageSrc);
+    await worker.terminate();
+
+    if (!text || text.trim() === '') {
+      throw new Error("Unable to extract text from the screenshot. Please crop closely on the prime items checklist with high contrast.");
+    }
+
+    const lines = text.split(/\r?\n/);
+    const parsedItems: any[] = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.length < 3) continue;
+
+      // Extract multiplier and name. Matches leading quantity like "5x Name" or trailing like "Name 5" or "5 Name"
+      const leadingQtyMatch = trimmed.match(/^(\d+)[xX*]?\s+(.+)$/);
+      const trailingQtyMatch = trimmed.match(/^(.+)\s+[xX*]?(\d+)$/);
+
+      let parsedName = trimmed;
+      let parsedCount = 1;
+
+      if (leadingQtyMatch) {
+         parsedCount = parseInt(leadingQtyMatch[1], 10) || 1;
+         parsedName = leadingQtyMatch[2].trim();
+      } else if (trailingQtyMatch) {
+         parsedCount = parseInt(trailingQtyMatch[2], 10) || 1;
+         parsedName = trailingQtyMatch[1].trim();
+      }
+
+      // Cleanup leading and trailing OCR garbage characters
+      parsedName = parsedName
+        .replace(/^[|•.+\-*#\/[\]\s=]+/, "")
+        .replace(/[|•.+\-*#\/[\]\s=]+$/, "")
+        .trim();
+
+      if (parsedName.length < 3) continue;
+
+      // Perform OCR match against official prime part data
+      const cleanScanned = parsedName.toLowerCase().replace(/[^a-z0-9 ]/g, "");
+      let bestMatch = null;
+      let maxOverlapScore = 0;
+
+      for (const official of PRIME_ITEMS) {
+        const cleanOfficial = official.part.toLowerCase().replace(/[^a-z0-9 ]/g, "");
+        if (cleanScanned === cleanOfficial) {
+          bestMatch = official;
+          break;
+        }
+        if (cleanScanned.includes(cleanOfficial) || cleanOfficial.includes(cleanScanned)) {
+          const overlap = Math.min(cleanScanned.length, cleanOfficial.length) / Math.max(cleanScanned.length, cleanOfficial.length);
+          if (overlap > maxOverlapScore) {
+            maxOverlapScore = overlap;
+            bestMatch = official;
+          }
+        }
+      }
+
+      if (!bestMatch) {
+        const scannedWords = cleanScanned.split(/\s+/).filter(w => w.length > 2 && w !== "prime");
+        for (const official of PRIME_ITEMS) {
+          const officialWords = official.part.toLowerCase().split(/\s+/).filter(w => w.length > 2 && w !== "prime");
+          const matchCount = scannedWords.filter(w => officialWords.includes(w)).length;
+          if (matchCount >= 2 && matchCount / officialWords.length > maxOverlapScore) {
+            maxOverlapScore = matchCount / officialWords.length;
+            bestMatch = official;
+          }
+        }
+      }
+
+      // Filter only lines that look like valid prime items or have partial components
+      if (bestMatch || cleanScanned.includes("blueprint") || cleanScanned.includes("prime") || cleanScanned.includes("chassis") || cleanScanned.includes("systems") || cleanScanned.includes("neuroptics") || cleanScanned.includes("barrel") || cleanScanned.includes("receiver") || cleanScanned.includes("stock") || cleanScanned.includes("hilt") || cleanScanned.includes("blade") || cleanScanned.includes("link") || cleanScanned.includes("carapace") || cleanScanned.includes("cerebru") || cleanScanned.includes("casing") || cleanScanned.includes("disc") || cleanScanned.includes("grip") || cleanScanned.includes("pouch") || cleanScanned.includes("stars")) {
+         parsedItems.push({
+           name: bestMatch ? bestMatch.part : parsedName,
+           count: parsedCount,
+           matchedItem: bestMatch || undefined
+         });
+      }
+    }
+
+    return parsedItems;
+  };
+
   const runOcrAnalysis = async () => {
     if (!previewUrl) return;
     setLoading(true);
@@ -171,6 +260,7 @@ Return a structured JSON list. Only return a plain JSON array of objects conform
 
       let rawResults: any[] = [];
       let isExpressFallbackResult = false;
+      let usedNativeFallback = false;
       
       try {
         // Attempt reaching the serverless function first (for Netlify production)
@@ -204,34 +294,47 @@ Return a structured JSON list. Only return a plain JSON array of objects conform
       } catch (netlifyErr: any) {
         console.log("Could not resolve Netlify serverless endpoint, triggering Express local API route fallback...", netlifyErr);
         
-        // Express fallback (for local dev server / AI Studio container environment)
-        const expressResponse = await fetch('/api/ocr', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            image: base64Data,
-            mimeType
-          })
-        });
+        try {
+          // Express fallback (for local dev server / AI Studio container environment)
+          const expressResponse = await fetch('/api/ocr', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              image: base64Data,
+              mimeType
+            })
+          });
 
-        if (!expressResponse.ok) {
-          const errData = await expressResponse.json().catch(() => ({}));
-          throw new Error(errData.error || `OCR API route failed with status ${expressResponse.status}`);
-        }
+          if (!expressResponse.ok) {
+            const errData = await expressResponse.json().catch(() => ({}));
+            throw new Error(errData.error || `OCR API route failed with status ${expressResponse.status}`);
+          }
 
-        const expressData = await expressResponse.json();
-        if (expressData.items) {
-          setOcrItems(expressData.items);
-          setFeedback(`Vision scanning completed via Express! Extracted ${expressData.items.length} items successfully.`);
-          isExpressFallbackResult = true;
-        } else {
-          throw new Error("Express OCR response was invalid.");
+          const expressData = await expressResponse.json();
+          if (expressData.items) {
+            setOcrItems(expressData.items);
+            setFeedback(`Vision scanning completed via Express! Extracted ${expressData.items.length} items successfully.`);
+            isExpressFallbackResult = true;
+          } else {
+            throw new Error("Express OCR response was invalid.");
+          }
+        } catch (expressErr: any) {
+          console.warn("Express local API route failed as well. Invoking Native Client-Side OCR fallback engine...", expressErr);
+          
+          try {
+            const nativeResults = await runNativeOcrFallback(previewUrl);
+            setOcrItems(nativeResults);
+            setFeedback(`Intel extracted successfully via Client-Side Native OCR Fallback! (${nativeResults.length} parts found)`);
+            usedNativeFallback = true;
+          } catch (nativeErr: any) {
+             throw new Error(`Vision pipeline and local Native fallback both failed: ${nativeErr.message}`);
+          }
         }
       }
 
-      if (isExpressFallbackResult) {
+      if (isExpressFallbackResult || usedNativeFallback) {
         setLoading(false);
         return;
       }
@@ -280,13 +383,13 @@ Return a structured JSON list. Only return a plain JSON array of objects conform
 
       setOcrItems(enrichedResults);
       if (enrichedResults.length === 0) {
-        setError("Gemini couldn't find any prime parts in the screenshot. Please make sure the table text is clear.");
+        setError("Couldn't find any prime parts in the screenshot. Please make sure the table text is clear.");
       } else {
         setFeedback(`Vision scanning completed! Extracted ${enrichedResults.length} items successfully.`);
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Failure executing the Gemini OCR scan.');
+      setError(err.message || 'Failure executing the Image OCR scan.');
     } finally {
       setLoading(false);
     }
@@ -357,7 +460,7 @@ Return a structured JSON list. Only return a plain JSON array of objects conform
         <div>
           <h2 className="text-xl font-light text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide" style={{ fontFamily: "'Georgia', serif" }}>
             <Clipboard className="w-5 h-5 text-[#d4af37]" />
-            Gemini Vision OCR Analyzer
+            Image Scan OCR Analyzer
           </h2>
           <p className="text-xs text-[#8e9299] mt-1">
             Skip manual entries! Drag-and-drop inventory screenshots, upload images, or press <kbd className="bg-[#0c0d10] px-1 rounded border border-[#2a2c33] text-[10px] text-[#e0e1e6]">Ctrl+V / ⌘+V</kbd> to paste directly.
@@ -668,8 +771,8 @@ Return a structured JSON list. Only return a plain JSON array of objects conform
             {loading ? (
               <div className="flex-1 flex flex-col items-center justify-center text-[#8e9299] gap-2">
                 <Loader className="w-8 h-8 text-[#d4af37] animate-spin" />
-                <span className="text-xs font-semibold text-[#c4c5cc]">Gemini is reading text items...</span>
-                <span className="text-[10px] text-zinc-600">Checking for parts and quantities...</span>
+                <span className="text-xs font-semibold text-[#c4c5cc]">Extracting text layout counts...</span>
+                <span className="text-[10px] text-zinc-600">Processing via Gemini AI / local Native OCR fallback...</span>
               </div>
             ) : error ? (
               <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center text-red-400 text-xs px-4 py-4 text-center space-y-4">

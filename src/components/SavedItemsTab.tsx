@@ -72,6 +72,7 @@ export default function SavedItemsTab({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const startRename = (id: string, currentName: string) => {
     setEditingId(id);
@@ -123,7 +124,7 @@ export default function SavedItemsTab({
   const sourceLabels = {
     manual: { text: "Manual Entry", style: "border-[#cd7f32]/30 bg-[#cd7f32]/10 text-orange-400" },
     directory: { text: "Directory Selection", style: "border-sky-500/30 bg-sky-950/20 text-sky-400" },
-    ocr: { text: "Gemini Vision Scan", style: "border-[#d4af37]/30 bg-[#d4af37]/10 text-[#d4af37]" }
+    ocr: { text: "Image Scan", style: "border-[#d4af37]/30 bg-[#d4af37]/10 text-[#d4af37]" }
   };
 
   return (
@@ -182,7 +183,7 @@ export default function SavedItemsTab({
           <div className="max-w-md">
             <h4 className="text-slate-300 font-semibold text-sm">No saved inventories available</h4>
             <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-              When entering components manually, picking them from the search directory, or executing Gemini vision scans, click the <strong className="text-zinc-400">"Save Set"</strong> indicator to lock down subsets for quick back-and-forth comparison.
+              When entering components manually, picking them from the search directory, or executing Image scans (powered by Gemini AI & local Native OCR), click the <strong className="text-zinc-400">"Save Set"</strong> indicator to lock down subsets for quick back-and-forth comparison.
             </p>
           </div>
         </div>
@@ -218,7 +219,7 @@ export default function SavedItemsTab({
                 <option value="all">All Sources</option>
                 <option value="manual">Manual inputs only</option>
                 <option value="directory">Directory selections only</option>
-                <option value="ocr">Gemini OCR outputs only</option>
+                <option value="ocr">Image scans only</option>
               </select>
 
               <select
@@ -341,21 +342,46 @@ export default function SavedItemsTab({
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onDeleteEntry(entry.id)}
-                        className="p-2 text-zinc-500 hover:text-red-400 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 rounded-lg transition duration-150"
-                        title="Delete saved set"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => onUseEntry(entry.counts)}
-                        className="px-4 py-2 bg-[#d4af37] hover:bg-[#b08d26] text-black font-semibold text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition active:scale-95"
-                      >
-                        Use in Calculator
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
+                    <div className="flex items-center gap-2">
+                      {deletingId === entry.id ? (
+                        <div className="flex items-center gap-1.5 bg-[#1c0c0e] border border-red-900/50 rounded-lg p-1.5 transition-all duration-150">
+                          <span className="text-[10px] text-red-400 px-1.5 uppercase font-mono tracking-wider font-semibold">Delete?</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onDeleteEntry(entry.id);
+                              setDeletingId(null);
+                            }}
+                            className="px-2 py-1 bg-red-650 hover:bg-red-550 text-white rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingId(null)}
+                            className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setDeletingId(entry.id)}
+                            className="p-2 text-zinc-500 hover:text-red-400 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 rounded-lg transition duration-150 cursor-pointer"
+                            title="Delete saved set"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => onUseEntry(entry.counts)}
+                            className="px-4 py-2 bg-[#d4af37] hover:bg-[#b08d26] text-black font-semibold text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+                          >
+                            Use in Calculator
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
 

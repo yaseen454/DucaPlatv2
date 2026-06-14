@@ -27,13 +27,55 @@ interface SettingsTabProps {
   setNarrowConfig: (cfg: PriceRangesConfig) => void;
   broadConfig: PriceRangesConfig;
   setBroadConfig: (cfg: PriceRangesConfig) => void;
+  onNavigateToCalculator?: () => void;
+}
+
+interface CompactInputFieldProps {
+  label: string;
+  value: number;
+  onChange: (val: number) => void;
+}
+
+function CompactInputField({ label, value, onChange }: CompactInputFieldProps) {
+  return (
+    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+      <span className="text-[9px] text-[#8e9299] uppercase shrink-0 w-8">{label}:</span>
+      <div className="flex-1 flex flex-col min-w-0">
+        <input
+          type="number"
+          min="1"
+          max="100"
+          value={value}
+          onChange={(e) => onChange(parseInt(e.target.value) || 1)}
+          className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2 py-0.5 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
+        />
+        <div className="flex gap-1 mt-1">
+          <button
+            type="button"
+            onClick={() => onChange(Math.max(1, value - 1))}
+            className="flex-1 h-5 flex items-center justify-center text-[10px] font-bold bg-[#0c0d10] hover:bg-[#1a1c22] border border-[#2a2c33] text-[#8e9299] hover:text-white rounded transition active:scale-95 cursor-pointer select-none"
+          >
+            -
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange(value + 1)}
+            className="flex-1 h-5 flex items-center justify-center text-[10px] font-bold bg-[#0c0d10] hover:bg-[#1a1c22] border border-[#2a2c33] text-[#8e9299] hover:text-white rounded transition active:scale-95 cursor-pointer select-none"
+          >
+            +
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function SettingsTab({
   narrowConfig,
   setNarrowConfig,
   broadConfig,
-  setBroadConfig
+  setBroadConfig,
+  onNavigateToCalculator
 }: SettingsTabProps) {
   
   // Calculate total combinations pool size for a given PriceRangesConfig
@@ -91,20 +133,30 @@ export default function SettingsTab({
   return (
     <div className="space-y-6">
       {/* Intro Header */}
-      <div className="p-6 rounded-xl bg-[#14161c] border border-[#2a2c33] relative overflow-hidden shadow-2xl">
+      <div className="p-6 rounded-xl bg-[#14161c] border border-[#2a2c33] relative overflow-hidden shadow-2xl flex flex-col md:flex-row md:items-center md:justify-between gap-5">
         <div className="absolute right-0 top-0 w-64 h-64 bg-[#d4af37]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="space-y-2 relative z-10">
+        <div className="space-y-2 relative z-10 flex-1">
           <div className="flex items-center gap-2">
             <Sliders className="w-5 h-5 text-[#d4af37]" />
             <h2 className="text-xl font-medium tracking-wide text-white uppercase" style={{ fontFamily: "'Georgia', serif" }}>
               Dynamic Market Boundaries Settings
             </h2>
           </div>
-          <p className="text-xs text-[#8e9299] max-w-3xl leading-relaxed">
+          <p className="text-xs text-[#8e9299] max-w-2xl leading-relaxed">
             Customize the lower and upper Platinum boundaries for each prime junk tier.
             Our statistics engine will rebuild the multi-variable cost vectors on-the-fly and compute revised Analysis of Variance tests and profit distributions.
           </p>
         </div>
+        
+        {onNavigateToCalculator && (
+          <button
+            type="button"
+            onClick={onNavigateToCalculator}
+            className="relative z-10 px-5 py-3 bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#d4af37] hover:text-black border border-[#d4af37]/35 hover:border-transparent rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shrink-0 shadow-lg active:scale-95"
+          >
+            Go to Calculator ➔
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -137,135 +189,83 @@ export default function SettingsTab({
             {/* Inputs list */}
             <div className="space-y-4 pt-1">
               {/* Bronze 15 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2 border border-zinc-800/40 rounded-lg hover:border-zinc-800 transition">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2.5 border border-zinc-800/40 rounded-xl hover:border-zinc-800 transition">
                 <span className="text-xs text-[#c4c5cc] font-medium font-sans flex items-center gap-1">Bronze (<DucatValue val={15} size="w-3 h-3" />)</span>
                 <div className="col-span-2 flex items-center gap-2">
-                  <span className="text-[10px] text-[#8e9299] uppercase pr-2">Fixed Cost:</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={narrowConfig.b15}
-                    onChange={(e) => updateNarrowField('b15', null, parseInt(e.target.value) || 1)}
-                    className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
+                  <CompactInputField 
+                    label="Cost" 
+                    value={narrowConfig.b15} 
+                    onChange={(val) => updateNarrowField('b15', null, val)} 
                   />
-                  <img src={platinumIcon} className="w-4 h-4 shrink-0 object-contain" alt="Pt" referrerPolicy="no-referrer" />
+                  <img src={platinumIcon} className="w-4 h-4 shrink-0 object-contain ml-1" alt="Pt" referrerPolicy="no-referrer" />
                 </div>
               </div>
 
               {/* Bronze 25 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2 border border-zinc-800/40 rounded-lg hover:border-zinc-800 transition">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2.5 border border-zinc-800/40 rounded-xl hover:border-zinc-800 transition">
                 <span className="text-xs text-[#c4c5cc] font-medium font-sans flex items-center gap-1">Bronze (<DucatValue val={25} size="w-3 h-3" />)</span>
-                <div className="col-span-2 grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Min:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={narrowConfig.b25.min}
-                      onChange={(e) => updateNarrowField('b25', 'min', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Max:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={narrowConfig.b25.max}
-                      onChange={(e) => updateNarrowField('b25', 'max', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
+                <div className="col-span-2 grid grid-cols-2 gap-3">
+                  <CompactInputField 
+                    label="Min" 
+                    value={narrowConfig.b25.min} 
+                    onChange={(val) => updateNarrowField('b25', 'min', val)} 
+                  />
+                  <CompactInputField 
+                    label="Max" 
+                    value={narrowConfig.b25.max} 
+                    onChange={(val) => updateNarrowField('b25', 'max', val)} 
+                  />
                 </div>
               </div>
 
               {/* Silver 45 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2 border border-zinc-800/40 rounded-lg hover:border-zinc-800 transition">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2.5 border border-zinc-800/40 rounded-xl hover:border-zinc-800 transition">
                 <span className="text-xs text-[#c4c5cc] font-medium font-sans flex items-center gap-1">Silver (<DucatValue val={45} size="w-3 h-3" />)</span>
-                <div className="col-span-2 grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Min:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={narrowConfig.s45.min}
-                      onChange={(e) => updateNarrowField('s45', 'min', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Max:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={narrowConfig.s45.max}
-                      onChange={(e) => updateNarrowField('s45', 'max', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
+                <div className="col-span-2 grid grid-cols-2 gap-3">
+                  <CompactInputField 
+                    label="Min" 
+                    value={narrowConfig.s45.min} 
+                    onChange={(val) => updateNarrowField('s45', 'min', val)} 
+                  />
+                  <CompactInputField 
+                    label="Max" 
+                    value={narrowConfig.s45.max} 
+                    onChange={(val) => updateNarrowField('s45', 'max', val)} 
+                  />
                 </div>
               </div>
 
               {/* Silver 65 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2 border border-zinc-800/40 rounded-lg hover:border-zinc-800 transition">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2.5 border border-zinc-800/40 rounded-xl hover:border-zinc-800 transition">
                 <span className="text-xs text-[#c4c5cc] font-medium font-sans flex items-center gap-1">Silver (<DucatValue val={65} size="w-3 h-3" />)</span>
-                <div className="col-span-2 grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Min:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={narrowConfig.s65.min}
-                      onChange={(e) => updateNarrowField('s65', 'min', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Max:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={narrowConfig.s65.max}
-                      onChange={(e) => updateNarrowField('s65', 'max', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
+                <div className="col-span-2 grid grid-cols-2 gap-3">
+                  <CompactInputField 
+                    label="Min" 
+                    value={narrowConfig.s65.min} 
+                    onChange={(val) => updateNarrowField('s65', 'min', val)} 
+                  />
+                  <CompactInputField 
+                    label="Max" 
+                    value={narrowConfig.s65.max} 
+                    onChange={(val) => updateNarrowField('s65', 'max', val)} 
+                  />
                 </div>
               </div>
 
               {/* Gold 100 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2 border border-zinc-800/40 rounded-lg hover:border-zinc-800 transition">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2.5 border border-zinc-800/40 rounded-xl hover:border-zinc-800 transition">
                 <span className="text-xs text-[#c4c5cc] font-medium font-sans flex items-center gap-1">Gold (<DucatValue val={100} size="w-3 h-3" className="text-[#ffd700]" />)</span>
-                <div className="col-span-2 grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Min:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={narrowConfig.g.min}
-                      onChange={(e) => updateNarrowField('g', 'min', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Max:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={narrowConfig.g.max}
-                      onChange={(e) => updateNarrowField('g', 'max', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
+                <div className="col-span-2 grid grid-cols-2 gap-3">
+                  <CompactInputField 
+                    label="Min" 
+                    value={narrowConfig.g.min} 
+                    onChange={(val) => updateNarrowField('g', 'min', val)} 
+                  />
+                  <CompactInputField 
+                    label="Max" 
+                    value={narrowConfig.g.max} 
+                    onChange={(val) => updateNarrowField('g', 'max', val)} 
+                  />
                 </div>
               </div>
             </div>
@@ -306,135 +306,83 @@ export default function SettingsTab({
             {/* Inputs list */}
             <div className="space-y-4 pt-1">
               {/* Bronze 15 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2 border border-zinc-800/40 rounded-lg hover:border-zinc-800 transition">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2.5 border border-zinc-800/40 rounded-xl hover:border-zinc-800 transition">
                 <span className="text-xs text-[#c4c5cc] font-medium font-sans flex items-center gap-1">Bronze (<DucatValue val={15} size="w-3 h-3" />)</span>
                 <div className="col-span-2 flex items-center gap-2">
-                  <span className="text-[10px] text-[#8e9299] uppercase pr-2">Fixed Cost:</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={broadConfig.b15}
-                    onChange={(e) => updateBroadField('b15', null, parseInt(e.target.value) || 1)}
-                    className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
+                  <CompactInputField 
+                    label="Cost" 
+                    value={broadConfig.b15} 
+                    onChange={(val) => updateBroadField('b15', null, val)} 
                   />
-                  <img src={platinumIcon} className="w-4 h-4 shrink-0 object-contain" alt="Pt" referrerPolicy="no-referrer" />
+                  <img src={platinumIcon} className="w-4 h-4 shrink-0 object-contain ml-1" alt="Pt" referrerPolicy="no-referrer" />
                 </div>
               </div>
 
               {/* Bronze 25 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2 border border-zinc-800/40 rounded-lg hover:border-zinc-800 transition">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2.5 border border-zinc-800/40 rounded-xl hover:border-zinc-800 transition">
                 <span className="text-xs text-[#c4c5cc] font-medium font-sans flex items-center gap-1">Bronze (<DucatValue val={25} size="w-3 h-3" />)</span>
-                <div className="col-span-2 grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Min:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={broadConfig.b25.min}
-                      onChange={(e) => updateBroadField('b25', 'min', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Max:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={broadConfig.b25.max}
-                      onChange={(e) => updateBroadField('b25', 'max', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
+                <div className="col-span-2 grid grid-cols-2 gap-3">
+                  <CompactInputField 
+                    label="Min" 
+                    value={broadConfig.b25.min} 
+                    onChange={(val) => updateBroadField('b25', 'min', val)} 
+                  />
+                  <CompactInputField 
+                    label="Max" 
+                    value={broadConfig.b25.max} 
+                    onChange={(val) => updateBroadField('b25', 'max', val)} 
+                  />
                 </div>
               </div>
 
               {/* Silver 45 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2 border border-zinc-800/40 rounded-lg hover:border-zinc-800 transition">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2.5 border border-zinc-800/40 rounded-xl hover:border-zinc-800 transition">
                 <span className="text-xs text-[#c4c5cc] font-medium font-sans flex items-center gap-1">Silver (<DucatValue val={45} size="w-3 h-3" />)</span>
-                <div className="col-span-2 grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Min:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={broadConfig.s45.min}
-                      onChange={(e) => updateBroadField('s45', 'min', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Max:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={broadConfig.s45.max}
-                      onChange={(e) => updateBroadField('s45', 'max', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
+                <div className="col-span-2 grid grid-cols-2 gap-3">
+                  <CompactInputField 
+                    label="Min" 
+                    value={broadConfig.s45.min} 
+                    onChange={(val) => updateBroadField('s45', 'min', val)} 
+                  />
+                  <CompactInputField 
+                    label="Max" 
+                    value={broadConfig.s45.max} 
+                    onChange={(val) => updateBroadField('s45', 'max', val)} 
+                  />
                 </div>
               </div>
 
               {/* Silver 65 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2 border border-zinc-800/40 rounded-lg hover:border-zinc-800 transition">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2.5 border border-zinc-800/40 rounded-xl hover:border-zinc-800 transition">
                 <span className="text-xs text-[#c4c5cc] font-medium font-sans flex items-center gap-1">Silver (<DucatValue val={65} size="w-3 h-3" />)</span>
-                <div className="col-span-2 grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Min:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={broadConfig.s65.min}
-                      onChange={(e) => updateBroadField('s65', 'min', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Max:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={broadConfig.s65.max}
-                      onChange={(e) => updateBroadField('s65', 'max', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
+                <div className="col-span-2 grid grid-cols-2 gap-3">
+                  <CompactInputField 
+                    label="Min" 
+                    value={broadConfig.s65.min} 
+                    onChange={(val) => updateBroadField('s65', 'min', val)} 
+                  />
+                  <CompactInputField 
+                    label="Max" 
+                    value={broadConfig.s65.max} 
+                    onChange={(val) => updateBroadField('s65', 'max', val)} 
+                  />
                 </div>
               </div>
 
               {/* Gold 100 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2 border border-zinc-800/40 rounded-lg hover:border-zinc-800 transition">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2 p-2.5 border border-zinc-800/40 rounded-xl hover:border-zinc-800 transition">
                 <span className="text-xs text-[#c4c5cc] font-medium font-sans flex items-center gap-1">Gold (<DucatValue val={100} size="w-3 h-3" className="text-[#ffd700]" />)</span>
-                <div className="col-span-2 grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Min:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={broadConfig.g.min}
-                      onChange={(e) => updateBroadField('g', 'min', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-[#8e9299] uppercase">Max:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={broadConfig.g.max}
-                      onChange={(e) => updateBroadField('g', 'max', parseInt(e.target.value) || 1)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded px-2.5 py-1 text-center text-xs font-mono text-white focus:ring-[#d4af37] focus:border-[#d4af37]"
-                    />
-                  </div>
+                <div className="col-span-2 grid grid-cols-2 gap-3">
+                  <CompactInputField 
+                    label="Min" 
+                    value={broadConfig.g.min} 
+                    onChange={(val) => updateBroadField('g', 'min', val)} 
+                  />
+                  <CompactInputField 
+                    label="Max" 
+                    value={broadConfig.g.max} 
+                    onChange={(val) => updateBroadField('g', 'max', val)} 
+                  />
                 </div>
               </div>
             </div>

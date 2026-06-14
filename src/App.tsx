@@ -206,7 +206,7 @@ export default function App() {
       second: '2-digit'
     });
 
-    const defaultName = `${source === 'manual' ? 'Manual Input' : source === 'directory' ? 'Directory Select' : 'Gemini Scan'} (${totalItems} items) — ${dateStr}`;
+    const defaultName = `${source === 'manual' ? 'Manual Input' : source === 'directory' ? 'Directory Select' : 'Image Scan'} (${totalItems} items) — ${dateStr}`;
 
     const newId = Date.now().toString();
     const newEntry: SavedItemEntry = {
@@ -442,7 +442,7 @@ export default function App() {
             { id: 'Home', label: 'Welcome', icon: Compass },
             { id: 'Calculator', label: 'Calculator', icon: Coins },
             { id: 'DataSelection', label: 'Directory', icon: Search },
-            { id: 'OCR', label: 'Gemini Scan', icon: Clipboard },
+            { id: 'OCR', label: 'Image Scan', icon: Clipboard },
             { id: 'SavedItems', label: 'Saved Items', icon: Bookmark },
             { id: 'Settings', label: 'Settings', icon: Settings },
             { id: 'Help', label: 'Guide', icon: HelpCircle }
@@ -503,7 +503,7 @@ export default function App() {
                         onClick={() => setActiveTab('OCR')}
                         className="px-5 py-2.5 bg-[#0c0d10] hover:bg-[#1a1c22] text-[#c4c5cc] hover:text-white rounded-md border border-[#2a2c33] font-semibold text-xs transition uppercase tracking-widest"
                       >
-                        Try Gemini OCR Scan
+                        Try Image OCR Scan
                       </button>
                     </div>
                   </div>
@@ -529,10 +529,10 @@ export default function App() {
                   <div className="p-5 bg-[#14161c] border border-[#2a2c33] rounded-xl space-y-2.5">
                     <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-1.5" style={{ fontFamily: "'Georgia', serif" }}>
                       <Sparkles className="w-4 h-4 text-[#d4af37]" />
-                      GEMINI VISION OCR SCAN
+                      IMAGE SCAN & NATIVE OCR
                     </h3>
                     <p className="text-xs text-[#8e9299] leading-relaxed">
-                      Don't waste time looking up each part's tier. Take screenshots of your transaction window, paste them in, and our server-side LLM parses counts and matches names perfectly.
+                      Don't waste time looking up each part's tier. Take screenshots of your transaction window and paste them in! Process securely using Google Gemini AI or our fast offline local Native OCR fallback.
                     </p>
                   </div>
                   <div className="p-5 bg-[#14161c] border border-[#2a2c33] rounded-xl space-y-2.5">
@@ -828,7 +828,7 @@ export default function App() {
                       <Coins className="w-12 h-12 text-slate-700 animate-pulse" />
                       <div>
                         <h4 className="text-slate-300 font-semibold">Calculator is empty</h4>
-                        <p className="text-xs text-slate-500 mt-1">Please enter your item counts inside the manual quantity editor, select items from the directory, or scan screenshots using Gemini OCR.</p>
+                        <p className="text-xs text-slate-500 mt-1">Please enter your item counts inside the manual quantity editor, select items from the directory, or scan screenshots using Image OCR.</p>
                       </div>
                     </div>
                   )}
@@ -891,6 +891,7 @@ export default function App() {
                 setNarrowConfig={setNarrowConfig}
                 broadConfig={broadConfig}
                 setBroadConfig={setBroadConfig}
+                onNavigateToCalculator={() => setActiveTab('Calculator')}
               />
             )}
 
@@ -909,7 +910,7 @@ export default function App() {
         <div className="flex gap-4">
           <a href="https://wiki.warframe.com/w/Ducats/Prices/All" target="_blank" rel="noreferrer" className="hover:text-white transition">Sourced from wiki.warframe.com</a>
           <span>•</span>
-          <span className="text-[#d4af37] font-semibold tracking-wide">Powered by Google Gemini</span>
+          <span className="text-[#d4af37] font-semibold tracking-wide">Powered by Google Gemini & Native Client-Side OCR</span>
         </div>
       </footer>
 
