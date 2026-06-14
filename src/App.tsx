@@ -25,7 +25,8 @@ import {
   Github,
   BookOpen,
   ShieldAlert,
-  Bookmark
+  Bookmark,
+  Coffee
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from './context/AuthContext';
@@ -59,7 +60,7 @@ export default function App() {
 
   // Parameter states
   const [calcType, setCalcType] = useState<1 | 2>(1); // 1 = narrow, 2 = broad
-  const [enablePlot, setEnablePlot] = useState<boolean>(true);
+  const [enablePlot, setEnablePlot] = useState<boolean>(false);
   const [displayAnova, setDisplayAnova] = useState<boolean>(false);
   const [showDecision, setShowDecision] = useState<boolean>(true);
 
@@ -385,6 +386,17 @@ export default function App() {
               <Github className="w-4 h-4" />
             </a>
 
+            <a
+              href="https://ko-fi.com/trc07#"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 md:p-2.5 bg-[#1a1313] hover:bg-[#2c1d1a] text-[#ff5e5b] hover:text-[#ff7875] border border-[#ff5e5b]/20 hover:border-[#ff5e5b]/40 rounded-lg transition-all duration-150 flex items-center justify-center gap-1.5 px-2 md:px-3 text-xs font-semibold"
+              title="Support Me on Ko-fi!"
+            >
+              <Coffee className="w-4 h-4 text-[#ff5e5b]" />
+              <span className="hidden sm:inline text-[#ff5e5b] font-mono text-[10px] uppercase tracking-wider font-bold">Ko-fi</span>
+            </a>
+
             {user ? (
               <div className="flex items-center gap-2.5 bg-[#111317] border border-[#d4af37]/20 p-1 pl-2.5 pr-2.5 md:pl-3 md:pr-3.5 rounded-lg">
                 {user.photoURL ? (
@@ -609,6 +621,99 @@ export default function App() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* Parameter & settings panel */}
                 <div className="lg:col-span-4 space-y-6">
+                  <ManualInput 
+                    counts={counts} 
+                    onChange={setCounts} 
+                    onCalculate={() => alert('Calculated! Results are loaded and updated instantly on the right.')} 
+                    activeConfig={calcType === 1 ? narrowConfig : broadConfig}
+                    onSaveToItems={(c, n) => handleSaveToItems(c, n, 'manual')}
+                    onNavigateToSettings={() => setActiveTab('Settings')}
+                    calcType={calcType}
+                    onChangeCalcType={setCalcType}
+                  />
+
+                  {/* Parameter sliders and configuration panel */}
+                  <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-6 shadow-xl space-y-5">
+                    <h3 className="text-sm font-semibold text-[#e0e1e6] uppercase tracking-widest flex items-center gap-1.5" style={{ fontFamily: "'Georgia', serif" }}>
+                      <Settings className="w-4 h-4 text-[#d4af37]" />
+                      Analytical Configuration
+                    </h3>
+
+                    <div className="space-y-4">
+                      {/* Display switches */}
+                      <div className="space-y-2.5">
+                        <label className="text-[10px] text-[#8e9299] font-bold uppercase tracking-wider block">Analytical Displays</label>
+                        <div className="space-y-2">
+                          <label className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer select-none transition-all ${
+                            displayAnova 
+                              ? 'bg-[#14161c] border-[#d4af37]/30 text-white font-medium' 
+                              : 'bg-[#0c0d10]/40 border-transparent text-[#8e9299] hover:bg-[#0c0d10]'
+                          }`}>
+                            <span className="flex items-center gap-2">
+                              <span className={`w-1.5 h-1.5 rounded-full transition-all ${displayAnova ? 'bg-[#d4af37] shadow-[0_0_6px_#d4af37]' : 'bg-[#2a2c33]'}`} />
+                              ANOVA Significance Check
+                            </span>
+                            <div className="relative flex items-center">
+                              <input 
+                                type="checkbox" 
+                                checked={displayAnova} 
+                                onChange={(e) => setDisplayAnova(e.target.checked)}
+                                className="sr-only"
+                              />
+                              <div className={`w-7 h-4 rounded-full transition-colors relative flex items-center ${displayAnova ? 'bg-[#d4af37]' : 'bg-[#2a2c33]'}`}>
+                                <div className={`w-3 h-3 rounded-full bg-[#0c0d10] shadow transform transition-transform ${displayAnova ? 'translate-x-3.5' : 'translate-x-[2px]'}`} />
+                              </div>
+                            </div>
+                          </label>
+
+                          <label className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer select-none transition-all ${
+                            enablePlot 
+                              ? 'bg-[#14161c] border-[#d4af37]/30 text-white font-medium' 
+                              : 'bg-[#0c0d10]/40 border-transparent text-[#8e9299] hover:bg-[#0c0d10]'
+                          }`}>
+                            <span className="flex items-center gap-2">
+                              <span className={`w-1.5 h-1.5 rounded-full transition-all ${enablePlot ? 'bg-[#d4af37] shadow-[0_0_6px_#d4af37]' : 'bg-[#2a2c33]'}`} />
+                              Yield Distribution Plot
+                            </span>
+                            <div className="relative flex items-center">
+                              <input 
+                                type="checkbox" 
+                                checked={enablePlot} 
+                                onChange={(e) => setEnablePlot(e.target.checked)}
+                                className="sr-only"
+                              />
+                              <div className={`w-7 h-4 rounded-full transition-colors relative flex items-center ${enablePlot ? 'bg-[#d4af37]' : 'bg-[#2a2c33]'}`}>
+                                <div className={`w-3 h-3 rounded-full bg-[#0c0d10] shadow transform transition-transform ${enablePlot ? 'translate-x-3.5' : 'translate-x-[2px]'}`} />
+                              </div>
+                            </div>
+                          </label>
+
+                          <label className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer select-none transition-all ${
+                            showDecision 
+                              ? 'bg-[#14161c] border-[#d4af37]/30 text-white font-medium' 
+                              : 'bg-[#0c0d10]/40 border-transparent text-[#8e9299] hover:bg-[#0c0d10]'
+                          }`}>
+                            <span className="flex items-center gap-2">
+                              <span className={`w-1.5 h-1.5 rounded-full transition-all ${showDecision ? 'bg-[#d4af37] shadow-[0_0_6px_#d4af37]' : 'bg-[#2a2c33]'}`} />
+                              Strategic Decisions Advisor
+                            </span>
+                            <div className="relative flex items-center">
+                              <input 
+                                type="checkbox" 
+                                checked={showDecision} 
+                                onChange={(e) => setShowDecision(e.target.checked)}
+                                className="sr-only"
+                              />
+                              <div className={`w-7 h-4 rounded-full transition-colors relative flex items-center ${showDecision ? 'bg-[#d4af37]' : 'bg-[#2a2c33]'}`}>
+                                <div className={`w-3 h-3 rounded-full bg-[#0c0d10] shadow transform transition-transform ${showDecision ? 'translate-x-3.5' : 'translate-x-[2px]'}`} />
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Inventory Rarity Overview Scorecard */}
                   <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 shadow-xl space-y-4">
                     <div className="flex items-center justify-between border-b border-[#2a2c33]/50 pb-2.5">
@@ -684,7 +789,7 @@ export default function App() {
                         <div className="absolute right-3 top-3 w-16 h-16 bg-[#d4af37]/5 rounded-full blur-xl pointer-events-none" />
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-pulse" />
+                            <span className="w-3 h-3 rounded-full bg-[#d4af37] animate-pulse" />
                             <span className="text-xs font-semibold text-white">Gold Tiers (Rare)</span>
                           </div>
                           <span className="text-xs font-mono font-bold text-[#d4af37]">
@@ -705,124 +810,6 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Parameter sliders and configuration panel */}
-                  <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-6 shadow-xl space-y-5">
-                    <h3 className="text-sm font-semibold text-[#e0e1e6] uppercase tracking-widest flex items-center gap-1.5" style={{ fontFamily: "'Georgia', serif" }}>
-                      <Settings className="w-4 h-4 text-[#d4af37]" />
-                      Analytical Configuration
-                    </h3>
-
-                    <div className="space-y-4">
-                      {/* Cost Vector selector */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs text-[#8e9299] font-bold uppercase tracking-wider block">Calculation Vector</label>
-                        <div className="grid grid-cols-2 gap-2 bg-[#0c0d10] p-1 border border-[#2a2c33] rounded-lg">
-                          <button
-                            onClick={() => setCalcType(1)}
-                            className={`py-1.5 text-xs font-semibold rounded text-center transition cursor-pointer select-none ${
-                              calcType === 1 ? 'bg-[#d4af37] text-black font-semibold shadow-inner' : 'text-[#8e9299] hover:text-[#e0e1e6]'
-                            }`}
-                          >
-                            Narrow Set (96 pts)
-                          </button>
-                          <button
-                            onClick={() => setCalcType(2)}
-                            className={`py-1.5 text-xs font-semibold rounded text-center transition cursor-pointer select-none ${
-                              calcType === 2 ? 'bg-[#d4af37] text-black font-semibold shadow-inner' : 'text-[#8e9299] hover:text-[#e0e1e6]'
-                            }`}
-                          >
-                            Broad Set (216 pts)
-                          </button>
-                        </div>
-                        <p className="text-[10px] text-[#8e9299] mt-1 leading-relaxed">
-                          {calcType === 1 
-                            ? 'Calculates expected profits over standard premium tiers. Perfect for typical bulk sales.' 
-                            : 'Explores wider, highly realistic pricing vectors down to lower margins.'}
-                        </p>
-                      </div>
-
-                      {/* Display switches */}
-                      <div className="space-y-2.5 pt-3 border-t border-[#2a2c33]/40">
-                        <label className="text-[10px] text-[#8e9299] font-bold uppercase tracking-wider block">Analytical Displays</label>
-                        <div className="space-y-2">
-                          <label className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer select-none transition-all ${
-                            displayAnova 
-                              ? 'bg-[#14161c] border-[#d4af37]/30 text-white font-medium' 
-                              : 'bg-[#0c0d10]/40 border-transparent text-[#8e9299] hover:bg-[#0c0d10]'
-                          }`}>
-                            <span className="flex items-center gap-2">
-                              <span className={`w-1.5 h-1.5 rounded-full transition-all ${displayAnova ? 'bg-[#d4af37] shadow-[0_0_6px_#d4af37]' : 'bg-[#2a2c33]'}`} />
-                              ANOVA Significance Check
-                            </span>
-                            <div className="relative flex items-center">
-                              <input 
-                                type="checkbox" 
-                                checked={displayAnova} 
-                                onChange={(e) => setDisplayAnova(e.target.checked)}
-                                className="sr-only"
-                              />
-                              <div className={`w-7 h-4 rounded-full transition-colors relative flex items-center ${displayAnova ? 'bg-[#d4af37]' : 'bg-[#2a2c33]'}`}>
-                                <div className={`w-3 h-3 rounded-full bg-[#0c0d10] shadow transform transition-transform ${displayAnova ? 'translate-x-3.5' : 'translate-x-[2px]'}`} />
-                              </div>
-                            </div>
-                          </label>
-
-                          <label className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer select-none transition-all ${
-                            enablePlot 
-                              ? 'bg-[#14161c] border-[#d4af37]/30 text-white font-medium' 
-                              : 'bg-[#0c0d10]/40 border-transparent text-[#8e9299] hover:bg-[#0c0d10]'
-                          }`}>
-                            <span className="flex items-center gap-2">
-                              <span className={`w-1.5 h-1.5 rounded-full transition-all ${enablePlot ? 'bg-[#d4af37] shadow-[0_0_6px_#d4af37]' : 'bg-[#2a2c33]'}`} />
-                              Yield Distribution Plot
-                            </span>
-                            <div className="relative flex items-center">
-                              <input 
-                                type="checkbox" 
-                                checked={enablePlot} 
-                                onChange={(e) => setEnablePlot(e.target.checked)}
-                                className="sr-only"
-                              />
-                              <div className={`w-7 h-4 rounded-full transition-colors relative flex items-center ${enablePlot ? 'bg-[#d4af37]' : 'bg-[#2a2c33]'}`}>
-                                <div className={`w-3 h-3 rounded-full bg-[#0c0d10] shadow transform transition-transform ${enablePlot ? 'translate-x-3.5' : 'translate-x-[2px]'}`} />
-                              </div>
-                            </div>
-                          </label>
-
-                          <label className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer select-none transition-all ${
-                            showDecision 
-                              ? 'bg-[#14161c] border-[#d4af37]/30 text-white font-medium' 
-                              : 'bg-[#0c0d10]/40 border-transparent text-[#8e9299] hover:bg-[#0c0d10]'
-                          }`}>
-                            <span className="flex items-center gap-2">
-                              <span className={`w-1.5 h-1.5 rounded-full transition-all ${showDecision ? 'bg-[#d4af37] shadow-[0_0_6px_#d4af37]' : 'bg-[#2a2c33]'}`} />
-                              Strategic Decisions Advisor
-                            </span>
-                            <div className="relative flex items-center">
-                              <input 
-                                type="checkbox" 
-                                checked={showDecision} 
-                                onChange={(e) => setShowDecision(e.target.checked)}
-                                className="sr-only"
-                              />
-                              <div className={`w-7 h-4 rounded-full transition-colors relative flex items-center ${showDecision ? 'bg-[#d4af37]' : 'bg-[#2a2c33]'}`}>
-                                <div className={`w-3 h-3 rounded-full bg-[#0c0d10] shadow transform transition-transform ${showDecision ? 'translate-x-3.5' : 'translate-x-[2px]'}`} />
-                              </div>
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <ManualInput 
-                    counts={counts} 
-                    onChange={setCounts} 
-                    onCalculate={() => alert('Calculated! Results are loaded and updated instantly on the right.')} 
-                    activeConfig={calcType === 1 ? narrowConfig : broadConfig}
-                    onSaveToItems={(c, n) => handleSaveToItems(c, n, 'manual')}
-                  />
                 </div>
 
                 {/* Analytical summary on the right side */}

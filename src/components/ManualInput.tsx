@@ -43,9 +43,21 @@ interface ManualInputProps {
   onCalculate: () => void;
   activeConfig: PriceRangesConfig;
   onSaveToItems?: (counts: InventoryCount, name?: string) => void;
+  onNavigateToSettings?: () => void;
+  calcType: 1 | 2;
+  onChangeCalcType: (type: 1 | 2) => void;
 }
 
-export default function ManualInput({ counts, onChange, onCalculate, activeConfig, onSaveToItems }: ManualInputProps) {
+export default function ManualInput({ 
+  counts, 
+  onChange, 
+  onCalculate, 
+  activeConfig, 
+  onSaveToItems,
+  onNavigateToSettings,
+  calcType,
+  onChangeCalcType
+}: ManualInputProps) {
   const [saveName, setSaveName] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -100,31 +112,77 @@ export default function ManualInput({ counts, onChange, onCalculate, activeConfi
 
       {/* Active Matrix compact visualizer */}
       {activeConfig && (
-        <div className="bg-[#0c0d10] border border-[#2a2c33]/60 rounded-xl px-4 py-2.5 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 font-sans shadow-inner">
-          <span className="text-[#8e9299] font-medium flex items-center gap-1.5 shrink-0 uppercase tracking-wider text-[10px]">
-            <Sparkles className="w-3.5 h-3.5 text-[#d4af37]" /> Active Rates Matrix:
-          </span>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#c4c5cc] font-mono leading-none">
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#cd7f32]/60"></span>
-              <DucatValue val="15" size="w-2.5 h-2.5" className="text-zinc-400 font-bold" />:&nbsp;<strong className="text-white flex items-center gap-0.5"><PlatValue val={activeConfig.b15} size="w-2.5 h-2.5" className="text-white" /></strong>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#cd7f32]"></span>
-              <DucatValue val="25" size="w-2.5 h-2.5" className="text-zinc-400 font-bold" />:&nbsp;<strong className="text-white flex items-center gap-0.5"><PlatValue val={`${activeConfig.b25.min}–${activeConfig.b25.max}`} size="w-2.5 h-2.5" className="text-white" /></strong>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#c0c0c0]/60"></span>
-              <DucatValue val="45" size="w-2.5 h-2.5" className="text-zinc-400 font-bold" />:&nbsp;<strong className="text-white flex items-center gap-0.5"><PlatValue val={`${activeConfig.s45.min}–${activeConfig.s45.max}`} size="w-2.5 h-2.5" className="text-white" /></strong>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#c0c0c0]"></span>
-              <DucatValue val="65" size="w-2.5 h-2.5" className="text-zinc-400 font-bold" />:&nbsp;<strong className="text-white flex items-center gap-0.5"><PlatValue val={`${activeConfig.s65.min}–${activeConfig.s65.max}`} size="w-2.5 h-2.5" className="text-white" /></strong>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
-              <DucatValue val="100" size="w-2.5 h-2.5" className="text-[#d4af37] font-bold" />:&nbsp;<strong className="text-white flex items-center gap-0.5"><PlatValue val={`${activeConfig.g.min}–${activeConfig.g.max}`} size="w-2.5 h-2.5" className="text-[#d4af37]" /></strong>
-            </span>
+        <div className="space-y-2.5">
+          <div className="bg-[#0c0d10] border border-[#2a2c33]/60 rounded-xl px-4 py-2.5 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 font-sans shadow-inner">
+            <div className="flex flex-col gap-0.5 shrink-0 select-none">
+              <span className="text-[#8e9299] font-medium flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
+                <Sparkles className="w-3.5 h-3.5 text-[#d4af37]" /> Active Rates Matrix:
+              </span>
+              <div className="flex items-center gap-1.5 mt-0.5 text-[9px] text-zinc-500">
+                <span>Edit plat ranges inside</span>
+                <button 
+                  type="button" 
+                  onClick={onNavigateToSettings}
+                  className="px-1.5 text-[8.5px] font-semibold bg-[#2a2c33]/40 border border-[#2a2c33]/80 hover:border-[#d4af37]/45 rounded text-[#d4af37] hover:text-[#d4af37] transition cursor-pointer select-none uppercase tracking-wide leading-none py-0.5"
+                >
+                  Settings ⚙️
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#c4c5cc] font-mono leading-none">
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#cd7f32]/60"></span>
+                <DucatValue val="15" size="w-2.5 h-2.5" className="text-zinc-400 font-bold" />:&nbsp;<strong className="text-white flex items-center gap-0.5"><PlatValue val={activeConfig.b15} size="w-2.5 h-2.5" className="text-white" /></strong>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#cd7f32]"></span>
+                <DucatValue val="25" size="w-2.5 h-2.5" className="text-zinc-400 font-bold" />:&nbsp;<strong className="text-white flex items-center gap-0.5"><PlatValue val={`${activeConfig.b25.min}–${activeConfig.b25.max}`} size="w-2.5 h-2.5" className="text-white" /></strong>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#c0c0c0]/60"></span>
+                <DucatValue val="45" size="w-2.5 h-2.5" className="text-zinc-400 font-bold" />:&nbsp;<strong className="text-white flex items-center gap-0.5"><PlatValue val={`${activeConfig.s45.min}–${activeConfig.s45.max}`} size="w-2.5 h-2.5" className="text-white" /></strong>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#c0c0c0]"></span>
+                <DucatValue val="65" size="w-2.5 h-2.5" className="text-zinc-400 font-bold" />:&nbsp;<strong className="text-white flex items-center gap-0.5"><PlatValue val={`${activeConfig.s65.min}–${activeConfig.s65.max}`} size="w-2.5 h-2.5" className="text-white" /></strong>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
+                <DucatValue val="100" size="w-2.5 h-2.5" className="text-[#d4af37] font-bold" />:&nbsp;<strong className="text-white flex items-center gap-0.5"><PlatValue val={`${activeConfig.g.min}–${activeConfig.g.max}`} size="w-2.5 h-2.5" className="text-[#d4af37]" /></strong>
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-[#0c0d10]/40 border border-[#2a2c33]/40 rounded-xl p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[#8e9299] font-bold uppercase tracking-wider">Calculation Vector Toggle</span>
+              <span className="text-[9px] text-[#d4af37] font-mono">Current: {calcType === 1 ? 'Narrow Set' : 'Broad Set'}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 bg-[#0c0d10] p-1 border border-[#2a2c33] rounded-lg">
+              <button
+                type="button"
+                onClick={() => onChangeCalcType(1)}
+                className={`py-1.5 text-xs font-semibold rounded text-center transition cursor-pointer select-none ${
+                  calcType === 1 ? 'bg-[#d4af37] text-black font-semibold shadow-inner' : 'text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1d24]/40'
+                }`}
+              >
+                Narrow Set (96 pts)
+              </button>
+              <button
+                type="button"
+                onClick={() => onChangeCalcType(2)}
+                className={`py-1.5 text-xs font-semibold rounded text-center transition cursor-pointer select-none ${
+                  calcType === 2 ? 'bg-[#d4af37] text-black font-semibold shadow-inner' : 'text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1d24]/40'
+                }`}
+              >
+                Broad Set (216 pts)
+              </button>
+            </div>
+            <p className="text-[9.5px] text-[#8e9299] leading-normal">
+              {calcType === 1 
+                ? 'Calculates expected profits over standard premium tiers. Perfect for typical bulk sales.' 
+                : 'Explores wider, highly realistic pricing vectors down to lower margins.'}
+            </p>
           </div>
         </div>
       )}

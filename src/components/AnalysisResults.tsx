@@ -65,13 +65,31 @@ export default function AnalysisResults({
   } | null>(null);
   const [hoveredPerm, setHoveredPerm] = useState<any | null>(null);
   const [copiedType, setCopiedType] = useState<string | null>(null);
+  const [hideUnowned, setHideUnowned] = useState<boolean>(false);
 
   const handleCopyTradeChat = (type: string, prices: number[]) => {
-    const chatText = `WTS Prime Junk 15 :ducats: = ${prices[0]} :platinum: , ` +
-      `25 :ducats: = ${prices[1]} :platinum: , ` +
-      `45 :ducats: = ${prices[2]} :platinum: , ` +
-      `65 :ducats: = ${prices[3]} :platinum: , ` +
-      `100 :ducats: = ${prices[4]} :platinum:`;
+    const categories = [
+      { ducats: 15, price: prices[0], count: counts.bronze15 },
+      { ducats: 25, price: prices[1], count: counts.bronze25 },
+      { ducats: 45, price: prices[2], count: counts.silver45 },
+      { ducats: 65, price: prices[3], count: counts.silver65 },
+      { ducats: 100, price: prices[4], count: counts.gold }
+    ];
+
+    const activeCategories = hideUnowned 
+      ? categories.filter(c => c.count > 0)
+      : categories;
+
+    const parts = activeCategories.map(c => `${c.ducats} :ducats: = ${c.price} :platinum:`);
+    
+    const chatText = parts.length > 0
+      ? `WTS Prime Junk ` + parts.join(' , ')
+      : `WTS Prime Junk 15 :ducats: = ${prices[0]} :platinum: , ` +
+        `25 :ducats: = ${prices[1]} :platinum: , ` +
+        `45 :ducats: = ${prices[2]} :platinum: , ` +
+        `65 :ducats: = ${prices[3]} :platinum: , ` +
+        `100 :ducats: = ${prices[4]} :platinum:`;
+
     navigator.clipboard.writeText(chatText).then(() => {
       setCopiedType(type);
       setTimeout(() => {
@@ -751,6 +769,32 @@ export default function AnalysisResults({
                 Primacy: {recommendations.validDensities[0].label}
               </span>
             )}
+          </div>
+
+          {/* Copy custom configurations: Toggle for unowned categories */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 p-3.5 bg-[#0c0d10]/60 border border-[#2a2c33]/55 rounded-xl text-xs">
+            <div className="space-y-0.5">
+              <span className="font-semibold text-zinc-100 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wide">
+                ⚙️ Trade Tag Configurator
+              </span>
+              <p className="text-[11px] text-[#8e9299]">
+                Enable this to omit ducat tiers with 0 inventory count from your copied Trade Chat strings.
+              </p>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer select-none shrink-0 bg-[#14161c] px-3 py-1.5 rounded-lg border border-[#2a2c33]/50 hover:border-[#d4af37]/35 transition">
+              <span className="text-[11px] text-zinc-300 font-medium">Hide Unowned Tiers</span>
+              <div className="relative flex items-center">
+                <input 
+                  type="checkbox" 
+                  checked={hideUnowned} 
+                  onChange={(e) => setHideUnowned(e.target.checked)}
+                  className="sr-only"
+                />
+                <div className={`w-7 h-4 rounded-full transition-colors relative flex items-center ${hideUnowned ? 'bg-[#d4af37]' : 'bg-[#2a2c33]'}`}>
+                  <div className={`w-3 h-3 rounded-full bg-[#0c0d10] shadow transform transition-transform ${hideUnowned ? 'translate-x-3.5' : 'translate-x-[2px]'}`} />
+                </div>
+              </div>
+            </label>
           </div>
 
           {/* 1. Inventory Density Stacked Visual Representation */}
@@ -1461,6 +1505,31 @@ export default function AnalysisResults({
                   <span className="font-mono text-slate-350 bg-[#0c0d10] px-1 py-0.5 rounded border border-[#2a2c33]/40">
                     B({record.prices[0]},{record.prices[1]}) S({record.prices[2]},{record.prices[3]}) G({record.prices[4]})
                   </span>
+                </div>
+
+                {/* Copy Trade Chat format helper */}
+                <div className="pt-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleCopyTradeChat(record.key, record.prices)}
+                    className={`w-full py-1 px-2 rounded-md border text-[10px] font-mono flex items-center justify-center gap-1.5 transition-all select-none cursor-pointer ${
+                      copiedType === record.key
+                        ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-400 font-bold shadow-[0_0_6px_rgba(16,185,129,0.15)]'
+                        : 'bg-[#181a20]/60 border-[#2a2c33]/60 text-zinc-400 hover:text-[#d4af37] hover:border-[#d4af37]/40 hover:bg-[#1a1d24]'
+                    }`}
+                  >
+                    {copiedType === record.key ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-400" />
+                        <span>Copied WTS Tag!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3 text-zinc-400" />
+                        <span>Copy Trade Chat Tag</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             ))}
