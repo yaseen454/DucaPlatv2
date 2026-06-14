@@ -108,19 +108,31 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Modern Chrome User-Agent header to avoid automated scraper blocking issues
-    const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-    const profileUrl = `https://forums.warframe.com/profile/${normalizedIGN}/`;
+    // Modern browser headers to bypass server/CDN automated scraper protections
+    const browserHeaders = {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Cache-Control": "max-age=0",
+      "Referer": "https://forums.warframe.com/",
+      "Sec-Ch-Ua": '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+      "Sec-Ch-Ua-Mobile": "?0",
+      "Sec-Ch-Ua-Platform": '"Windows"',
+      "Sec-Fetch-Dest": "document",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-Site": "same-origin",
+      "Sec-Fetch-User": "?1",
+      "Upgrade-Insecure-Requests": "1"
+    };
+
+    // Append about me tab parameter to force loading the tab in initial HTML source
+    const profileUrl = `https://forums.warframe.com/profile/${normalizedIGN}/?tab=node_info_AboutMe`;
 
     console.log(`Fetching profile: ${profileUrl}`);
     let response: Response;
     try {
       response = await fetchWithRetry(profileUrl, {
-        headers: {
-          "User-Agent": userAgent,
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.5"
-        },
+        headers: browserHeaders,
         redirect: "follow", // Automatically follow slug redirects
       });
     } catch (fetchErr: any) {
@@ -130,7 +142,26 @@ export const handler: Handler = async (event) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           success: false,
-          error: `Could not retrieve Warframe Forums profile page. Verify your internet, check if the IGN exists, and try again.`
+          error: `Could not reach Warframe Forums. Verify your internet, check if the IGN exists, and try again.`
+        }),
+      };
+    }
+
+    // Check if the response was successful (e.g. 200 OK)
+    if (!response.ok) {
+      console.error(`Forum profile load failed with HTTP status: ${response.status}`);
+      let humanReadableError = `Forum server returned HTTP error ${response.status}.`;
+      if (response.status === 403) {
+        humanReadableError = "Forum CDN protection (Cloudflare) rejected the automated request (HTTP 403 Forbidden). Try updating your profile or verify the slug.";
+      } else if (response.status === 404) {
+        humanReadableError = `Profile URL not found (HTTP 404). Check if the forum slug/link is fully correct: "${normalizedIGN}"`;
+      }
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          success: false,
+          error: humanReadableError
         }),
       };
     }
@@ -138,10 +169,14 @@ export const handler: Handler = async (event) => {
     const htmlText = await response.text();
     const root = parse(htmlText);
 
-    // Filter selectors to isolate "About Me" tab container
-    const aboutContainer = root.querySelector('[data-role="memberContent"]') 
-      || root.querySelector("#elAboutMe") 
-      || root.querySelector(".cBioContent");
+    // Isolate About Me content area. We look for specific containers first, falling back to broader layout slots.
+    let aboutContainer = root.querySelector("#elAboutMe") 
+      || root.querySelector(".cBioContent")
+      || root.querySelector('[data-role="memberContent"]')
+      || root.querySelector("#elProfileTabs_content")
+      || root.querySelector("#ipsLayout_mainArea")
+      || root.querySelector(".ipsLayout_container")
+      || root.querySelector("body"); // absolute fallback
 
     if (!aboutContainer) {
       console.warn("Targeted aboutContainer element not found on page.");
@@ -150,12 +185,30 @@ export const handler: Handler = async (event) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           success: false,
-          error: "About Me section container not found on your Warframe forum profile. Ensure your profile is public."
+          error: "About Me section container or main page body could not be located in the profile HTML."
         }),
       };
     }
 
-    const containerText = aboutContainer.text || "";
+    // Retrieve body content while stripping out global headers, footers and navigation to prevent false-positives
+    let containerText = aboutContainer.text || "";
+    
+    // Quick sanitization to exclude common global chunks if using body fallback
+    if (aboutContainer.tagName?.toLowerCase() === "body") {
+      const headerObj = root.querySelector("header") || root.querySelector("#ipsHeader");
+      const footerObj = root.querySelector("footer") || root.querySelector("#ipsFooter");
+      const navObj = root.querySelector("nav");
+      
+      let headerText = headerObj?.text || "";
+      let footerText = footerObj?.text || "";
+      let navText = navObj?.text || "";
+
+      containerText = containerText
+        .replace(headerText, "")
+        .replace(footerText, "")
+        .replace(navText, "");
+    }
+
     const lowercaseToken = token.trim().toLowerCase();
     const lowercaseAboutText = containerText.toLowerCase();
 
@@ -163,12 +216,19 @@ export const handler: Handler = async (event) => {
     const hasToken = lowercaseAboutText.includes(lowercaseToken);
 
     if (!hasToken) {
+      // Let's check if there is a permission error or login notification on the page
+      const pageTextLowercase = htmlText.toLowerCase();
+      let extraHint = "";
+      if (pageTextLowercase.includes("must sign in") || pageTextLowercase.includes("do not have permission") || pageTextLowercase.includes("sign in")) {
+        extraHint = " Your forum profile appears restricted or private to guest viewers. Check your forum privacy settings.";
+      }
+
       return {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           success: false,
-          error: `Token not found in About Me section. Ensure "${token}" is saved and your profile visibility is public.`
+          error: `Verification token not found in your profile info.${extraHint} Ensure "${token}" is saved inside your 'About Me' tab, and verify your forum profile is public.`
         }),
       };
     }
