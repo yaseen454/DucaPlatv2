@@ -37,10 +37,10 @@ import {
   Tag,
   Loader2,
   TrendingUp,
-  Bookmark
+  Bookmark,
+  Clock
 } from 'lucide-react';
 import { PRIME_ITEMS } from '../data/primeData';
-import { SourceParserService } from '../utils/verificationParser';
 import { InventoryCount } from '../types';
 import { getProfitStats, generateCostsCustom } from '../utils/mathUtils';
 import platinumIcon from '../data/platinum.png';
@@ -225,7 +225,6 @@ export default function MarketTab({
   // Local UI / Form states
   const [marketSubTab, setMarketSubTab] = useState<'browse' | 'manage' | 'saved'>('browse');
   const [claimedInput, setClaimedInput] = useState('');
-  const [htmlInput, setHtmlInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'WTS' | 'WTB'>('all');
   const [verifiedFilter, setVerifiedFilter] = useState<boolean>(false);
@@ -285,6 +284,8 @@ export default function MarketTab({
   
   // Statuses
   const [verifying, setVerifying] = useState(false);
+  const [verificationCooldown, setVerificationCooldown] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -370,6 +371,23 @@ export default function MarketTab({
     return () => unsubProfile();
   }, [user]);
 
+  // 3. Manage verification cooldown timer (30-second countdown)
+  useEffect(() => {
+    if (!verificationCooldown || cooldownSeconds <= 0) return;
+
+    const timerId = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          setVerificationCooldown(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [verificationCooldown, cooldownSeconds]);
+
   // Handle Autocomplete listing item searches
   useEffect(() => {
     if (!itemName.trim()) {
@@ -436,42 +454,24 @@ export default function MarketTab({
   };
 
   // Intercept the textarea paste action to safely parse and discard private page state in-browser
-  const handleSourcePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    e.preventDefault();
-    const pastedText = e.clipboardData.getData('text') || '';
-    
-    // Parse client-side instantly! Discard the huge bloat, extracting only what's needed.
-    const result = SourceParserService.extractVerificationMeta(pastedText);
+  // Removed handleSourcePaste - no longer needed with WFM v2 API
+  // Verification now uses official API endpoint with JWT authorization
 
-    if (result.success && result.data) {
-      const { username, verificationKey } = result.data;
-      
-      // We set a lightweight, sanitized snippet containing only the extracted public headers
-      // completely discarding any private cookies, check_codes, or order arrays before transmission.
-      const optimizedHtml = `<title>Profile - ${username} | Orders</title>\n<meta name="description" content="${verificationKey}">`;
-      setHtmlInput(optimizedHtml);
-      
-      setErrorMsg(null);
-      setSuccessMsg(`✓ SECURE extraction complete! Safely parsed and discarded large page source. Extracted Username: "${username}" and Signature: "${verificationKey}". You are ready to click "Verify Now"!`);
-    } else {
-      setErrorMsg(result.error || 'Token parsing failed. Verify you are on your warframe.market profile page, refreshed, and copied (CTRL+U -> CTRL+A) properly.');
-      // Fallback: put first 5000 chars of pasted text as fallback 
-      setHtmlInput(pastedText.slice(0, 5000));
-    }
-  };
-
-  // Trigger POST checkout validation (pending verification state)
+  // Trigger POST verification against WFM v2 API (pending verification state)
   const handleTriggerValidation = async () => {
     if (!user || userVerification.status !== 'pending') return;
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    const htmlCode = htmlInput.trim();
-    if (!htmlCode) {
-      setErrorMsg('Please paste the viewed page source (HTML code) of your warframe.market profile page.');
+    const code = userVerification.token?.trim();
+    if (!code) {
+      setErrorMsg('No verification code found. Please initiate verification first.');
       return;
     }
 
+    // Start cooldown
+    setVerificationCooldown(true);
+    setCooldownSeconds(30);
     setVerifying(true);
 
     try {
@@ -481,20 +481,24 @@ export default function MarketTab({
         body: JSON.stringify({
           uid: user.uid,
           claimedIGN: userVerification.claimedIGN,
-          htmlSource: htmlCode
+          verificationCode: code
         })
       });
 
       const result = await checkRes.json();
       if (result.success) {
-        setSuccessMsg(`Congratulations! Successfully verified as: ${result.verifiedIGN}. You can now safely remove the token code from your profile biography.`);
-        setHtmlInput(''); // Clear the text field on successful verification
+        setSuccessMsg(`✓ Congratulations! Successfully verified as: ${result.verifiedIGN}. You can now safely remove the code from your profile biography.`);
       } else {
-        setErrorMsg(result.error || 'Token checking failed. Ensure you copied it fully and saved.');
+        // Only show cooldown on actual verification attempts, not on errors
+        setVerificationCooldown(false);
+        setCooldownSeconds(0);
+        setErrorMsg(result.error || 'Verification failed. Please try again.');
       }
     } catch (err: any) {
       console.error(err);
-      setErrorMsg('Network error requesting Netlify validator function. Try again shortly.');
+      setVerificationCooldown(false);
+      setCooldownSeconds(0);
+      setErrorMsg('Network error reaching verification service. Please try again shortly.');
     } finally {
       setVerifying(false);
     }
@@ -1680,32 +1684,28 @@ export default function MarketTab({
                           </a>) and press <strong className="text-[#facc15] font-extrabold underline uppercase">REFRESH (F5 / CTRL+R)</strong>! If you do not refresh the public profile, warframe.market will serve stale cached data and verification will fail.</span>
                         </li>
                         <li>
-                          <span>Right-click anywhere on that refreshed page, and select <strong className="text-white font-medium">View Page Source</strong> (or press <kbd className="bg-[#0c0d10] border border-[#2a2c33] text-zinc-300 px-1 py-0.5 rounded text-[9px] font-mono">CTRL + U</kbd> on PC, <kbd className="bg-[#0c0d10] border border-[#2a2c33] text-zinc-300 px-1 py-0.5 rounded text-[9px] font-mono">CMD + Option + U</kbd> on Mac).</span>
+                          <span>Visit your Warframe.Market profile page and click <strong className="text-white font-medium">Edit Profile</strong>. Navigate to the <strong className="text-white font-medium">"About" / "Biography"</strong> section.</span>
                         </li>
                         <li className="space-y-1.5">
-                          <span>Select all text on that source tab (<strong className="text-white font-medium">CTRL + A</strong> / <strong className="text-white font-medium">CMD + A</strong>), copy it, and paste it fully in the box below:</span>
-                          <textarea
-                            rows={3}
-                            value={htmlInput}
-                            onChange={(e) => setHtmlInput(e.target.value)}
-                            onPaste={handleSourcePaste}
-                            maxLength={100000}
-                            placeholder="Right-click on your refreshed profile -> View Page Source -> Copy all source (CTRL+A) and paste here..."
-                            className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-2.5 py-2 text-[10px] text-[#e0e1e6] focus:outline-none placeholder:text-zinc-600 font-mono resize-none mt-1"
-                          />
-                          <div className="flex justify-between items-center text-[9px] text-zinc-500 font-mono">
-                            <span>*Securely parsed of session data locally in your tab</span>
-                            <span>{htmlInput.length.toLocaleString()} / 100,000</span>
-                          </div>
-
-                          <div className="mt-2 p-2 bg-[#0d1210] border border-emerald-950/40 rounded text-[9px] text-[#8fa89b] leading-normal font-mono flex gap-1.5 items-start">
-                            <span className="text-[#a1e2b5]">🔒 SECURE SANDBOX ON PASTE:</span>
-                            <span>
-                              Page source code is parsed in-browser inside this tab. Our script discards all orders, session logs, cookies, and tokens (like check_code) instantly to safeguard account parameters before anything leaves your browser.
-                            </span>
+                          <span>Add the verification code anywhere in your biography text:</span>
+                          <div className="w-full bg-[#0c0d10] border border-[#2a2c33] rounded-lg px-2.5 py-2 text-[10px] text-[#d4af37] font-mono select-all truncate">
+                            {userVerification.token}
                           </div>
                         </li>
+                        <li>
+                          <span>Click <strong className="text-white font-medium">Save</strong> on your profile settings, then refresh your profile page (press <kbd className="bg-[#0c0d10] border border-[#2a2c33] text-zinc-300 px-1 py-0.5 rounded text-[9px] font-mono">F5</kbd> or <kbd className="bg-[#0c0d10] border border-[#2a2c33] text-zinc-300 px-1 py-0.5 rounded text-[9px] font-mono">CTRL+R</kbd>).</span>
+                        </li>
+                        <li>
+                          <span>Click <strong className="text-[#facc15] font-extrabold">"Verify Now"</strong> below. The system will securely connect to Warframe.Market API to confirm your identity.</span>
+                        </li>
                       </ol>
+
+                      <div className="mt-3 p-2.5 bg-emerald-950/25 border border-emerald-500/20 rounded-md text-[9px] text-emerald-300 leading-normal font-mono flex gap-2 items-start">
+                        <span className="text-emerald-400 font-bold mt-0.5 shrink-0">✓ SECURE:</span>
+                        <span>
+                          Your verification code is verified using Warframe.Market's official API. No HTML parsing, no page source uploads—direct API validation only.
+                        </span>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -1720,11 +1720,25 @@ export default function MarketTab({
                       <button
                         type="button"
                         onClick={handleTriggerValidation}
-                        disabled={verifying}
+                        disabled={verifying || verificationCooldown}
                         className="py-2.5 bg-[#d4af37] hover:bg-[#b08d26] disabled:opacity-50 text-black font-semibold text-[10px] uppercase tracking-wider rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        {verifying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-                        Verify Now
+                        {verifying ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Verifying...
+                          </>
+                        ) : verificationCooldown ? (
+                          <>
+                            <Clock className="w-3.5 h-3.5" />
+                            Wait {cooldownSeconds}s
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            Verify Now
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

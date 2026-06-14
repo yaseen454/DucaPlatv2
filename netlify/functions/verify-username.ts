@@ -1,104 +1,87 @@
 import { Handler } from "@netlify/functions";
-import { parse } from "node-html-parser";
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
-// Polyfill fetch for node environments older than Node 18,
-// though native fetch is available on modern Netlify Node runtimes
-const fetchWithRetry = async (url: string, options: RequestInit, retries = 5, delay = 500): Promise<Response> => {
+/**
+ * Strongly-typed WFM v2 API Response Contracts
+ */
+interface WfmUserProfile {
+  id: string;
+  ingame_name: string;
+  about?: string;
+  banned?: boolean;
+  avatar?: string;
+}
+
+interface WfmApiResponse {
+  payload?: {
+    profile: WfmUserProfile;
+  };
+  error?: string;
+}
+
+/**
+ * Defensive fetch with exponential backoff retry mechanism
+ */
+const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, delay = 1000): Promise<Response> => {
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, options);
-      // If we got a 429 Too Many Requests or 5xx server error, we retry.
-      // For standard 404 or 403, we can either retry or fail. Forums can rate limit with 429 or 403 sometimes.
+      // Retry on rate limit or server error
       if (response.status === 429 || response.status >= 500) {
         throw new Error(`HTTP ${response.status}`);
       }
       return response;
     } catch (err) {
       if (i === retries - 1) throw err;
-      console.warn(`Fetch retry ${i + 1}/${retries} failed. Retrying in ${delay}ms...`);
+      console.warn(`Fetch retry ${i + 1}/${retries} failed for ${url}. Retrying in ${delay}ms...`);
       await new Promise((res) => setTimeout(res, delay));
       delay *= 2; // Exponential backoff
     }
   }
-  throw new Error("Failed to fetch page after retries.");
+  throw new Error("Failed to fetch after retries.");
 };
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ error: "Method Not Allowed" }),
     };
   }
 
   try {
     const body = event.body ? JSON.parse(event.body) : {};
-    const { uid, claimedIGN, htmlSource, action } = body;
+    const { uid, claimedIGN, verificationCode, action } = body;
 
-    if (!uid || !claimedIGN) {
+    if (!uid) {
       return {
         statusCode: 400,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Missing uid or claimedIGN in request body." }),
+        body: JSON.stringify({ error: "Missing uid in request body." }),
       };
     }
-
-    const extractWFMProfileUsername = (input: string): string => {
-      let val = input.trim();
-      // Handle warframe.market/profile/username urls
-      if (val.toLowerCase().includes("warframe.market/profile/")) {
-        const parts = val.split(/warframe\.market\/profile\//i);
-        if (parts.length > 1) {
-          val = parts[1];
-        }
-      } else if (val.toLowerCase().includes("forums.warframe.com/profile/")) {
-        // Fallback for older links or forum layout formats
-        const parts = val.split(/forums\.warframe\.com\/profile\//i);
-        if (parts.length > 1) {
-          val = parts[1];
-        }
-        if (val.includes("-")) {
-          const blocks = val.split("-");
-          if (/^\d+$/.test(blocks[0])) {
-            val = blocks.slice(1).join("-");
-          }
-        }
-      }
-      while (val.endsWith("/")) {
-        val = val.slice(0, -1);
-      }
-      if (val.includes("?")) {
-        val = val.split("?")[0];
-      }
-      if (val.includes("/")) {
-        val = val.split("/").pop() || val;
-      }
-      return val.trim();
-    };
-
-    const parsedSlug = extractWFMProfileUsername(claimedIGN);
-    const normalizedIGN = parsedSlug.toLowerCase();
 
     // Initialize Firebase Admin securely
     if (!getApps().length) {
       const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
       const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-      
+
       if (!clientEmail || !privateKey) {
+        console.error("Firebase credentials missing from environment");
         return {
           statusCode: 500,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ error: "FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY env keys are missing on the server." }),
+          body: JSON.stringify({ error: "Verification service temporarily unavailable. Please try again later." }),
         };
       }
-      
+
       const serviceAccount = {
         client_email: clientEmail,
-        private_key: privateKey.replace(/\\n/g, "\n"), // Handle escaped newlines
+        private_key: privateKey.replace(/\\n/g, "\n"),
       };
-      
+
       initializeApp({
         credential: cert(serviceAccount as any),
       });
@@ -106,8 +89,18 @@ export const handler: Handler = async (event) => {
 
     const db = getFirestore();
 
-    // 1. ACTION: UPDATE CASING ONLY (Case-insensitive correction)
+    /**
+     * ACTION: Update username casing (verified state only)
+     */
     if (action === "update-casing") {
+      if (!claimedIGN) {
+        return {
+          statusCode: 400,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ error: "Missing claimedIGN for casing update." }),
+        };
+      }
+
       const userDocRef = db.collection("users").doc(uid);
       const userDoc = await userDocRef.get();
 
@@ -115,304 +108,242 @@ export const handler: Handler = async (event) => {
         return {
           statusCode: 404,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ error: "User profile document not found." }),
+          body: JSON.stringify({ error: "User profile not found." }),
         };
       }
 
       const userData = userDoc.data() || {};
-      const { status, normalizedIGN: savedNormalized, verifiedIGN: savedVerified } = userData.verification || {};
+      const verification = userData.verification || {};
 
-      if (status !== "verified") {
+      if (verification.status !== "verified") {
         return {
-          statusCode: 200,
+          statusCode: 403,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             success: false,
-            error: "You must be officially verified before adjusting capitalization."
+            error: "You must be verified before updating capitalization.",
           }),
         };
       }
 
-      if (normalizedIGN !== savedNormalized) {
+      const newCasingNormalized = claimedIGN.toLowerCase().trim();
+      const savedNormalized = verification.normalizedIGN;
+
+      if (newCasingNormalized !== savedNormalized) {
         return {
-          statusCode: 200,
+          statusCode: 400,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             success: false,
-            error: `Name "${parsedSlug}" does not match your verified username "${savedVerified}" (case-insensitive).`
+            error: `Capitalization must remain the same name (case-insensitive match required).`,
           }),
         };
       }
 
       const batch = db.batch();
       batch.update(userDocRef, {
-        "verification.verifiedIGN": parsedSlug,
-        "verification.claimedIGN": parsedSlug,
+        "verification.verifiedIGN": claimedIGN,
         "verification.updatedAt": FieldValue.serverTimestamp(),
       });
 
-      // Update all listings belonging to this seller
       const listingsSnap = await db.collection("listings")
         .where("sellerUid", "==", uid)
         .get();
 
       listingsSnap.docs.forEach((doc) => {
-        batch.update(doc.ref, {
-          sellerIGN: parsedSlug
-        });
+        batch.update(doc.ref, { sellerIGN: claimedIGN });
       });
 
       await batch.commit();
-
-      console.log(`[Verifier] Corrected IGN capitalization securely to "${parsedSlug}" for UID: ${uid}`);
+      console.log(`[Verifier] Casing updated to "${claimedIGN}" for UID: ${uid}`);
 
       return {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ success: true, verifiedIGN: claimedIGN }),
+      };
+    }
+
+    /**
+     * ACTION: Primary verification via WFM v2 API
+     */
+    if (!claimedIGN || !verificationCode) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Missing claimedIGN or verification code." }),
+      };
+    }
+
+    const normalizedIGN = claimedIGN.toLowerCase().trim();
+
+    // Prevent duplicate verification (username already verified by another user)
+    const dupeQuery = await db.collection("users")
+      .where("verification.status", "==", "verified")
+      .where("verification.normalizedIGN", "==", normalizedIGN)
+      .get();
+
+    if (!dupeQuery.empty) {
+      const conflicts = dupeQuery.docs.filter((doc) => doc.id !== uid);
+      if (conflicts.length > 0) {
+        console.warn(`[Verifier] Attempted duplicate claim of verified name: ${normalizedIGN}`);
+        return {
+          statusCode: 409,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            success: false,
+            error: "This Warframe username is already verified by another user.",
+          }),
+        };
+      }
+    }
+
+    /**
+     * Query WFM v2 API with JWT authorization
+     */
+    const wfmApiUrl = `https://api.warframe.market/v2/profile/${encodeURIComponent(normalizedIGN)}`;
+    const wfmJwtToken = process.env.WFM_JWT_TOKEN;
+
+    if (!wfmJwtToken) {
+      console.error("[Verifier] WFM_JWT_TOKEN missing from environment");
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Verification service temporarily unavailable. Please try again later." }),
+      };
+    }
+
+    let wfmUserData: WfmUserProfile | null = null;
+
+    try {
+      console.log(`[Verifier] Fetching WFM v2 profile: ${normalizedIGN}`);
+      const wfmResponse = await fetchWithRetry(wfmApiUrl, {
+        method: "GET",
+        headers: {
+          "Authorization": `JWT ${wfmJwtToken}`,
+          "Language": "en",
+          "User-Agent": "DucaPlat/2.0 (+https://ducaplat.com)",
+        },
+      });
+
+      if (wfmResponse.status === 404) {
+        console.warn(`[Verifier] WFM profile not found: ${normalizedIGN}`);
+        return {
+          statusCode: 404,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            success: false,
+            error: "Warframe.Market profile not found. Please check your username.",
+          }),
+        };
+      }
+
+      if (!wfmResponse.ok) {
+        console.warn(`[Verifier] WFM API error: ${wfmResponse.status}`);
+        return {
+          statusCode: 503,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            success: false,
+            error: "Warframe.Market service temporarily unavailable. Please try again in a moment.",
+          }),
+        };
+      }
+
+      const wfmData: WfmApiResponse = await wfmResponse.json();
+      wfmUserData = wfmData.payload?.profile || null;
+
+      if (!wfmUserData) {
+        console.warn(`[Verifier] Invalid WFM response structure for: ${normalizedIGN}`);
+        return {
+          statusCode: 500,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ error: "Failed to retrieve profile data. Please try again." }),
+        };
+      }
+
+      // Security guard: check if account is banned
+      if (wfmUserData.banned) {
+        console.warn(`[Verifier] Blocked verification of banned account: ${wfmUserData.ingame_name}`);
+        return {
+          statusCode: 403,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            success: false,
+            error: "This Warframe.Market account is banned and cannot be verified.",
+          }),
+        };
+      }
+    } catch (wfmError) {
+      console.error("[Verifier] WFM API fetch failed:", wfmError);
+      return {
+        statusCode: 503,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          success: true,
-          verifiedIGN: parsedSlug,
+          success: false,
+          error: "Unable to reach Warframe.Market. Please try again shortly.",
         }),
       };
     }
 
-    if (!htmlSource || typeof htmlSource !== "string" || !htmlSource.trim()) {
+    /**
+     * Validate verification code presence in profile "about" field
+     */
+    const aboutText = (wfmUserData.about || "").trim().toLowerCase();
+    const codeToFind = verificationCode.trim().toLowerCase();
+
+    if (!aboutText.includes(codeToFind)) {
+      console.warn(
+        `[Verifier] Verification code not found in profile bio for: ${normalizedIGN}`
+      );
       return {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           success: false,
-          error: "Please paste your warframe.market profile page source (CTRL+U/CMD+U code) in the box below before verifying."
+          error: `Verification code not found in your Warframe.Market profile "About" section. Please add "${verificationCode}" to your profile bio and try again.`,
         }),
       };
     }
 
-    // 1. DUPLICATE USERNAME CHECK: Prevent other users from hijack/claiming an already verified IGN
-    const dupeQuery = await db.collection("users")
-      .where("verification.status", "==", "verified")
-      .where("verification.normalizedIGN", "==", normalizedIGN)
-      .get();
-    
-    if (!dupeQuery.empty) {
-      const conflicts = dupeQuery.docs.filter(doc => doc.id !== uid);
-      if (conflicts.length > 0) {
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            success: false,
-            error: `The Warframe IGN "${parsedSlug}" is already officially verified by another DucaPlat user. A single in-game name cannot be claimed by duplicate accounts.`
-          }),
-        };
-      }
-    }
-
+    /**
+     * Atomic Firestore update: Mark as verified
+     */
     const userDocRef = db.collection("users").doc(uid);
-    const userDoc = await userDocRef.get();
-
-    if (!userDoc.exists) {
-      return {
-        statusCode: 404,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "User profile document not found." }),
-      };
-    }
-
-    const userData = userDoc.data() || {};
-    const verification = userData.verification || {};
-    const token = verification.token;
-
-    if (!token) {
-      return {
-        statusCode: 400,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "No active verification token found for this user." }),
-      };
-    }
-
-    // 2. DIRECT SERVER-SIDE VERIFICATION ATTEMPTS (bulletproof against clipboard/paste HTML forgings)
-    let secureTokenVerified = false;
-    let verifiedIGN = "";
-
-    // Attempt A: Direct JSON fetch from official warframe.market profile API
-    try {
-      console.log(`[Verifier] Querying warframe.market official API for: ${normalizedIGN}`);
-      const apiRes = await fetch(`https://api.warframe.market/v1/profile/${normalizedIGN}`, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 DucaPlat/2.0 (Identity Certification Engine)"
-        }
-      });
-
-      if (apiRes.ok) {
-        const apiData = await apiRes.json();
-        const profile = apiData.payload?.profile;
-        if (profile) {
-          const bioRaw = (profile.about_raw || "").trim().toLowerCase();
-          const bioHtml = (profile.about || "").trim().toLowerCase();
-          const lowercaseToken = token.trim().toLowerCase();
-          
-          if (bioRaw.includes(lowercaseToken) || bioHtml.includes(lowercaseToken)) {
-            secureTokenVerified = true;
-            verifiedIGN = profile.ingame_name || parsedSlug;
-            console.log(`[Verifier] Secure API Verification SUCCESS for user ${verifiedIGN}`);
-          }
-        }
-      } else {
-        console.warn(`[Verifier] warframe.market API fetch status: ${apiRes.status}. Trying HTML fallback...`);
-      }
-    } catch (apiErr) {
-      console.warn("[Verifier] warframe.market API fetch timed out or failed:", apiErr);
-    }
-
-    // Attempt B: If API didn't work (e.g. rate limit), attempt a fallback direct server-side HTML fetch
-    if (!secureTokenVerified) {
-      try {
-        console.log(`[Verifier] Fallback fetching public profile page HTML for: ${normalizedIGN}`);
-        const htmlRes = await fetch(`https://warframe.market/profile/${normalizedIGN}`, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 DucaPlat/2.0"
-          }
-        });
-
-        if (htmlRes.ok) {
-          const htmlText = await htmlRes.text();
-          const croppedHtml = htmlText.substring(0, 80000).toLowerCase();
-          const lowercaseToken = token.trim().toLowerCase();
-          
-          if (croppedHtml.includes(lowercaseToken)) {
-            secureTokenVerified = true;
-            verifiedIGN = parsedSlug;
-            console.log(`[Verifier] Fallback HTML Verification SUCCESS for user ${verifiedIGN}`);
-          }
-        } else {
-          console.warn(`[Verifier] Fallback HTML fetch status: ${htmlRes.status}`);
-        }
-      } catch (htmlErr) {
-        console.warn("[Verifier] Fallback HTML profile fetch failed or timed out:", htmlErr);
-      }
-    }
-
-    // Attempt C: If BOTH backend fetches are blocked/fail, parse the pasted htmlSource (legacy path, protected by unique check)
-    if (!secureTokenVerified) {
-      console.log(`[Verifier] Both server-side fetches failed or blocked. Processing pasted HTML source code fallback...`);
-      
-      const html = htmlSource.substring(0, 15000);
-      const headerLines = html.split(/\r?\n/).slice(0, 100).join("\n");
-
-      // Extract exact case-sensitive username from title or page links using clean, bounded regex matches
-      // 1. Try case-sensitive Title tag first (e.g. <title>Profile - TennoMerchant | Orders</title>)
-      const titleMatch = headerLines.match(/<title>Profile\s*-\s*(.*?)\s*\|\s*Orders<\/title>/i);
-      if (titleMatch && titleMatch[1]) {
-        verifiedIGN = titleMatch[1].trim();
-      } else {
-        // 2. Try case-sensitive og:title tag as backup
-        const ogTitleMatch = headerLines.match(/<meta\s+property="og:title"\s+content="Profile\s*-\s*(.*?)\s*\|\s*Orders"/i);
-        if (ogTitleMatch && ogTitleMatch[1]) {
-          verifiedIGN = ogTitleMatch[1].trim();
-        } else {
-          // 3. Try canonical URL fallback
-          const canonicalMatch = headerLines.match(/<link\s+rel="canonical"\s+href="[^"]*?warframe\.market\/(?:[a-z]{2}\/)?profile\/([a-zA-Z0-9_-]+)"/i);
-          if (canonicalMatch && canonicalMatch[1]) {
-            verifiedIGN = canonicalMatch[1].trim();
-          } else {
-            // 4. Try profile tab link selector links
-            const linkMatch = headerLines.match(/href="(?:\/[a-z]{2})?\/profile\/([a-zA-Z0-9_-]+)"/i);
-            if (linkMatch && linkMatch[1]) {
-              verifiedIGN = linkMatch[1].trim();
-            }
-          }
-        }
-      }
-
-      if (!verifiedIGN) {
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            success: false,
-            error: `Could not parse profile owner's username from the pasted page source. Please make sure you copy the entire raw HTML page source (use CTRL+U/CMD+U, then CTRL+A/CMD+A, then copy) and try again.`
-          }),
-        };
-      }
-
-      // Now check if verifiedIGN matches normalizedIGN (case-insensitive)
-      if (verifiedIGN.toLowerCase() !== normalizedIGN) {
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            success: false,
-            error: `The pasted page source belongs to "${verifiedIGN}", which does not match your claimed username of "${parsedSlug}". Please view page source (CTRL+U/CMD+U) on your own profile (https://warframe.market/profile/${normalizedIGN}) and copy that source HTML.`
-          }),
-        };
-      }
-
-      // Search for meta description first (where the "About Me" / Biography text of the profile is embedded as standard SEO metadata)
-      const descMatch = headerLines.match(/<meta\s+name="description"\s+content="([\s\S]*?)">/i);
-      let aboutText = descMatch ? descMatch[1] : "";
-
-      // Fallback to og:description if name="description" was empty or not matched
-      if (!aboutText) {
-        const ogDescMatch = headerLines.match(/<meta\s+property="og:description"\s+content="([\s\S]*?)">/i);
-        if (ogDescMatch) {
-          aboutText = ogDescMatch[1];
-        }
-      }
-
-      // Ultimate fallback: if description tag parsing is not matching, search the header text safely.
-      if (!aboutText) {
-        aboutText = headerLines;
-      }
-
-      const lowercaseToken = token.trim().toLowerCase();
-      const lowercaseAboutText = aboutText.toLowerCase();
-
-      console.log("Checking token containment in warframe.market profile's Custom About/Bio Info...");
-      const hasToken = lowercaseAboutText.includes(lowercaseToken);
-
-      if (!hasToken) {
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            success: false,
-            error: `Verification token "${token}" was not found in the pasted page source. Ensure you saved "${token}" in your warframe.market "About" (biography) settings, refreshed public page, and then copied the NEW page source (CTRL+U).`
-          }),
-        };
-      }
-    }
-
-    // Secure batch write to verify status
-    console.log(`Verification Succeeded! Case-corrected IGN: ${verifiedIGN}`);
-    
-    // We want the verified IGN to keep the exact case-sensitive casing written when verifying, if it matches case-insensitively
-    const finalVerifiedIGN = (parsedSlug && parsedSlug.toLowerCase() === verifiedIGN.toLowerCase()) ? parsedSlug : verifiedIGN;
-
     const batch = db.batch();
+
     batch.update(userDocRef, {
       "verification.status": "verified",
-      "verification.verifiedIGN": finalVerifiedIGN,
-      "verification.token": null,
-      "verification.updatedAt": FieldValue.serverTimestamp(),
+      "verification.verifiedIGN": wfmUserData.ingame_name,
+      "verification.normalizedIGN": normalizedIGN,
+      "verification.wfmId": wfmUserData.id,
+      "verification.verificationCode": null,
+      "verification.verifiedAt": FieldValue.serverTimestamp(),
     });
 
     await batch.commit();
+
+    console.log(
+      `[Verifier] Verification SUCCESS: ${uid} -> ${wfmUserData.ingame_name}`
+    );
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         success: true,
-        verifiedIGN: finalVerifiedIGN,
+        verifiedIGN: wfmUserData.ingame_name,
       }),
     };
-
   } catch (error: any) {
-    console.error("Netlify verify-username runtime error:", error);
+    console.error("[Verifier] Unexpected runtime error:", error);
+    // Generic error response - never leak internal details
     return {
       statusCode: 500,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Failed to verify. Direct internal server fault." }),
+      body: JSON.stringify({
+        error: "An unexpected error occurred. Please try again later.",
+      }),
     };
   }
 };
