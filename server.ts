@@ -169,8 +169,8 @@ Return a structured JSON list.`;
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`DucaPlat custom full-stack server listening on http://0.0.0.0:${PORT}`);
+  app.listen(PORT, "localhost", () => {
+    console.log(`DucaPlat custom full-stack server listening on http://localhost:${PORT}`);
   });
 }
 
