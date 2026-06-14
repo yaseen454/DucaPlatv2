@@ -34,7 +34,7 @@ service cloud.firestore {
 
     // Validation Validators (Rule-Side Enforcers with Type & Size Checks)
     function isValidUserProfile(data) {
-      return data.uid == request.auth.uid 
+      return (data.uid == null || data.uid == request.auth.uid)
         && (data.email == null || (data.email is string && data.email.size() <= 200))
         && (data.displayName == null || (data.displayName is string && data.displayName.size() <= 150))
         && (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 500))
@@ -48,6 +48,8 @@ service cloud.firestore {
             && (data.verification.normalizedIGN == null || (data.verification.normalizedIGN is string && data.verification.normalizedIGN.size() <= 100))
             && (data.verification.verifiedIGN == null || (data.verification.verifiedIGN is string && data.verification.verifiedIGN.size() <= 100))
             && (data.verification.token == null || (data.verification.token is string && data.verification.token.size() <= 150))
+            && (data.verification.method == null || (data.verification.method is string && (data.verification.method == 'forum' || data.verification.method == 'wfm_api' || data.verification.method == 'pasted_html')))
+            && (data.verification.forumUrl == null || (data.verification.forumUrl is string && data.verification.forumUrl.size() <= 200))
             && (data.verification.updatedAt == null || data.verification.updatedAt is timestamp)
           )
         );
@@ -68,6 +70,7 @@ service cloud.firestore {
         && data.sellerIGN is string && data.sellerIGN.size() <= 100
         && data.normalizedSellerIGN is string && data.normalizedSellerIGN.size() <= 100
         && data.isSellerVerified == true
+        && (data.sellerVerificationMethod == null || (data.sellerVerificationMethod is string && (data.sellerVerificationMethod == 'forum' || data.sellerVerificationMethod == 'wfm_api' || data.sellerVerificationMethod == 'pasted_html')))
         && data.itemName is string && data.itemName.size() <= 200
         && data.price is int && data.price >= 0
         && data.quantity is int && data.quantity > 0

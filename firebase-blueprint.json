@@ -51,6 +51,15 @@
             "token": {
               "type": "string"
             },
+            "method": {
+              "type": "string",
+              "enum": ["forum", "wfm_api", "pasted_html"],
+              "description": "Which verification method was used to certify this user."
+            },
+            "forumUrl": {
+              "type": "string",
+              "description": "The official Warframe Forum profile URL of the user, if verified via forums."
+            },
             "updatedAt": {
               "type": "string",
               "format": "date-time"
@@ -80,6 +89,11 @@
         "isSellerVerified": {
           "type": "boolean",
           "description": "Whether the seller is fully verified."
+        },
+        "sellerVerificationMethod": {
+          "type": "string",
+          "enum": ["forum", "wfm_api", "pasted_html"],
+          "description": "The certified verification path used by the seller."
         },
         "itemName": {
           "type": "string",
