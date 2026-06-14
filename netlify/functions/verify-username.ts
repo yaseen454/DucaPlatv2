@@ -67,8 +67,9 @@ export const handler: Handler = async (event) => {
     if (!getApps().length) {
       const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
       const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+      const projectId = process.env.FIREBASE_PROJECT_ID;
 
-      if (!clientEmail || !privateKey) {
+      if (!clientEmail || !privateKey || !projectId) {
         console.error("Firebase credentials missing from environment");
         return {
           statusCode: 500,
@@ -78,6 +79,7 @@ export const handler: Handler = async (event) => {
       }
 
       const serviceAccount = {
+        project_id: projectId,
         client_email: clientEmail,
         private_key: privateKey.replace(/\\n/g, "\n"),
       };
