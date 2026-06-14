@@ -55,6 +55,7 @@ interface SavedItemsTabProps {
   onRenameEntry: (id: string, newName: string) => void;
   onDeleteEntry: (id: string) => void;
   onClearAll: () => void;
+  onNavigateToCalculator?: () => void;
 }
 
 export default function SavedItemsTab({
@@ -62,7 +63,8 @@ export default function SavedItemsTab({
   onUseEntry,
   onRenameEntry,
   onDeleteEntry,
-  onClearAll
+  onClearAll,
+  onNavigateToCalculator
 }: SavedItemsTabProps) {
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'directory' | 'ocr'>('all');
@@ -142,38 +144,50 @@ export default function SavedItemsTab({
           </p>
         </div>
         
-        {entries.length > 0 && (
-          <div className="flex items-center gap-2 self-start md:self-auto">
-            {showConfirm ? (
-              <div className="flex items-center gap-1.5 bg-[#1c0c0e] border border-red-900/50 rounded-lg p-1.5 transition-all duration-150">
-                <span className="text-[10px] text-red-400 px-2 uppercase font-mono tracking-wider">Are you sure?</span>
-                <button
-                  onClick={() => {
-                    onClearAll();
-                    setShowConfirm(false);
-                  }}
-                  className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-[10px] font-bold uppercase transition"
+        <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto shrink-0">
+          {onNavigateToCalculator && (
+            <button
+              type="button"
+              onClick={onNavigateToCalculator}
+              className="px-4 py-2 bg-[#d4af37]/10 hover:bg-[#d4af37]/20 active:bg-[#d4af37]/35 text-[#d4af37] border border-[#d4af37]/30 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 inline-flex items-center gap-1.5 cursor-pointer select-none active:scale-95"
+            >
+              Go To Calculator ➔
+            </button>
+          )}
+
+          {entries.length > 0 && (
+            <div className="flex items-center gap-2">
+              {showConfirm ? (
+                <div className="flex items-center gap-1.5 bg-[#1c0c0e] border border-red-900/50 rounded-lg p-1.5 transition-all duration-150">
+                  <span className="text-[10px] text-red-400 px-2 uppercase font-mono tracking-wider">Are you sure?</span>
+                  <button
+                    onClick={() => {
+                      onClearAll();
+                      setShowConfirm(false);
+                    }}
+                    className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-[10px] font-bold uppercase transition cursor-pointer"
+                  >
+                    Yes, Clear
+                  </button>
+                  <button
+                    onClick={() => setShowConfirm(false)}
+                    className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setShowConfirm(true)}
+                  className="px-4 py-2 bg-red-950/20 hover:bg-red-950/40 text-red-400 hover:text-red-300 border border-red-900/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition duration-150 select-none uppercase tracking-wider cursor-pointer"
                 >
-                  Yes, Clear
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Clear All History
                 </button>
-                <button
-                  onClick={() => setShowConfirm(false)}
-                  className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[10px] font-bold uppercase transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button 
-                onClick={() => setShowConfirm(true)}
-                className="px-4 py-2 bg-red-950/20 hover:bg-red-950/40 text-red-400 hover:text-red-300 border border-red-900/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition duration-150 select-none uppercase tracking-wider"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Clear All History
-              </button>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {entries.length === 0 ? (

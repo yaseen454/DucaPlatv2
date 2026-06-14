@@ -882,6 +882,7 @@ export default function App() {
                 onRenameEntry={handleRenameSavedInventory}
                 onDeleteEntry={handleDeleteSavedInventory}
                 onClearAll={handleClearAllSavedInventories}
+                onNavigateToCalculator={() => setActiveTab('Calculator')}
               />
             )}
 
@@ -896,7 +897,7 @@ export default function App() {
             )}
 
             {activeTab === 'Help' && (
-              <AboutInfo />
+              <AboutInfo onNavigateToCalculator={() => setActiveTab('Calculator')} />
             )}
           </motion.div>
         </AnimatePresence>

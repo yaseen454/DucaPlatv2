@@ -35,18 +35,34 @@ function DucatValue({ val, size = "w-3 h-3", className = "" }: { val: string | n
   );
 }
 
-export default function AboutInfo() {
+interface AboutInfoProps {
+  onNavigateToCalculator?: () => void;
+}
+
+export default function AboutInfo({ onNavigateToCalculator }: AboutInfoProps) {
   return (
     <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-6 shadow-2xl space-y-8">
       {/* Introduction */}
-      <div className="space-y-3">
-        <h2 className="text-2xl font-light text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wider" style={{ fontFamily: "'Georgia', serif" }}>
-          <Info className="w-6 h-6 text-[#d4af37]" />
-          Trade Analytics & Educational Concepts
-        </h2>
-        <p className="text-sm text-[#c4c5cc] leading-relaxed max-w-4xl">
-          DucaPlat integrates real-time inventory counts with trade economics and mathematical modeling. By running hundreds of pricing combinations across distinct rarity tiers, we deliver the most reliable analysis of Warframe's second-hand prime trade markets.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 pb-5 border-b border-[#2a2c33]/40">
+        <div className="space-y-3 flex-1">
+          <h2 className="text-2xl font-light text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wider" style={{ fontFamily: "'Georgia', serif" }}>
+            <Info className="w-6 h-6 text-[#d4af37]" />
+            Trade Analytics & Educational Concepts
+          </h2>
+          <p className="text-sm text-[#c4c5cc] leading-relaxed max-w-3xl">
+            DucaPlat integrates real-time inventory counts with trade economics and mathematical modeling. By running hundreds of pricing combinations across distinct rarity tiers, we deliver the most reliable analysis of Warframe's second-hand prime trade markets.
+          </p>
+        </div>
+
+        {onNavigateToCalculator && (
+          <button
+            type="button"
+            onClick={onNavigateToCalculator}
+            className="px-5 py-3 bg-[#d4af37]/10 hover:bg-[#d4af37]/20 active:bg-[#d4af37]/35 text-[#d4af37] border border-[#d4af37]/30 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 shrink-0"
+          >
+            Go to Calculator ➔
+          </button>
+        )}
       </div>
 
       {/* NEW: Trade Chat Integration & The "Weight of Gold" Explanation */}

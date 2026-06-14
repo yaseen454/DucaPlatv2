@@ -4,7 +4,7 @@
  */
 import React, { useState } from 'react';
 import { InventoryCount } from '../types';
-import { Sparkles, Coins, TrendingUp, Bookmark } from 'lucide-react';
+import { Sparkles, Coins, TrendingUp, Bookmark, Trash2 } from 'lucide-react';
 import { PriceRangesConfig } from '../utils/mathUtils';
 import platinumIcon from '../data/platinum.png';
 import ducatIcon from '../data/480px-OrokinDucats.png';
@@ -210,7 +210,16 @@ export default function ManualInput({
               </div>
             </div>
 
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => updateField(cat.key, 0)}
+                disabled={counts[cat.key] === 0}
+                className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:text-red-400 disabled:opacity-0 disabled:pointer-events-none bg-red-950/10 border border-zinc-800 disabled:border-transparent rounded-lg transition-all duration-150 cursor-pointer"
+                title="Reset tier count"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
               <button 
                 type="button"
                 onClick={() => decrement(cat.key)}
@@ -234,16 +243,6 @@ export default function ManualInput({
               >
                 +
               </button>
-              {counts[cat.key] > 0 && (
-                <button
-                  type="button"
-                  onClick={() => updateField(cat.key, 0)}
-                  className="text-[11px] text-zinc-500 hover:text-red-400 transition cursor-pointer ml-1 px-1 font-mono hover:font-bold"
-                  title="Clear"
-                >
-                  ×
-                </button>
-              )}
             </div>
           </div>
         ))}
