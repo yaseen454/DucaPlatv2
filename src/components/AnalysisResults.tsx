@@ -68,10 +68,10 @@ export default function AnalysisResults({
 
   const handleCopyTradeChat = (type: string, prices: number[]) => {
     const chatText = `WTS Prime Junk 15 :ducats: = ${prices[0]} :platinum , ` +
-      `25 :ducats: = ${prices[1]} :platinum , ` +
-      `45 :ducats: = ${prices[2]} :platinum , ` +
-      `65 :ducats: = ${prices[3]} :platinum , ` +
-      `100 :ducats: = ${prices[4]} :platinum`;
+      `25 :ducats: = ${prices[1]} :platinum: , ` +
+      `45 :ducats: = ${prices[2]} :platinum: , ` +
+      `65 :ducats: = ${prices[3]} :platinum: , ` +
+      `100 :ducats: = ${prices[4]} :platinum:`;
     navigator.clipboard.writeText(chatText).then(() => {
       setCopiedType(type);
       setTimeout(() => {
