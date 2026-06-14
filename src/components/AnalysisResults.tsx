@@ -67,7 +67,7 @@ export default function AnalysisResults({
   const [copiedType, setCopiedType] = useState<string | null>(null);
 
   const handleCopyTradeChat = (type: string, prices: number[]) => {
-    const chatText = `WTS Prime Junk 15 :ducats: = ${prices[0]} :platinum , ` +
+    const chatText = `WTS Prime Junk 15 :ducats: = ${prices[0]} :platinum: , ` +
       `25 :ducats: = ${prices[1]} :platinum: , ` +
       `45 :ducats: = ${prices[2]} :platinum: , ` +
       `65 :ducats: = ${prices[3]} :platinum: , ` +
