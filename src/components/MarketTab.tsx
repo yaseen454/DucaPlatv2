@@ -517,18 +517,21 @@ export default function MarketTab() {
                 {userVerification.status === 'unverified' && (
                   <form onSubmit={handleInitiateVerification} className="space-y-3">
                     <p className="text-xs text-[#8e9299] leading-relaxed">
-                      To safely post trades, prove you own your In-Game Name. Paste your <strong>Warframe.market Profile URL</strong> (or username) below:
+                      To safely post trades, prove you own your In-Game Name. Enter your <strong>exact warframe.market Username</strong> below (capitalization must match exactly):
                     </p>
                     <div className="space-y-2">
-                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">Your warframe.market Username or Profile Link</label>
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">Your exact warframe.market Username</label>
                       <input
                         type="text"
-                        placeholder="e.g. shyknees2 or https://warframe.market/profile/shyknees2"
+                        placeholder="e.g. ShyKnees2 (case-sensitive)"
                         value={claimedInput}
                         onChange={(e) => setClaimedInput(e.target.value)}
                         className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder:text-zinc-700"
                         required
                       />
+                      <p className="text-[10px] text-amber-500/80 leading-normal">
+                        ⚠️ Note: The warframe.market API requires your exact capitalization (e.g., if your name has capital letters, enter them exactly).
+                      </p>
                     </div>
                     <button
                       type="submit"
@@ -576,7 +579,7 @@ export default function MarketTab() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <a
-                        href={`https://warframe.market/profile/${userVerification.normalizedIGN}/`}
+                        href={`https://warframe.market/profile/${encodeURIComponent(userVerification.claimedIGN || userVerification.normalizedIGN)}/`}
                         target="_blank"
                         rel="noreferrer"
                         className="py-2.5 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] text-zinc-300 uppercase tracking-wider font-semibold flex items-center justify-center gap-1.5 transition select-none cursor-pointer"

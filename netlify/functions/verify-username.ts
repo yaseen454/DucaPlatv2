@@ -130,14 +130,27 @@ export const handler: Handler = async (event) => {
       "Accept": "application/json"
     };
 
-    const profileUrl = `https://api.warframe.market/v1/profile/${encodeURIComponent(normalizedIGN)}`;
+    // We will attempt with actual user capitalization (parsedSlug) first,
+    // and if that fails with a 404, try the fully-lowercased version (normalizedIGN) as a fallback.
+    const firstUrl = `https://api.warframe.market/v1/profile/${encodeURIComponent(parsedSlug)}`;
 
-    console.log(`Fetching WFM profile: ${profileUrl}`);
+    console.log(`Fetching WFM profile: ${firstUrl}`);
     let response: Response;
     try {
-      response = await fetchWithRetry(profileUrl, {
+      response = await fetchWithRetry(firstUrl, {
         headers: wfmHeaders,
       });
+
+      if (response.status === 404 && parsedSlug !== normalizedIGN) {
+        console.log(`Exact capitalized username not found (HTTP 404). Trying lowercased fallback: ${normalizedIGN}`);
+        const fallbackUrl = `https://api.warframe.market/v1/profile/${encodeURIComponent(normalizedIGN)}`;
+        const fallbackRes = await fetchWithRetry(fallbackUrl, {
+          headers: wfmHeaders,
+        });
+        if (fallbackRes.ok || fallbackRes.status !== 404) {
+          response = fallbackRes;
+        }
+      }
     } catch (fetchErr: any) {
       console.error("WFM API fetch failed:", fetchErr);
       return {
