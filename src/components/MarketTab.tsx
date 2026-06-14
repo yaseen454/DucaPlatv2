@@ -35,10 +35,15 @@ import {
   MessageSquare,
   HelpCircle,
   Tag,
-  Loader2
+  Loader2,
+  TrendingUp,
+  Bookmark
 } from 'lucide-react';
 import { PRIME_ITEMS } from '../data/primeData';
 import { SourceParserService } from '../utils/verificationParser';
+import { InventoryCount } from '../types';
+import platinumIcon from '../data/platinum.png';
+import ducatIcon from '../data/480px-OrokinDucats.png';
 
 // Generate WF-VERIFY-[8 alphanumeric] token
 function generateVerifyToken(): string {
@@ -62,6 +67,13 @@ interface MarketListing {
   type: 'WTS' | 'WTB';
   status: 'active' | 'sold' | 'cancelled';
   createdAt: any;
+  // bulk junk fields
+  isPrimeJunk?: boolean;
+  counts?: InventoryCount;
+  totalDucats?: number;
+  totalParts?: number;
+  partDistribution?: string;
+  tradesRequired?: number;
 }
 
 interface UserVerification {
@@ -122,7 +134,7 @@ export default function MarketTab() {
   });
   
   // Local UI / Form states
-  const [marketSubTab, setMarketSubTab] = useState<'browse' | 'manage'>('browse');
+  const [marketSubTab, setMarketSubTab] = useState<'browse' | 'manage' | 'saved'>('browse');
   const [claimedInput, setClaimedInput] = useState('');
   const [htmlInput, setHtmlInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -130,6 +142,47 @@ export default function MarketTab() {
   const [verifiedFilter, setVerifiedFilter] = useState<boolean>(false);
   const [copiedToken, setCopiedToken] = useState(false);
   const [copiedCommandId, setCopiedCommandId] = useState<string | null>(null);
+
+  // Saved presets & bulk custom junk states
+  const [savedTrades, setSavedTrades] = useState<any[]>([]);
+  const [bulkCounts, setBulkCounts] = useState<InventoryCount>({
+    bronze15: 0,
+    bronze25: 0,
+    silver45: 0,
+    silver65: 0,
+    gold: 0
+  });
+
+  const loadSavedTrades = () => {
+    try {
+      const existing = localStorage.getItem('saved_trades_for_market');
+      if (existing) {
+        setSavedTrades(JSON.parse(existing));
+      } else {
+        setSavedTrades([]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    loadSavedTrades();
+  }, [marketSubTab]);
+
+  const handleRemoveSavedTrade = (id: string) => {
+    try {
+      const existing = localStorage.getItem('saved_trades_for_market');
+      if (existing) {
+        const trades = JSON.parse(existing);
+        const filtered = trades.filter((t: any) => t.id !== id);
+        localStorage.setItem('saved_trades_for_market', JSON.stringify(filtered));
+        setSavedTrades(filtered);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
   
   // Create listing states
   const [itemName, setItemName] = useState('');
@@ -143,6 +196,9 @@ export default function MarketTab() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [showCasingInput, setShowCasingInput] = useState(false);
+  const [newCasingValue, setNewCasingValue] = useState('');
+  const [casingLoading, setCasingLoading] = useState(false);
 
   // Suggested / popular prime search lists
   const [itemSuggestions, setItemSuggestions] = useState<string[]>([]);
@@ -395,6 +451,47 @@ export default function MarketTab() {
     }
   };
 
+  const handleUpdateCasing = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !userVerification.verifiedIGN) return;
+    const inputval = newCasingValue.trim();
+    if (!inputval) return;
+
+    if (inputval.toLowerCase() !== userVerification.normalizedIGN) {
+      setErrorMsg(`Adjusted capitalization must be case-insensitively identical to your verified name "${userVerification.verifiedIGN}". You cannot change to a completely different user.`);
+      return;
+    }
+
+    setCasingLoading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    try {
+      const res = await fetch('/.netlify/functions/verify-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: user.uid,
+          claimedIGN: inputval,
+          action: 'update-casing'
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMsg(`✓ Capitalization corrected successfully in profile and active listings! Selected casing: ${data.verifiedIGN}`);
+        setShowCasingInput(false);
+      } else {
+        setErrorMsg(data.error || 'Failed to update casing of username.');
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Failed to call serverless function. Please try again shortly.');
+    } finally {
+      setCasingLoading(false);
+    }
+  };
+
   // Submit live listing
   const handleCreateListing = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -439,6 +536,156 @@ export default function MarketTab() {
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'listings');
       setErrorMsg('Firestore rejected the listing. Verify rule settings.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePublishPrimeJunk = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (!user) {
+      setErrorMsg('Log in using Google first to publish trades.');
+      return;
+    }
+
+    if (userVerification.status !== 'verified') {
+      setErrorMsg('Identity verification is required. Complete verification under "My Trade Panel & Verification" first.');
+      return;
+    }
+
+    const totalParts = (bulkCounts.bronze15 || 0) + 
+      (bulkCounts.bronze25 || 0) + 
+      (bulkCounts.silver45 || 0) + 
+      (bulkCounts.silver65 || 0) + 
+      (bulkCounts.gold || 0);
+    if (totalParts === 0) {
+      setErrorMsg('Cannot publish empty bundle. Specify at least one prime part.');
+      return;
+    }
+
+    const totalDucats = 
+      (bulkCounts.bronze15 || 0) * 15 + 
+      (bulkCounts.bronze25 || 0) * 25 + 
+      (bulkCounts.silver45 || 0) * 45 + 
+      (bulkCounts.silver65 || 0) * 65 + 
+      (bulkCounts.gold || 0) * 100;
+
+    const pricePlat = Math.round(totalDucats / 25);
+    const tradesRequired = Math.ceil(totalParts / 6);
+
+    const distList = [];
+    if (bulkCounts.bronze15 > 0) distList.push(`15d x ${bulkCounts.bronze15}`);
+    if (bulkCounts.bronze25 > 0) distList.push(`25d x ${bulkCounts.bronze25}`);
+    if (bulkCounts.silver45 > 0) distList.push(`45d x ${bulkCounts.silver45}`);
+    if (bulkCounts.silver65 > 0) distList.push(`65d x ${bulkCounts.silver65}`);
+    if (bulkCounts.gold > 0) distList.push(`100d x ${bulkCounts.gold}`);
+    const partDistribution = distList.join(', ');
+
+    setActionLoading(true);
+
+    try {
+      await addDoc(collection(db, 'listings'), {
+        sellerUid: user.uid,
+        sellerIGN: userVerification.verifiedIGN,
+        normalizedSellerIGN: userVerification.normalizedIGN,
+        isSellerVerified: true,
+        itemName: `Bulk Prime Junk (${totalParts} parts)`,
+        price: pricePlat,
+        quantity: 1,
+        type: 'WTS',
+        status: 'active',
+        isPrimeJunk: true,
+        counts: { ...bulkCounts },
+        totalDucats,
+        totalParts,
+        partDistribution,
+        tradesRequired,
+        createdAt: serverTimestamp()
+      });
+
+      setSuccessMsg(`✓ Bulk Prime Junk Bundle successfully listed! ${totalParts} parts for ${pricePlat} Plat (${totalDucats} Ducats).`);
+      setBulkCounts({
+        bronze15: 0,
+        bronze25: 0,
+        silver45: 0,
+        silver65: 0,
+        gold: 0
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'listings');
+      setErrorMsg('Failed to publish bulk junk listing.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePublishPresetDirectly = async (presetCounts: InventoryCount, presetName: string) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (!user) {
+      setErrorMsg('Log in using Google first to publish trades.');
+      return;
+    }
+
+    if (userVerification.status !== 'verified') {
+      setErrorMsg('Identity verification is required. Complete verification under "My Trade Panel & Verification" first.');
+      return;
+    }
+
+    const totalParts = Object.values(presetCounts).reduce((a, b) => a + b, 0);
+    if (totalParts === 0) {
+      setErrorMsg('Cannot publish empty bundle.');
+      return;
+    }
+
+    const totalDucats = 
+      presetCounts.bronze15 * 15 + 
+      presetCounts.bronze25 * 25 + 
+      presetCounts.silver45 * 45 + 
+      presetCounts.silver65 * 65 + 
+      presetCounts.gold * 100;
+
+    const pricePlat = Math.round(totalDucats / 25);
+    const tradesRequired = Math.ceil(totalParts / 6);
+
+    const distList = [];
+    if (presetCounts.bronze15 > 0) distList.push(`15d x ${presetCounts.bronze15}`);
+    if (presetCounts.bronze25 > 0) distList.push(`25d x ${presetCounts.bronze25}`);
+    if (presetCounts.silver45 > 0) distList.push(`45d x ${presetCounts.silver45}`);
+    if (presetCounts.silver65 > 0) distList.push(`65d x ${presetCounts.silver65}`);
+    if (presetCounts.gold > 0) distList.push(`100d x ${presetCounts.gold}`);
+    const partDistribution = distList.join(', ');
+
+    setActionLoading(true);
+
+    try {
+      await addDoc(collection(db, 'listings'), {
+        sellerUid: user.uid,
+        sellerIGN: userVerification.verifiedIGN,
+        normalizedSellerIGN: userVerification.normalizedIGN,
+        isSellerVerified: true,
+        itemName: `Bulk Prime Junk (${totalParts} parts)`,
+        price: pricePlat,
+        quantity: 1,
+        type: 'WTS',
+        status: 'active',
+        isPrimeJunk: true,
+        counts: { ...presetCounts },
+        totalDucats,
+        totalParts,
+        partDistribution,
+        tradesRequired,
+        createdAt: serverTimestamp()
+      });
+
+      setSuccessMsg(`✓ Published preset "${presetName}" directly! Listed ${totalParts} parts for ${pricePlat} Plat.`);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'listings');
+      setErrorMsg('Failed to publish bulk junk listing.');
     } finally {
       setActionLoading(false);
     }
@@ -548,6 +795,23 @@ export default function MarketTab() {
         </button>
 
         <button
+          onClick={() => setMarketSubTab('saved')}
+          className={`flex-1 sm:flex-initial px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all relative -mb-px border-b-2 flex items-center justify-center gap-2 cursor-pointer ${
+            marketSubTab === 'saved'
+              ? 'border-[#d4af37] text-[#d4af37] bg-slate-900/10'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <Tag className="w-4 h-4 shrink-0 text-[#d4af37]" />
+          <span>Saved listings</span>
+          {savedTrades.length > 0 && (
+            <span className="bg-[#0c0d10] text-[#e0e1e6] border border-[#2a2c33] text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">
+              {savedTrades.length}
+            </span>
+          )}
+        </button>
+
+        <button
           onClick={() => setMarketSubTab('manage')}
           className={`flex-1 sm:flex-initial px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all relative -mb-px border-b-2 flex items-center justify-center gap-2 cursor-pointer ${
             marketSubTab === 'manage'
@@ -562,6 +826,405 @@ export default function MarketTab() {
           )}
         </button>
       </div>
+
+      {marketSubTab === 'saved' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fadeIn max-w-7xl mx-auto w-full">
+          {/* Left Column: Manual Quantity Seller / Editor */}
+          <div className="lg:col-span-6 space-y-6">
+            <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-5">
+              <div className="border-b border-[#2a2c33]/40 pb-3">
+                <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide">
+                  <Coins className="w-4 h-4 text-[#d4af37]" />
+                  Bulk Junk Bundle Builder & Seller
+                </h3>
+                <p className="text-[11px] text-[#8e9299] mt-0.5">
+                  Build your bundle manually or click a saved preset from the right-hand panel. Prices automatically compute at <strong className="text-[#d4af37]">25 Ducats : 1 Platinum</strong>.
+                </p>
+              </div>
+
+              {/* Input grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Bronze 15 */}
+                <div className="bg-[#0c0d10] p-3 border border-[#cd7f32]/20 rounded-lg flex items-center justify-between gap-2">
+                  <div>
+                    <span className="block text-[10px] font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (15 Ducats)</span>
+                    <span className="text-[10px] text-zinc-500 font-mono">15d parts count</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setBulkCounts(prev => ({ ...prev, bronze15: Math.max(0, prev.bronze15 - 1) }))}
+                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bulkCounts.bronze15 || ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        setBulkCounts(prev => ({ ...prev, bronze15: val >= 0 ? val : 0 }));
+                      }}
+                      className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBulkCounts(prev => ({ ...prev, bronze15: prev.bronze15 + 1 }))}
+                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bronze 25 */}
+                <div className="bg-[#0c0d10] p-3 border border-[#cd7f32]/45 rounded-lg flex items-center justify-between gap-2">
+                  <div>
+                    <span className="block text-[10px] font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (25 Ducats)</span>
+                    <span className="text-[10px] text-zinc-500 font-mono">25d parts count</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setBulkCounts(prev => ({ ...prev, bronze25: Math.max(0, prev.bronze25 - 1) }))}
+                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bulkCounts.bronze25 || ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        setBulkCounts(prev => ({ ...prev, bronze25: val >= 0 ? val : 0 }));
+                      }}
+                      className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBulkCounts(prev => ({ ...prev, bronze25: prev.bronze25 + 1 }))}
+                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Silver 45 */}
+                <div className="bg-[#0c0d10] p-3 border border-[#c0c0c0]/25 rounded-lg flex items-center justify-between gap-2">
+                  <div>
+                    <span className="block text-[10px] font-extrabold uppercase text-slate-300 tracking-wider">Silver (45 Ducats)</span>
+                    <span className="text-[10px] text-zinc-500 font-mono">45d parts count</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setBulkCounts(prev => ({ ...prev, silver45: Math.max(0, prev.silver45 - 1) }))}
+                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bulkCounts.silver45 || ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        setBulkCounts(prev => ({ ...prev, silver45: val >= 0 ? val : 0 }));
+                      }}
+                      className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBulkCounts(prev => ({ ...prev, silver45: prev.silver45 + 1 }))}
+                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Silver 65 */}
+                <div className="bg-[#0c0d10] p-3 border border-[#c0c0c0]/45 rounded-lg flex items-center justify-between gap-2">
+                  <div>
+                    <span className="block text-[10px] font-extrabold uppercase text-slate-300 tracking-wider">Silver (65 Ducats)</span>
+                    <span className="text-[10px] text-zinc-500 font-mono">65d parts count</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setBulkCounts(prev => ({ ...prev, silver65: Math.max(0, prev.silver65 - 1) }))}
+                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bulkCounts.silver65 || ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        setBulkCounts(prev => ({ ...prev, silver65: val >= 0 ? val : 0 }));
+                      }}
+                      className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBulkCounts(prev => ({ ...prev, silver65: prev.silver65 + 1 }))}
+                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Gold 100 */}
+                <div className="bg-[#0c0d10] p-3 border border-[#d4af37]/30 rounded-lg flex items-center justify-between gap-2 sm:col-span-2">
+                  <div>
+                    <span className="block text-[10px] font-extrabold uppercase text-[#d4af37] tracking-wider">Gold (100 Ducats)</span>
+                    <span className="text-[10px] text-zinc-500 font-mono">100d parts count</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setBulkCounts(prev => ({ ...prev, gold: Math.max(0, prev.gold - 1) }))}
+                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bulkCounts.gold || ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        setBulkCounts(prev => ({ ...prev, gold: val >= 0 ? val : 0 }));
+                      }}
+                      className="w-12 text-center bg-[#14161c] border border-[#d4af37]/30 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBulkCounts(prev => ({ ...prev, gold: prev.gold + 1 }))}
+                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Computed margins info */}
+              {(() => {
+                const totalParts = (bulkCounts.bronze15 || 0) + 
+                  (bulkCounts.bronze25 || 0) + 
+                  (bulkCounts.silver45 || 0) + 
+                  (bulkCounts.silver65 || 0) + 
+                  (bulkCounts.gold || 0);
+                const totalDucats = 
+                  (bulkCounts.bronze15 || 0) * 15 + 
+                  (bulkCounts.bronze25 || 0) * 25 + 
+                  (bulkCounts.silver45 || 0) * 45 + 
+                  (bulkCounts.silver65 || 0) * 65 + 
+                  (bulkCounts.gold || 0) * 100;
+                const pricePlat = Math.round(totalDucats / 25);
+                const tradesRequired = Math.ceil(totalParts / 6);
+
+                return (
+                  <div className="bg-[#0c0d10] p-4 rounded-xl border border-[#2a2c33]/80 space-y-3">
+                    <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Computed Bundle Stats</h4>
+                    <div className="grid grid-cols-2 gap-3.5 pt-1">
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-[#8e9299] uppercase">Total Parts Selected</span>
+                        <div className="text-white text-base font-mono font-extrabold">{totalParts} <span className="text-[10px] text-zinc-500 font-normal font-sans">pieces</span></div>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-[#8e9299] uppercase">Total Ducat Pool</span>
+                        <div className="text-[#d4af37] text-base font-mono font-extrabold flex items-center gap-0.5">
+                          <span>{totalDucats}</span>
+                          <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline" alt="D" referrerPolicy="no-referrer" />
+                        </div>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-[#8e9299] uppercase">Trades Needed</span>
+                        <div className="text-pink-400 text-base font-mono font-extrabold">{tradesRequired} <span className="text-[10px] text-zinc-500 font-normal font-sans">trades (max 6/trade)</span></div>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-[#d4af37] uppercase">Final Price (25:1 Gold Ratio)</span>
+                        <div className="text-emerald-400 text-base font-mono font-extrabold flex items-center gap-0.5">
+                          <span>{pricePlat}</span>
+                          <img src={platinumIcon} className="w-4 h-4 object-contain inline" alt="Pt" referrerPolicy="no-referrer" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-[10px] text-amber-500 leading-normal p-2.5 bg-amber-950/10 border border-amber-900/20 rounded-md">
+                      ⚠️ Note: Players do not buy components individually. Buyers will purchase the entire bulk bundle.
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="pt-2">
+                       {!user ? (
+                        <div className="text-xs text-zinc-500 text-center py-2 border border-dashed border-zinc-800 rounded">
+                          Please Log In via Google to publish trades on the Live Board.
+                        </div>
+                      ) : userVerification.status !== 'verified' ? (
+                        <div className="space-y-2">
+                          <p className="text-[11px] text-red-400 text-center">
+                            You must complete identity verification to post listed trades.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setMarketSubTab('manage')}
+                            className="w-full py-2.5 bg-[#2a2c33] hover:bg-[#3f414a] text-[#d4af37] rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer"
+                          >
+                            Go To Verification Panel &rarr;
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handlePublishPrimeJunk()}
+                          disabled={totalParts === 0 || actionLoading}
+                          className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-black font-extrabold text-xs uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer select-none"
+                        >
+                          {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />}
+                          Publish Bulk Prime Junk Bundle
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Right Column: Saved Drafts Presets */}
+          <div className="lg:col-span-6 space-y-6">
+            <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-4">
+              <div className="border-b border-[#2a2c33]/40 pb-3">
+                <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide">
+                  <Bookmark className="w-4 h-4 text-emerald-400" />
+                  Your Saved Trade Presets
+                </h3>
+                <p className="text-[11px] text-[#8e9299]">
+                  Trade items saved via the <strong className="text-white">"Save to Trades"</strong> buttons in the Calculator, Directory, and OCR Scans.
+                </p>
+              </div>
+
+              {savedTrades.length === 0 ? (
+                <div className="py-12 text-center text-zinc-500 flex flex-col items-center justify-center space-y-3 bg-[#0c0d10]/40 rounded-xl border border-dashed border-[#2a2c33]/60">
+                  <Bookmark className="w-10 h-10 text-zinc-700 animate-pulse" />
+                  <div className="max-w-xs">
+                    <h4 className="text-slate-400 text-xs font-semibold">No trade presets saved yet</h4>
+                    <p className="text-[10px] text-zinc-500 mt-1 leading-relaxed">
+                      Visit the Calculator, search the directory, or scan logs, and hit <strong className="text-emerald-400 font-semibold inline-flex items-center gap-0.5"><TrendingUp className="w-3 h-3 text-emerald-400" /> Save to Trades</strong> to populate this buffer!
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                  {savedTrades.map((trade: any) => {
+                    const totalParts = Object.values(trade.counts).reduce((a: number, b: any) => a + (parseInt(b) || 0), 0) as number;
+                    const totalDucats = 
+                      (parseInt(trade.counts.bronze15) || 0) * 15 + 
+                      (parseInt(trade.counts.bronze25) || 0) * 25 + 
+                      (parseInt(trade.counts.silver45) || 0) * 45 + 
+                      (parseInt(trade.counts.silver65) || 0) * 65 + 
+                      (parseInt(trade.counts.gold) || 0) * 100;
+                    const pricePlat = Math.round(totalDucats / 25);
+
+                    return (
+                      <div key={trade.id} className="bg-[#0c0d10] border border-[#2a2c33] rounded-lg p-3.5 space-y-3 hover:border-emerald-500/30 transition-all duration-150">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <h4 className="text-xs font-bold text-white tracking-wide truncate max-w-[200px]">{trade.name}</h4>
+                            <span className="text-[9px] text-zinc-500 font-mono block">{trade.timestamp}</span>
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 border border-emerald-950 bg-[#0c0d10] text-[#d4af37] border-[#d4af37]/35 rounded-full font-mono uppercase font-bold">
+                            Preset
+                          </span>
+                        </div>
+
+                        {/* Counts grid */}
+                        <div className="grid grid-cols-5 gap-1.5 text-center">
+                          <div className="bg-[#14161c] rounded p-1">
+                            <span className="block text-[8px] text-[#cd7f32] font-mono">B15</span>
+                            <span className="text-xs text-white font-mono">{trade.counts.bronze15}</span>
+                          </div>
+                          <div className="bg-[#14161c] rounded p-1">
+                            <span className="block text-[8px] text-[#cd7f32] font-mono">B25</span>
+                            <span className="text-xs text-white font-mono">{trade.counts.bronze25}</span>
+                          </div>
+                          <div className="bg-[#14161c] rounded p-1">
+                            <span className="block text-[8px] text-[#c0c0c0] font-mono">S45</span>
+                            <span className="text-xs text-white font-mono">{trade.counts.silver45}</span>
+                          </div>
+                          <div className="bg-[#14161c] rounded p-1">
+                            <span className="block text-[8px] text-[#c0c0c0] font-mono">S65</span>
+                            <span className="text-xs text-white font-mono">{trade.counts.silver65}</span>
+                          </div>
+                          <div className="bg-[#14161c] rounded p-1 border border-[#d4af37]/25">
+                            <span className="block text-[8px] text-[#d4af37] font-mono">G100</span>
+                            <span className="text-xs text-white font-mono">{trade.counts.gold}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[10px] text-zinc-400 font-mono">
+                          <span>Parts: <span className="text-white font-bold">{totalParts}</span></span>
+                          <span className="flex items-center gap-0.5">Ducats: <span className="text-[#d4af37] font-bold">{totalDucats}</span><img src={ducatIcon} className="w-3 h-3 object-contain inline" alt="D" referrerPolicy="no-referrer" /></span>
+                          <span className="flex items-center gap-0.5">Price: <span className="text-emerald-400 font-bold">{pricePlat}</span><img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline" alt="P" referrerPolicy="no-referrer" /></span>
+                        </div>
+
+                        {/* Preset Actions */}
+                        <div className="flex items-center gap-2 pt-1 border-t border-[#2a2c33]/50">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setBulkCounts({
+                                bronze15: parseInt(trade.counts.bronze15) || 0,
+                                bronze25: parseInt(trade.counts.bronze25) || 0,
+                                silver45: parseInt(trade.counts.silver45) || 0,
+                                silver65: parseInt(trade.counts.silver65) || 0,
+                                gold: parseInt(trade.counts.gold) || 0,
+                              });
+                              setSuccessMsg(`✓ Loaded items from "${trade.name}" into your Bulk Junk Seller!`);
+                            }}
+                            className="flex-1 py-1 px-3 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-500 rounded text-[10px] uppercase font-bold text-[#e0e1e6] transition cursor-pointer select-none text-center"
+                          >
+                            Load to Editor
+                          </button>
+                          
+                          {userVerification.status === 'verified' && (
+                            <button
+                              type="button"
+                              onClick={() => handlePublishPresetDirectly(trade.counts, trade.name)}
+                              className="py-1 px-3 bg-emerald-950/30 hover:bg-emerald-950/60 border border-emerald-500/20 hover:border-emerald-500 text-emerald-400 hover:text-emerald-300 rounded text-[10px] uppercase font-bold transition cursor-pointer select-none"
+                              title="Publish this specific set directly to public live board"
+                            >
+                              Publish Preset
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSavedTrade(trade.id)}
+                            className="p-1 px-2.5 bg-red-950/10 hover:bg-red-950/30 border border-red-900/35 text-red-400 rounded transition cursor-pointer select-none"
+                            title="Remove draft"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {marketSubTab === 'manage' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fadeIn">
@@ -650,15 +1313,15 @@ export default function MarketTab() {
                             </button>
                           </div>
                         </li>
-                        <li className="text-amber-400 font-medium leading-relaxed">
-                          <span>⚠️ MANDATORY STEP: Save your biography settings, go back to your public profile page (<a
+                        <li className="text-amber-400 font-bold leading-normal p-2.5 bg-amber-950/25 border border-amber-500/20 rounded-md animate-pulse">
+                          <span>⚠️ CRITICAL MANDATORY STEP: After pasting the signature token above into your warframe.market settings page called "About" (biography) and saving it, you MUST go back to your public profile page (<a
                             href={`https://warframe.market/profile/${encodeURIComponent((userVerification.claimedIGN || userVerification.normalizedIGN || '').toLowerCase())}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[#d4af37] font-bold underline hover:text-[#b08d26] inline-flex items-center gap-0.5"
+                            className="text-[#d4af37] font-extrabold underline hover:text-[#b08d26] inline-flex items-center gap-0.5"
                           >
                             {userVerification.claimedIGN} <ExternalLink className="w-3 h-3 inline mb-0.5" />
-                          </a>), and press <strong className="text-white font-bold underline uppercase">REFRESH (F5 / CTRL+R)</strong> so changes take effect!</span>
+                          </a>) and press <strong className="text-[#facc15] font-extrabold underline uppercase">REFRESH (F5 / CTRL+R)</strong>! If you do not refresh the public profile, warframe.market will serve stale cached data and verification will fail.</span>
                         </li>
                         <li>
                           <span>Right-click anywhere on that refreshed page, and select <strong className="text-white font-medium">View Page Source</strong> (or press <kbd className="bg-[#0c0d10] border border-[#2a2c33] text-zinc-300 px-1 py-0.5 rounded text-[9px] font-mono">CTRL + U</kbd> on PC, <kbd className="bg-[#0c0d10] border border-[#2a2c33] text-zinc-300 px-1 py-0.5 rounded text-[9px] font-mono">CMD + Option + U</kbd> on Mac).</span>
@@ -724,6 +1387,55 @@ export default function MarketTab() {
                           {userVerification.verifiedIGN}
                         </span>
                       </div>
+                    </div>
+
+                    {/* Casing correction tools */}
+                    <div className="bg-[#0c0d10] border border-[#2a2c33] rounded-lg p-3 space-y-2">
+                      {!showCasingInput ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] text-[#8e9299]">Casing incorrect or links broken?</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewCasingValue(userVerification.verifiedIGN || '');
+                              setShowCasingInput(true);
+                            }}
+                            className="px-2.5 py-1 text-[10px] uppercase tracking-wide font-bold bg-[#1d1f26] hover:bg-[#272933] text-[#e0e1e6] border border-[#2a2c33] rounded transition cursor-pointer"
+                          >
+                            Adjust Casing
+                          </button>
+                        </div>
+                      ) : (
+                        <form onSubmit={handleUpdateCasing} className="space-y-2">
+                          <label className="block text-[10px] font-mono uppercase tracking-wider text-[#8e9299]">Exact Case-Sensitive Name</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={newCasingValue}
+                              onChange={(e) => setNewCasingValue(e.target.value)}
+                              placeholder="e.g. ShyKnees2"
+                              className="flex-1 bg-[#14161c] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded px-2 py-1.5 text-xs text-white focus:outline-none font-mono"
+                              required
+                            />
+                            <button
+                              type="submit"
+                              disabled={casingLoading}
+                              className="px-3 py-1.5 bg-[#d4af37] hover:bg-[#b08d26] disabled:opacity-50 text-black text-[10px] font-bold uppercase rounded cursor-pointer transition flex items-center justify-center gap-1"
+                            >
+                              {casingLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                              Apply
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowCasingInput(false)}
+                              className="px-2.5 py-1.5 bg-[#14161c] hover:bg-[#20222a] text-[#8e9299] text-[10px] font-bold uppercase rounded cursor-pointer transition border border-[#2a2c33]"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                          <p className="text-[9px] text-[#8e9299]">Must match of the same letters. Instantly updates profile identity and all your active listings.</p>
+                        </form>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -1057,13 +1769,21 @@ export default function MarketTab() {
           ) : (
             <div className="space-y-3">
               {filteredListings.map((listing) => {
+                const isPrimeJunk = !!listing.isPrimeJunk;
                 const isWTS = listing.type === 'WTS';
                 const isOwner = user && listing.sellerUid === user.uid;
                 
                 // Copy-paste trade command for Warframe Chat
-                const tradeText = isWTS 
-                  ? `/w ${listing.sellerIGN} Hi! I want to buy ${listing.itemName} for ${listing.price}p [DucaPlat]`
-                  : `/w ${listing.sellerIGN} Hi! I want to sell ${listing.itemName} for ${listing.price}p [DucaPlat]`;
+                let tradeText = "";
+                if (isPrimeJunk) {
+                  tradeText = isWTS
+                    ? `/w ${listing.sellerIGN} Hi! I want to buy your Bulk Prime Junk Bundle (${listing.totalParts} parts for ${listing.price}p)`
+                    : `/w ${listing.sellerIGN} Hi! I want to sell you a Bulk Prime Junk Bundle (${listing.totalParts} parts for ${listing.price}p)`;
+                } else {
+                  tradeText = isWTS 
+                    ? `/w ${listing.sellerIGN} Hi! I want to buy ${listing.itemName} for ${listing.price}p [DucaPlat]`
+                    : `/w ${listing.sellerIGN} Hi! I want to sell ${listing.itemName} for ${listing.price}p [DucaPlat]`;
+                }
 
                 return (
                   <div
@@ -1072,14 +1792,14 @@ export default function MarketTab() {
                   >
                     
                     {/* Left Accent Bar depending on listing type */}
-                    <div className={`absolute top-0 bottom-0 left-0 w-1 ${isWTS ? 'bg-red-500' : 'bg-blue-500'}`} />
+                    <div className={`absolute top-0 bottom-0 left-0 w-1 ${isPrimeJunk ? 'bg-[#d4af37]' : isWTS ? 'bg-red-500' : 'bg-blue-500'}`} />
 
                     <div className="space-y-2 flex-1 pl-1">
                       
                       {/* Top seller tag & verification */}
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${isWTS ? 'bg-red-950/50 text-red-400 border border-red-900/35' : 'bg-blue-950/50 text-blue-400 border border-blue-900/35'}`}>
-                          {listing.type}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded ${isPrimeJunk ? 'bg-amber-950/40 text-[#facc15] border border-amber-500/25' : isWTS ? 'bg-red-950/50 text-red-400 border border-red-900/35' : 'bg-blue-950/50 text-blue-400 border border-blue-900/35'}`}>
+                          {isPrimeJunk ? 'PRIME JUNK' : listing.type}
                         </span>
 
                         <span className="font-mono text-xs font-semibold text-[#e0e1e6] flex items-center gap-1 uppercase select-all">
@@ -1106,20 +1826,69 @@ export default function MarketTab() {
                       </div>
 
                       {/* Item and Quantity details */}
-                      <div className="flex flex-wrap items-baseline gap-2.5">
-                        <h4 className="text-[13px] font-semibold text-[#f1f2f6] tracking-wide uppercase font-sans">
-                          {listing.itemName}
-                        </h4>
-                        <span className="text-xs text-zinc-500">
-                          Qty: <span className="font-bold text-zinc-300 font-mono">{listing.quantity}</span>
-                        </span>
-                      </div>
+                      {isPrimeJunk ? (
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-baseline gap-2.5">
+                            <h4 className="text-[13px] font-extrabold text-[#f1f2f6] tracking-wide uppercase font-sans text-amber-400">
+                              {listing.itemName || 'Bulk Prime Junk Bundle'}
+                            </h4>
+                            <span className="text-xs text-zinc-500">
+                              Wholesale bundle — No single item purchases!
+                            </span>
+                          </div>
+                          
+                          {/* Part distribution chips */}
+                          <div className="flex flex-wrap gap-1.5 pt-0.5">
+                            {listing.counts && listing.counts.bronze15 > 0 && (
+                              <span className="text-[9px] font-mono px-2 py-0.5 bg-[#0c0d10] border border-[#cd7f32]/15 text-[#cd7f32] rounded">
+                                B15: <span className="text-[#e0e1e6] font-bold">{listing.counts.bronze15}</span>
+                              </span>
+                            )}
+                            {listing.counts && listing.counts.bronze25 > 0 && (
+                              <span className="text-[9px] font-mono px-2 py-0.5 bg-[#0c0d10] border border-[#cd7f32]/25 text-[#cd7f32] rounded">
+                                B25: <span className="text-[#e0e1e6] font-bold">{listing.counts.bronze25}</span>
+                              </span>
+                            )}
+                            {listing.counts && listing.counts.silver45 > 0 && (
+                              <span className="text-[9px] font-mono px-2 py-0.5 bg-[#0c0d10] border border-slate-700/50 text-slate-300 rounded">
+                                S45: <span className="text-[#e0e1e6] font-bold">{listing.counts.silver45}</span>
+                              </span>
+                            )}
+                            {listing.counts && listing.counts.silver65 > 0 && (
+                              <span className="text-[9px] font-mono px-2 py-0.5 bg-[#0c0d10] border border-slate-600/60 text-slate-300 rounded">
+                                S65: <span className="text-[#e0e1e6] font-bold">{listing.counts.silver65}</span>
+                              </span>
+                            )}
+                            {listing.counts && listing.counts.gold > 0 && (
+                              <span className="text-[9px] font-mono px-2 py-0.5 bg-[#0c0d10] border border-[#d4af37]/15 text-[#d4af37] rounded">
+                                G100: <span className="text-[#e0e1e6] font-bold">{listing.counts.gold}</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Extra info metrics */}
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-zinc-400 font-mono">
+                            <span>Total Parts: <span className="text-white font-extrabold">{listing.totalParts}</span></span>
+                            <span className="flex items-center gap-0.5">Total Ducats: <span className="text-[#d4af37] font-extrabold">{listing.totalDucats}</span><img src={ducatIcon} className="w-3 h-3 object-contain inline" alt="D" referrerPolicy="no-referrer" /></span>
+                            <span className="text-pink-400">Trades Needed: <span className="font-extrabold">{listing.tradesRequired}</span></span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap items-baseline gap-2.5">
+                          <h4 className="text-[13px] font-semibold text-[#f1f2f6] tracking-wide uppercase font-sans">
+                            {listing.itemName}
+                          </h4>
+                          <span className="text-xs text-zinc-500">
+                            Qty: <span className="font-bold text-zinc-300 font-mono">{listing.quantity}</span>
+                          </span>
+                        </div>
+                      )}
 
                       {/* COPY FORUM COMMAND BLOCK */}
                       {!isOwner && (
                         <div className="flex items-center gap-1.5 mt-2 bg-[#0c0d10]/60 border border-[#2a2c33]/40 rounded-lg p-1 max-w-md shrink-0">
                           <span className="text-[9px] text-[#8e9299] shrink-0 pl-1.5 font-mono uppercase tracking-wide">Copy command:</span>
-                          <div className="flex-1 font-mono text-[10px] text-zinc-400 truncate select-all px-1">
+                          <div className="flex-1 font-mono text-[10px] text-[#22c55e] truncate select-all px-1 font-semibold">
                             {tradeText}
                           </div>
                           <button
@@ -1137,11 +1906,16 @@ export default function MarketTab() {
                     <div className="flex sm:flex-col items-end gap-3.5 sm:gap-1.5 justify-between border-t sm:border-0 border-zinc-800/55 pt-3 sm:pt-0 shrink-0">
                       
                       <div className="text-right">
-                        <span className="text-[10px] font-mono text-[#8e9299] uppercase select-none block">Price Per Item</span>
+                        <span className="text-[10px] font-mono text-[#8e9299] uppercase select-none block">
+                          {isPrimeJunk ? 'Total Bundle Price' : 'Price Per Item'}
+                        </span>
                         <div className="flex items-center gap-1 text-base font-semibold text-[#f1f2f6] justify-end">
-                          <span className="font-mono">{listing.price}</span>
-                          <span className="text-xs text-[#d4af37] uppercase tracking-wide">Plat</span>
+                          <span className="font-mono text-emerald-400 font-extrabold">{listing.price}</span>
+                          <img src={platinumIcon} className="w-4 h-4 object-contain inline" alt="Pt" referrerPolicy="no-referrer" />
                         </div>
+                        {isPrimeJunk && (
+                          <span className="text-[9px] text-[#d4af37] font-mono block">Wholesale combo</span>
+                        )}
                       </div>
 
                       {/* Owner Operations to manage or clear active listed rows */}

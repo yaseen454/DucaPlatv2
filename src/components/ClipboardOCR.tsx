@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { OcrResultItem, InventoryCount } from '../types';
 import { PRIME_ITEMS } from '../data/primeData';
 import { createWorker } from 'tesseract.js';
-import { Image as ImageIcon, Sparkles, Wand2, Plus, Minus, Trash2, ArrowRight, HelpCircle, Check, Loader, Clipboard, Eye, EyeOff, Bookmark, X } from 'lucide-react';
+import { Image as ImageIcon, Sparkles, Wand2, Plus, Minus, Trash2, ArrowRight, HelpCircle, Check, Loader, Clipboard, Eye, EyeOff, Bookmark, X, TrendingUp } from 'lucide-react';
 import PrimePartsImage from '../data/Prime_Parts.png';
 import ducatIcon from '../data/480px-OrokinDucats.png';
 
@@ -70,7 +70,48 @@ export default function ClipboardOCR({
 
   const [saveName, setSaveName] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [tradeSuccess, setTradeSuccess] = useState(false);
   const [zoomedUrl, setZoomedUrl] = useState<string | null>(null);
+
+  const handleOcrSaveToTrades = () => {
+    try {
+      const existing = localStorage.getItem('saved_trades_for_market');
+      const trades = existing ? JSON.parse(existing) : [];
+      
+      const counts: InventoryCount = {
+        bronze15: 0,
+        bronze25: 0,
+        silver45: 0,
+        silver65: 0,
+        gold: 0
+      };
+      
+      ocrItems.forEach(item => {
+        if (!item.matchedItem) return;
+        const v = item.matchedItem.ducat_value;
+        if (v === 15) counts.bronze15 += item.count;
+        else if (v === 25) counts.bronze25 += item.count;
+        else if (v === 45) counts.silver45 += item.count;
+        else if (v === 65) counts.silver65 += item.count;
+        else if (v === 100) counts.gold += item.count;
+      });
+
+      const title = saveName.trim() || `OCR Scan Preset (${new Date().toLocaleDateString()})`;
+      const newTrade = {
+        id: 'trade_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        name: title,
+        counts: counts,
+        timestamp: new Date().toLocaleString()
+      };
+      trades.unshift(newTrade);
+      localStorage.setItem('saved_trades_for_market', JSON.stringify(trades));
+      
+      setTradeSuccess(true);
+      setTimeout(() => setTradeSuccess(false), 2200);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // Bind Escape key to dismiss the zoomed magnifier modal
   useEffect(() => {
@@ -891,6 +932,16 @@ Return a structured JSON list. Only return a plain JSON array of objects conform
               >
                 <Bookmark className="w-3.5 h-3.5 text-[#d4af37]" />
                 Save Set
+              </button>
+
+              <button
+                onClick={handleOcrSaveToTrades}
+                disabled={ocrItems.filter(i => i.matchedItem).length === 0}
+                className="px-3.5 py-1.5 bg-emerald-950/25 hover:bg-emerald-900/35 text-[#10b981] hover:text-emerald-300 border border-emerald-900/35 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                title="Save current scanned results directly to Live Market Saved Trades list"
+              >
+                <TrendingUp className="w-3.5 h-3.5 text-[#10b981]" />
+                {tradeSuccess ? 'Saved Trade!' : 'Save to Trades'}
               </button>
             </div>
             {saveSuccess && (

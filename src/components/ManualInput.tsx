@@ -60,6 +60,27 @@ export default function ManualInput({
 }: ManualInputProps) {
   const [saveName, setSaveName] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [tradeSuccess, setTradeSuccess] = useState(false);
+
+  const handleSaveToTrades = () => {
+    try {
+      const existing = localStorage.getItem('saved_trades_for_market');
+      const trades = existing ? JSON.parse(existing) : [];
+      const title = saveName.trim() || `Manual Junker Grid (${new Date().toLocaleDateString()})`;
+      const newTrade = {
+        id: 'trade_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        name: title,
+        counts: { ...counts },
+        timestamp: new Date().toLocaleString()
+      };
+      trades.unshift(newTrade);
+      localStorage.setItem('saved_trades_for_market', JSON.stringify(trades));
+      setTradeSuccess(true);
+      setTimeout(() => setTradeSuccess(false), 2200);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const updateField = (key: keyof InventoryCount, val: number) => {
     const clamped = Math.max(0, val);
@@ -248,42 +269,56 @@ export default function ManualInput({
         ))}
       </div>
 
-      <div className="pt-3 border-t border-[#2a2c33]/60 space-y-2.5">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-          <div className="flex items-stretch gap-1.5 flex-1 min-w-0">
-            <input
-              type="text"
-              placeholder="Set name (optional)..."
-              value={saveName}
-              onChange={(e) => setSaveName(e.target.value)}
-              disabled={totalItems === 0}
-              className="flex-1 min-w-[100px] bg-[#0c0d10] border border-[#2a2c33] hover:border-[#2a2c33]/80 focus:border-[#d4af37]/60 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none placeholder-zinc-650 disabled:opacity-40"
-            />
+      <div className="pt-3 border-t border-[#2a2c33]/60 space-y-3">
+        <div className="flex flex-col gap-2">
+          <input
+            type="text"
+            placeholder="Set name (optional)..."
+            value={saveName}
+            onChange={(e) => setSaveName(e.target.value)}
+            disabled={totalItems === 0}
+            className="w-full bg-[#0c0d10] border border-[#2a2c33] hover:border-[#2a2c33]/80 focus:border-[#d4af37]/60 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none placeholder-zinc-650 disabled:opacity-40"
+          />
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onSaveToItems) {
+                    onSaveToItems(counts, saveName.trim() || undefined);
+                    setSaveName('');
+                    setSaveSuccess(true);
+                    setTimeout(() => setSaveSuccess(false), 2200);
+                  }
+                }}
+                disabled={totalItems === 0}
+                className="px-2.5 py-1.5 bg-[#161820] hover:bg-[#1f222b] text-[#c4c5cc] hover:text-white border border-[#2a2c33] hover:border-[#2a2c33]/80 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition active:scale-95 disabled:scale-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0"
+              >
+                <Bookmark className="w-3 h-3 text-[#d4af37]" />
+                Save Set
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveToTrades}
+                disabled={totalItems === 0}
+                className="px-2.5 py-1.5 bg-emerald-950/25 hover:bg-emerald-900/35 text-[#10b981] hover:text-emerald-300 border border-emerald-900/30 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition active:scale-95 disabled:scale-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                title="Save current prime junk set/quantities directly into Live Market Saved Trades list"
+              >
+                <TrendingUp className="w-3 h-3 text-[#10b981]" />
+                {tradeSuccess ? 'Saved Trade!' : 'Save to Trades'}
+              </button>
+            </div>
+
             <button
               type="button"
-              onClick={() => {
-                if (onSaveToItems) {
-                  onSaveToItems(counts, saveName.trim() || undefined);
-                  setSaveName('');
-                  setSaveSuccess(true);
-                  setTimeout(() => setSaveSuccess(false), 2200);
-                }
-              }}
-              disabled={totalItems === 0}
-              className="px-2.5 py-1.5 bg-[#161820] hover:bg-[#1f222b] text-[#c4c5cc] hover:text-white border border-[#2a2c33] hover:border-[#2a2c33]/80 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition active:scale-95 disabled:scale-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0"
+              onClick={() => onChange({ bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })}
+              className="text-[11px] text-[#8e9299] hover:text-red-400 px-3 py-1.5 rounded-lg border border-[#2a2c33]/80 hover:border-red-400/25 bg-[#0c0d10]/40 hover:bg-red-400/5 transition cursor-pointer select-none font-medium text-center shrink-0"
             >
-              <Bookmark className="w-3 h-3 text-[#d4af37]" />
-              Save Set
+              Reset Counters
             </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => onChange({ bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })}
-            className="text-[11px] text-[#8e9299] hover:text-red-400 px-3 py-1.5 rounded-lg border border-[#2a2c33]/80 hover:border-red-400/25 bg-[#0c0d10]/40 hover:bg-red-400/5 transition cursor-pointer select-none font-medium text-center shrink-0"
-          >
-            Reset Counters
-          </button>
         </div>
 
         {saveSuccess && (

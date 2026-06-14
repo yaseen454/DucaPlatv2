@@ -92,7 +92,26 @@ service cloud.firestore {
         // Protect original creation timestamp
         && incoming().createdAt == existing().createdAt
         // Limit which fields the client might dynamically edit in profile
-        && incoming().diff(existing()).affectedKeys().hasOnly(['lastLoginAt', 'displayName', 'photoURL', 'email', 'verification']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['lastLoginAt', 'displayName', 'photoURL', 'email', 'verification'])
+        // Guard against client-side self-verification and privilege escalation
+        && (
+          !incoming().keys().hasAll(['verification'])
+          || incoming().verification == existing().verification
+          || (
+            // Client is initiating verification (transition to pending with null verifiedIGN)
+            incoming().verification.status == 'pending'
+            && incoming().verification.verifiedIGN == null
+            && (existing().verification == null || existing().verification.status != 'verified')
+          )
+          || (
+            // Client is resetting/disconnecting verification back to unverified
+            incoming().verification.status == 'unverified'
+            && incoming().verification.claimedIGN == ''
+            && incoming().verification.normalizedIGN == ''
+            && incoming().verification.verifiedIGN == null
+            && incoming().verification.token == null
+          )
+        );
       
       allow delete: if false; // Profiles are permanent
 

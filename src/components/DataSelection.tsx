@@ -5,7 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import { PRIME_ITEMS } from '../data/primeData';
 import { PrimeItem, InventoryCount } from '../types';
-import { Search, Plus, Minus, Trash2, Archive, Star, ShoppingCart, RefreshCw, Filter, Bookmark } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, Archive, Star, ShoppingCart, RefreshCw, Filter, Bookmark, TrendingUp } from 'lucide-react';
 import ducatIcon from '../data/480px-OrokinDucats.png';
 
 function DucatValue({ val, size = "w-3 h-3", className = "" }: { val: string | number; size?: string; className?: string }) {
@@ -50,6 +50,27 @@ export default function DataSelection({
 
   const [saveName, setSaveName] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [tradeSuccess, setTradeSuccess] = useState(false);
+
+  const handleDirectorySaveToTrades = () => {
+    try {
+      const existing = localStorage.getItem('saved_trades_for_market');
+      const trades = existing ? JSON.parse(existing) : [];
+      const title = saveName.trim() || `Directory Preset (${new Date().toLocaleDateString()})`;
+      const newTrade = {
+        id: 'trade_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        name: title,
+        counts: { ...calculatedCounts },
+        timestamp: new Date().toLocaleString()
+      };
+      trades.unshift(newTrade);
+      localStorage.setItem('saved_trades_for_market', JSON.stringify(trades));
+      setTradeSuccess(true);
+      setTimeout(() => setTradeSuccess(false), 2200);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // Filter items based on criteria
   const filteredItems = useMemo(() => {
@@ -396,6 +417,16 @@ export default function DataSelection({
             >
               <Bookmark className="w-3.5 h-3.5 text-[#d4af37]" />
               Save Set
+            </button>
+
+            <button
+              onClick={handleDirectorySaveToTrades}
+              disabled={totalCartItems === 0}
+              className="px-3.5 py-1.5 bg-emerald-950/25 hover:bg-emerald-900/35 text-[#10b981] hover:text-emerald-300 border border-emerald-900/30 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed cursor-pointer shrink-0"
+              title="Save current directory items directly into Live Market Saved Trades list"
+            >
+              <TrendingUp className="w-3.5 h-3.5 text-[#10b981]" />
+              {tradeSuccess ? 'Saved Trade!' : 'Save to Trades'}
             </button>
           </div>
           {saveSuccess && (
