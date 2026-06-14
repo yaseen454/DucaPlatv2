@@ -86,6 +86,7 @@ service cloud.firestore {
             // Client is initiating verification (transition to pending with null verifiedIGN)
             incoming().verification.status == 'pending'
             && incoming().verification.verifiedIGN == null
+            && incoming().verification.updatedAt is timestamp
             && (existing().verification == null || existing().verification.status != 'verified')
           )
           || (
@@ -95,6 +96,7 @@ service cloud.firestore {
             && incoming().verification.normalizedIGN == ''
             && incoming().verification.verifiedIGN == null
             && incoming().verification.token == null
+            && incoming().verification.updatedAt is timestamp
           )
         );
       
