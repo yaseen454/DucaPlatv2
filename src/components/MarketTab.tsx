@@ -371,6 +371,13 @@ export default function MarketTab({
     return () => unsubProfile();
   }, [user]);
 
+  // 2.5 Clear input field when transitioning away from unverified state
+  useEffect(() => {
+    if (userVerification.status !== 'unverified') {
+      setClaimedInput('');
+    }
+  }, [userVerification.status]);
+
   // 3. Manage verification cooldown timer (30-second countdown)
   useEffect(() => {
     if (!verificationCooldown || cooldownSeconds <= 0) return;
@@ -434,17 +441,17 @@ export default function MarketTab({
 
     try {
       const userRef = doc(db, 'users', user.uid);
+      // Use field-level update instead of object merge to ensure Firestore rules accept it
       await updateDoc(userRef, {
-        verification: {
-          status: 'pending',
-          claimedIGN: parsedSlug,
-          normalizedIGN: normalized,
-          verifiedIGN: null,
-          token: token,
-          updatedAt: serverTimestamp()
-        }
+        'verification.status': 'pending',
+        'verification.claimedIGN': parsedSlug,
+        'verification.normalizedIGN': normalized,
+        'verification.verifiedIGN': null,
+        'verification.token': token,
+        'verification.updatedAt': serverTimestamp()
       });
-      setSuccessMsg(`Verification token successfully created!`);
+      setSuccessMsg(`✓ Verification token successfully created! Code: ${token}`);
+      // Keep claimedInput populated so user can see what they submitted
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
       setErrorMsg('Failed to create verification token. Try again.');
