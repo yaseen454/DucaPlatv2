@@ -45,7 +45,28 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const normalizedIGN = claimedIGN.trim().toLowerCase();
+    const extractForumProfileSlug = (input: string): string => {
+      let val = input.trim();
+      if (val.toLowerCase().includes("forums.warframe.com/profile/")) {
+        const parts = val.split(/forums\.warframe\.com\/profile\//i);
+        if (parts.length > 1) {
+          val = parts[1];
+        }
+      }
+      while (val.endsWith("/")) {
+        val = val.slice(0, -1);
+      }
+      if (val.includes("?")) {
+        val = val.split("?")[0];
+      }
+      if (val.includes("/")) {
+        val = val.split("/")[0];
+      }
+      return val.trim();
+    };
+
+    const parsedSlug = extractForumProfileSlug(claimedIGN);
+    const normalizedIGN = parsedSlug.toLowerCase();
 
     // Initialize Firebase Admin securely
     if (!getApps().length) {
@@ -155,7 +176,14 @@ export const handler: Handler = async (event) => {
     // Extract canonical In-Game Name from the <title> tag
     // Format: "ShyKnees - Warframe Forums" or "ShyKnees - Page 2 - Warframe Forums"
     const titleElement = root.querySelector("title");
-    let verifiedIGN = claimedIGN; // Fallback
+    let verifiedIGN = parsedSlug; // Fallback from parsed slug
+    if (parsedSlug.includes("-")) {
+      const parts = parsedSlug.split("-");
+      if (/^\d+$/.test(parts[0])) {
+        verifiedIGN = parts.slice(1).join("-");
+      }
+    }
+
     if (titleElement) {
       const titleText = titleElement.text || "";
       if (titleText.includes(" - ")) {

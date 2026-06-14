@@ -72,6 +72,27 @@ interface UserVerification {
   updatedAt: any;
 }
 
+// Extract ID and user slug from full forum links to handle routing correctly
+function extractForumProfileSlug(input: string): string {
+  let val = input.trim();
+  if (val.toLowerCase().includes("forums.warframe.com/profile/")) {
+    const parts = val.split(/forums\.warframe\.com\/profile\//i);
+    if (parts.length > 1) {
+      val = parts[1];
+    }
+  }
+  while (val.endsWith("/")) {
+    val = val.slice(0, -1);
+  }
+  if (val.includes("?")) {
+    val = val.split("?")[0];
+  }
+  if (val.includes("/")) {
+    val = val.split("/")[0];
+  }
+  return val.trim();
+}
+
 export default function MarketTab() {
   const { user } = useAuth();
   
@@ -219,20 +240,21 @@ export default function MarketTab() {
 
     const claimed = claimedInput.trim();
     if (!claimed) {
-      setErrorMsg('Please enter a valid claimed Warframe In-Game Name (IGN).');
+      setErrorMsg('Please enter a valid claimed Warframe In-Game Name (IGN) or Forum Profile Link.');
       return;
     }
 
     setActionLoading(true);
     const token = generateVerifyToken();
-    const normalized = claimed.toLowerCase();
+    const parsedSlug = extractForumProfileSlug(claimed);
+    const normalized = parsedSlug.toLowerCase();
 
     try {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
         verification: {
           status: 'pending',
-          claimedIGN: claimed,
+          claimedIGN: parsedSlug,
           normalizedIGN: normalized,
           verifiedIGN: null,
           token: token,
@@ -482,16 +504,16 @@ export default function MarketTab() {
                 {userVerification.status === 'unverified' && (
                   <form onSubmit={handleInitiateVerification} className="space-y-3">
                     <p className="text-xs text-[#8e9299] leading-relaxed">
-                      To safely post trades, prove you own your In-Game Name. Enter your EXACT Warframe forum IGN below:
+                      To safely post trades, prove you own your In-Game Name. Paste your <strong>Warframe Forums Profile URL</strong> (or numeric slug) below:
                     </p>
                     <div className="space-y-2">
-                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">Your Forum IGN</label>
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">Your Forum Profile URL or Slug</label>
                       <input
                         type="text"
-                        placeholder="e.g. ShyKnees"
+                        placeholder="e.g. https://forums.warframe.com/profile/123456-shyknees/"
                         value={claimedInput}
                         onChange={(e) => setClaimedInput(e.target.value)}
-                        className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
+                        className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder:text-zinc-700"
                         required
                       />
                     </div>
