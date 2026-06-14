@@ -890,7 +890,15 @@ export default function App() {
             )}
 
             {activeTab === 'Market' && (
-              <MarketTab />
+              <MarketTab 
+                narrowConfig={narrowConfig}
+                broadConfig={broadConfig}
+                onAnalyzeInCalculator={(selectedCounts: InventoryCount) => {
+                  setCounts(selectedCounts);
+                  setDisplayAnova(true);
+                  setActiveTab('Calculator');
+                }}
+              />
             )}
 
             {activeTab === 'Settings' && (

@@ -42,6 +42,7 @@ import {
 import { PRIME_ITEMS } from '../data/primeData';
 import { SourceParserService } from '../utils/verificationParser';
 import { InventoryCount } from '../types';
+import { getProfitStats, generateCostsCustom } from '../utils/mathUtils';
 import platinumIcon from '../data/platinum.png';
 import ducatIcon from '../data/480px-OrokinDucats.png';
 
@@ -119,8 +120,96 @@ function extractWFMProfileUsername(input: string): string {
   return val.trim();
 }
 
-export default function MarketTab() {
+// Helper to convert item name into an InventoryCount
+export function guessCountsFromItem(nameStr: string, qtyValue: number): InventoryCount {
+  const empty: InventoryCount = { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 };
+  const name = nameStr.trim().toLowerCase();
+  if (!name) return empty;
+  
+  // Explicit junk matching
+  if (name.includes('bronze prime junk (15d)') || name.includes('bronze 15') || (name.includes('bronze') && name.includes('15'))) {
+    return { ...empty, bronze15: qtyValue };
+  }
+  if (name.includes('bronze prime junk (25d)') || name.includes('bronze 25') || (name.includes('bronze') && name.includes('25'))) {
+    return { ...empty, bronze25: qtyValue };
+  }
+  if (name.includes('uncommon prime junk (45d)') || name.includes('silver 45') || (name.includes('uncommon') && name.includes('45')) || (name.includes('silver') && name.includes('45'))) {
+    return { ...empty, silver45: qtyValue };
+  }
+  if (name.includes('uncommon prime junk (65d)') || name.includes('silver 65') || (name.includes('uncommon') && name.includes('65')) || (name.includes('silver') && name.includes('65'))) {
+    return { ...empty, silver65: qtyValue };
+  }
+  if (name.includes('gold prime junk (100d)') || name.includes('gold') || name.includes('rare') || name.includes('100d')) {
+    return { ...empty, gold: qtyValue };
+  }
+  
+  // Match with database!
+  const matched = PRIME_ITEMS.find(item => item.part.toLowerCase() === name);
+  if (matched) {
+    const v = matched.ducat_value;
+    if (v === 15) return { ...empty, bronze15: qtyValue };
+    if (v === 25) return { ...empty, bronze25: qtyValue };
+    if (v === 45) return { ...empty, silver45: qtyValue };
+    if (v === 65) return { ...empty, silver65: qtyValue };
+    if (v === 100) return { ...empty, gold: qtyValue };
+  }
+  
+  // Fallback based on typical search
+  if (name.includes('grip') || name.includes('stock') || name.includes('receiver') || name.includes('barrel') || name.includes('link')) {
+    return { ...empty, bronze15: qtyValue };
+  }
+  
+  return { ...empty, bronze15: qtyValue };
+}
+
+interface MarketTabProps {
+  narrowConfig?: any;
+  broadConfig?: any;
+  onAnalyzeInCalculator?: (counts: InventoryCount) => void;
+}
+
+export default function MarketTab({
+  narrowConfig,
+  broadConfig,
+  onAnalyzeInCalculator
+}: MarketTabProps) {
   const { user } = useAuth();
+
+  const activeNarrowConfig = narrowConfig || {
+    b15: 1,
+    b25: { min: 1, max: 2 },
+    s45: { min: 2, max: 4 },
+    s65: { min: 4, max: 7 },
+    g: { min: 7, max: 10 }
+  };
+  const activeBroadConfig = broadConfig || {
+    b15: 1,
+    b25: { min: 1, max: 2 },
+    s45: { min: 2, max: 4 },
+    s65: { min: 2, max: 7 },
+    g: { min: 5, max: 10 }
+  };
+
+  const getListingPriceSuggestion = (c: InventoryCount) => {
+    const totalParts = c.bronze15 + c.bronze25 + c.silver45 + c.silver65 + c.gold;
+    if (totalParts === 0) return null;
+    
+    const costsNarrow = generateCostsCustom(activeNarrowConfig);
+    const costsBroad = generateCostsCustom(activeBroadConfig);
+    
+    const statsNarrow = getProfitStats(c, costsNarrow);
+    const statsBroad = getProfitStats(c, costsBroad);
+    
+    const minVal = Math.floor(Math.min(statsNarrow.min, statsBroad.min));
+    const maxVal = Math.ceil(Math.max(statsNarrow.max, statsBroad.max));
+    const avgVal = Math.round((statsNarrow.average + statsBroad.average) / 2);
+    
+    return {
+      min: minVal,
+      max: maxVal,
+      average: avgVal,
+    };
+  };
   
   // Real-time states
   const [listings, setListings] = useState<MarketListing[]>([]);
@@ -189,6 +278,10 @@ export default function MarketTab() {
   const [price, setPrice] = useState<number>(10);
   const [quantity, setQuantity] = useState<number>(1);
   const [listType, setListType] = useState<'WTS' | 'WTB'>('WTS');
+  const [bulkListType, setBulkListType] = useState<'WTS' | 'WTB'>('WTS');
+  const [standardNote, setStandardNote] = useState('');
+  const [bulkNote, setBulkNote] = useState('');
+  const [bulkPriceCustom, setBulkPriceCustom] = useState<number | null>(null);
   
   // Statuses
   const [verifying, setVerifying] = useState(false);
@@ -525,6 +618,7 @@ export default function MarketTab() {
         quantity: Math.floor(quantity),
         type: listType,
         status: 'active',
+        note: standardNote.trim(),
         createdAt: serverTimestamp()
       });
 
@@ -532,6 +626,7 @@ export default function MarketTab() {
       setItemName('');
       setPrice(10);
       setQuantity(1);
+      setStandardNote('');
       setSuccessMsg(`Listed "${item}" successfully!`);
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'listings');
@@ -573,7 +668,7 @@ export default function MarketTab() {
       (bulkCounts.silver65 || 0) * 65 + 
       (bulkCounts.gold || 0) * 100;
 
-    const pricePlat = Math.round(totalDucats / 25);
+    const finalPrice = bulkPriceCustom !== null ? bulkPriceCustom : Math.round(totalDucats / 25);
     const tradesRequired = Math.ceil(totalParts / 6);
 
     const distList = [];
@@ -593,10 +688,11 @@ export default function MarketTab() {
         normalizedSellerIGN: userVerification.normalizedIGN,
         isSellerVerified: true,
         itemName: `Bulk Prime Junk (${totalParts} parts)`,
-        price: pricePlat,
+        price: finalPrice,
         quantity: 1,
-        type: 'WTS',
+        type: bulkListType,
         status: 'active',
+        note: bulkNote.trim(),
         isPrimeJunk: true,
         counts: { ...bulkCounts },
         totalDucats,
@@ -606,7 +702,7 @@ export default function MarketTab() {
         createdAt: serverTimestamp()
       });
 
-      setSuccessMsg(`✓ Bulk Prime Junk Bundle successfully listed! ${totalParts} parts for ${pricePlat} Plat (${totalDucats} Ducats).`);
+      setSuccessMsg(`✓ Bulk Prime Junk Bundle successfully listed as ${bulkListType}! ${totalParts} parts for ${finalPrice} Plat (${totalDucats} Ducats).`);
       setBulkCounts({
         bronze15: 0,
         bronze25: 0,
@@ -614,6 +710,8 @@ export default function MarketTab() {
         silver65: 0,
         gold: 0
       });
+      setBulkNote('');
+      setBulkPriceCustom(null);
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'listings');
       setErrorMsg('Failed to publish bulk junk listing.');
@@ -671,8 +769,9 @@ export default function MarketTab() {
         itemName: `Bulk Prime Junk (${totalParts} parts)`,
         price: pricePlat,
         quantity: 1,
-        type: 'WTS',
+        type: bulkListType,
         status: 'active',
+        note: '',
         isPrimeJunk: true,
         counts: { ...presetCounts },
         totalDucats,
@@ -682,7 +781,7 @@ export default function MarketTab() {
         createdAt: serverTimestamp()
       });
 
-      setSuccessMsg(`✓ Published preset "${presetName}" directly! Listed ${totalParts} parts for ${pricePlat} Plat.`);
+      setSuccessMsg(`✓ Published preset "${presetName}" directly as ${bulkListType}! Listed ${totalParts} parts for ${pricePlat} Plat.`);
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'listings');
       setErrorMsg('Failed to publish bulk junk listing.');
@@ -840,6 +939,24 @@ export default function MarketTab() {
                 <p className="text-[11px] text-[#8e9299] mt-0.5">
                   Build your bundle manually or click a saved preset from the right-hand panel. Prices automatically compute at <strong className="text-[#d4af37]">25 Ducats : 1 Platinum</strong>.
                 </p>
+              </div>
+
+              {/* WTS or WTB Operation Toggle */}
+              <div className="grid grid-cols-2 gap-2 bg-[#0c0d10] p-1 border border-[#2a2c33] rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setBulkListType('WTS')}
+                  className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer ${bulkListType === 'WTS' ? 'bg-[#d4af37] text-black' : 'text-[#8e9299] hover:text-white'}`}
+                >
+                  WTS (Sell)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBulkListType('WTB')}
+                  className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer ${bulkListType === 'WTB' ? 'bg-[#d4af37] text-black' : 'text-[#8e9299] hover:text-white'}`}
+                >
+                  WTB (Buy)
+                </button>
               </div>
 
               {/* Input grid */}
@@ -1063,11 +1180,104 @@ export default function MarketTab() {
                       ⚠️ Note: Players do not buy components individually. Buyers will purchase the entire bulk bundle.
                     </div>
 
+                    {/* Statistical suggestions & overrides */}
+                    {(() => {
+                      const suggestion = getListingPriceSuggestion(bulkCounts);
+                      if (!suggestion) return null;
+                      return (
+                        <div className="bg-[#14161c]/30 p-3.5 rounded-lg border border-[#2a2c33] text-xs text-zinc-400 space-y-2">
+                          <div className="flex items-center gap-1.5 text-[#d4af37] font-semibold text-[11px] uppercase tracking-wider">
+                            <TrendingUp className="w-3.5 h-3.5" />
+                            <span>ANOVA Pricing Insights</span>
+                          </div>
+                          <p className="text-[10px] text-zinc-500 leading-normal">
+                            Statistical ANOVA analysis recommends these platinum prices based on active market configurations:
+                          </p>
+                          <div className="grid grid-cols-3 gap-2 text-center pt-0.5">
+                            <div className="p-1.5 bg-[#0c0d10] rounded border border-zinc-950">
+                              <span className="block text-[8px] text-[#8e9299] uppercase font-mono">Statistical Min</span>
+                              <span className="text-xs font-mono font-bold text-zinc-300">{suggestion.min}p</span>
+                            </div>
+                            <div className="p-1.5 bg-[#0c0d10] rounded border border-[#d4af37]/25">
+                              <span className="block text-[8px] text-[#d4af37] uppercase font-mono font-extrabold">Expected Avg</span>
+                              <span className="text-xs font-mono font-extrabold text-[#d4af37]">{suggestion.average}p</span>
+                            </div>
+                            <div className="p-1.5 bg-[#0c0d10] rounded border border-zinc-950">
+                              <span className="block text-[8px] text-[#8e9299] uppercase font-mono">Max Strategy</span>
+                              <span className="text-xs font-mono font-bold text-zinc-300">{suggestion.max}p</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 justify-end pt-1">
+                            <button
+                              type="button"
+                              onClick={() => setBulkPriceCustom(suggestion.average)}
+                              className="text-[9px] text-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37]/20 px-2.5 py-1 rounded border border-[#d4af37]/25 font-bold uppercase tracking-wider cursor-pointer"
+                            >
+                              Apply Expected ({suggestion.average}p)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setBulkPriceCustom(suggestion.min)}
+                              className="text-[9px] text-zinc-400 bg-zinc-950 hover:bg-zinc-900 px-2.5 py-1 rounded border border-zinc-900 font-bold uppercase tracking-wider cursor-pointer"
+                            >
+                              Apply Min ({suggestion.min}p)
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Custom override price */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+                        <span>Custom Bundle Price (Plat)</span>
+                        {bulkPriceCustom !== null && (
+                          <button 
+                            type="button" 
+                            onClick={() => setBulkPriceCustom(null)}
+                            className="text-[9px] text-zinc-400 hover:text-white underline cursor-pointer"
+                          >
+                            Reset to Default
+                          </button>
+                        )}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder={`Default: ${pricePlat}p (Gold Ratio 25:1)`}
+                          value={bulkPriceCustom !== null ? bulkPriceCustom : ''}
+                          onChange={(e) => {
+                            const valStr = e.target.value;
+                            setBulkPriceCustom(valStr === '' ? null : Math.max(0, parseInt(valStr) || 0));
+                          }}
+                          className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder-zinc-650 font-mono"
+                        />
+                        <img src={platinumIcon} className="absolute right-3 top-2.5 w-4 h-4 object-contain" alt="Pt" />
+                      </div>
+                    </div>
+
+                    {/* Custom note */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+                        <span>Bundle Special Notes</span>
+                        <span className="text-zinc-600 font-normal">Optional</span>
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={120}
+                        placeholder="e.g. Bulk seller, online now! No split orders."
+                        value={bulkNote}
+                        onChange={(e) => setBulkNote(e.target.value)}
+                        className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder-zinc-500"
+                      />
+                    </div>
+
                     {/* Action buttons */}
                     <div className="pt-2">
                        {!user ? (
                         <div className="text-xs text-zinc-500 text-center py-2 border border-dashed border-zinc-800 rounded">
-                          Please Log In via Google to publish trades on the Live Board.
+                           Please Log In via Google to publish trades on the Live Board.
                         </div>
                       ) : userVerification.status !== 'verified' ? (
                         <div className="space-y-2">
@@ -1087,10 +1297,10 @@ export default function MarketTab() {
                           type="button"
                           onClick={() => handlePublishPrimeJunk()}
                           disabled={totalParts === 0 || actionLoading}
-                          className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-black font-extrabold text-xs uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer select-none"
+                          className={`w-full py-2.5 disabled:opacity-40 text-black font-extrabold text-xs uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer select-none ${bulkListType === 'WTS' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-blue-500 hover:bg-blue-600'}`}
                         >
                           {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />}
-                          Publish Bulk Prime Junk Bundle
+                          {bulkListType === 'WTS' ? 'Publish Bulk Bundle (WTS - Sell)' : 'Publish Bulk Bundle (WTB - Buy)'}
                         </button>
                       )}
                     </div>
@@ -1098,6 +1308,152 @@ export default function MarketTab() {
                 );
               })()}
             </div>
+
+            {/* Standard Post Trade Request card for verified players inside the Bulk Junk subtab */}
+            {user && userVerification.status === 'verified' && (
+              <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-4 animate-fadeIn">
+                <div className="border-b border-[#2a2c33]/40 pb-3">
+                  <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide">
+                    <Tag className="w-4 h-4 text-[#d4af37]" />
+                    Post Standard Trade Request
+                  </h3>
+                  <p className="text-[10px] text-[#8e9299] mt-0.5">
+                    Post standard individual parts or prime junk trades immediately on the live board.
+                  </p>
+                </div>
+
+                <form onSubmit={handleCreateListing} className="space-y-4">
+                  {/* WTS or WTB */}
+                  <div className="grid grid-cols-2 gap-2 bg-[#0c0d10] p-1 border border-[#2a2c33] rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setListType('WTS')}
+                      className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer ${listType === 'WTS' ? 'bg-[#d4af37] text-black' : 'text-[#8e9299] hover:text-white'}`}
+                    >
+                      WTS (Sell)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setListType('WTB')}
+                      className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer ${listType === 'WTB' ? 'bg-[#d4af37] text-black' : 'text-[#8e9299] hover:text-white'}`}
+                    >
+                      WTB (Buy)
+                    </button>
+                  </div>
+
+                  {/* Item Name & Autocomplete suggestions */}
+                  <div className="space-y-2 relative">
+                    <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">Item or Junk part name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Bronze Prime Junk (15d) or Paris Prime Grip"
+                      value={itemName}
+                      onChange={(e) => setItemName(e.target.value)}
+                      className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
+                      required
+                    />
+
+                    {itemSuggestions.length > 0 && (
+                      <div className="absolute left-0 right-0 top-[60px] bg-[#0c0d10] border border-[#2f313a] rounded-lg shadow-2xl z-30 overflow-hidden divide-y divide-[#2a2c33]/40 font-mono text-xs">
+                        {itemSuggestions.map((sug, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setItemName(sug);
+                              setItemSuggestions([]);
+                            }}
+                            className="w-full text-left px-3.5 py-2 hover:bg-[#14161c] text-slate-300 hover:text-white transition block"
+                          >
+                            {sug}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Price and Quantity */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-1">
+                        Price <span className="text-[#d4af37]">Plat</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={price}
+                        onChange={(e) => setPrice(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none font-mono"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-sans">Qty available</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={quantity}
+                        onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none font-mono"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pricing Suggestion */}
+                  {(() => {
+                    const currentStandardCounts = guessCountsFromItem(itemName, quantity);
+                    const standardPriceSuggestion = getListingPriceSuggestion(currentStandardCounts);
+                    if (!standardPriceSuggestion) return null;
+                    return (
+                      <div className="text-[11px] bg-[#0c0d10] p-2.5 rounded border border-[#2a2c33] text-zinc-400 space-y-1">
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span>📊 Statistical expected value:</span>
+                          <span className="font-semibold text-[#d4af37] font-mono">{standardPriceSuggestion.average}p</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[9px] text-zinc-500">
+                          <span>Market Price Range:</span>
+                          <span className="font-mono text-zinc-300 font-semibold">{standardPriceSuggestion.min}p - {standardPriceSuggestion.max}p</span>
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={() => setPrice(standardPriceSuggestion.average)}
+                          className="text-[9px] text-[#d4af37] uppercase font-bold tracking-wider hover:underline block pt-0.5"
+                        >
+                          Use Statistical Average ({standardPriceSuggestion.average}p)
+                        </button>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Note input field */}
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+                      <span>Listing Note</span>
+                      <span className="text-zinc-600 font-normal">Optional</span>
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={120}
+                      placeholder="e.g., Fast trade, online now! No negotiations."
+                      value={standardNote}
+                      onChange={(e) => setStandardNote(e.target.value)}
+                      className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder-zinc-500"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="w-full py-2.5 bg-[#d4af37] hover:bg-[#b08d26] disabled:opacity-50 text-black font-semibold text-xs uppercase tracking-wider rounded-lg transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-lg font-sans"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Publish Standard Listing
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
 
           {/* Right Column: Saved Drafts Presets */}
@@ -1563,6 +1919,48 @@ export default function MarketTab() {
                   </div>
                 </div>
 
+                {/* Pricing Suggestion */}
+                {(() => {
+                  const currentStandardCounts = guessCountsFromItem(itemName, quantity);
+                  const standardPriceSuggestion = getListingPriceSuggestion(currentStandardCounts);
+                  if (!standardPriceSuggestion) return null;
+                  return (
+                    <div className="text-[11px] bg-[#0c0d10] p-2.5 rounded border border-[#2a2c33] text-zinc-400 space-y-1">
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span>📊 Statistical expected value:</span>
+                        <span className="font-semibold text-[#d4af37] font-mono">{standardPriceSuggestion.average}p</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[9px] text-zinc-500">
+                        <span>Market Price Range:</span>
+                        <span className="font-mono text-zinc-300 font-semibold">{standardPriceSuggestion.min}p - {standardPriceSuggestion.max}p</span>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => setPrice(standardPriceSuggestion.average)}
+                        className="text-[9px] text-[#d4af37] uppercase font-bold tracking-wider hover:underline block pt-0.5"
+                      >
+                        Use Statistical Average ({standardPriceSuggestion.average}p)
+                      </button>
+                    </div>
+                  );
+                })()}
+
+                {/* Note input field */}
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+                    <span>Listing Note</span>
+                    <span className="text-zinc-600 font-normal">Optional</span>
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={120}
+                    placeholder="e.g., Fast trade, online now! No negotiations."
+                    value={standardNote}
+                    onChange={(e) => setStandardNote(e.target.value)}
+                    className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder-zinc-500"
+                  />
+                </div>
+
                 <button
                   type="submit"
                   disabled={actionLoading}
@@ -1776,9 +2174,10 @@ export default function MarketTab() {
                 // Copy-paste trade command for Warframe Chat
                 let tradeText = "";
                 if (isPrimeJunk) {
+                  const partDetails = listing.partDistribution ? ` [${listing.partDistribution}]` : '';
                   tradeText = isWTS
-                    ? `/w ${listing.sellerIGN} Hi! I want to buy your Bulk Prime Junk Bundle (${listing.totalParts} parts for ${listing.price}p)`
-                    : `/w ${listing.sellerIGN} Hi! I want to sell you a Bulk Prime Junk Bundle (${listing.totalParts} parts for ${listing.price}p)`;
+                    ? `/w ${listing.sellerIGN} Hi! I want to buy your Bulk Prime Junk Bundle${partDetails} (${listing.totalParts} parts for ${listing.price}p)`
+                    : `/w ${listing.sellerIGN} Hi! I want to sell you a Bulk Prime Junk Bundle${partDetails} (${listing.totalParts} parts for ${listing.price}p)`;
                 } else {
                   tradeText = isWTS 
                     ? `/w ${listing.sellerIGN} Hi! I want to buy ${listing.itemName} for ${listing.price}p [DucaPlat]`
@@ -1788,18 +2187,26 @@ export default function MarketTab() {
                 return (
                   <div
                     key={listing.id}
-                    className={`bg-[#14161c] border rounded-xl p-4.5 transition duration-150 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${isOwner ? 'border-[#d4af37]/45 shadow-lg shadow-[#d4af37]/3' : 'border-[#2a2c33]'}`}
+                    className={`bg-[#14161c] border rounded-xl p-6 transition duration-150 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-5 ${isOwner ? 'border-[#d4af37]/45 shadow-lg shadow-[#d4af37]/3' : 'border-[#2a2c33]'}`}
                   >
                     
                     {/* Left Accent Bar depending on listing type */}
-                    <div className={`absolute top-0 bottom-0 left-0 w-1 ${isPrimeJunk ? 'bg-[#d4af37]' : isWTS ? 'bg-red-500' : 'bg-blue-500'}`} />
+                    <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${isWTS ? 'bg-[#c55353]' : 'bg-[#3b82f6]'}`} />
 
                     <div className="space-y-2 flex-1 pl-1">
                       
                       {/* Top seller tag & verification */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded ${isPrimeJunk ? 'bg-amber-950/40 text-[#facc15] border border-amber-500/25' : isWTS ? 'bg-red-950/50 text-red-400 border border-red-900/35' : 'bg-blue-950/50 text-blue-400 border border-blue-900/35'}`}>
-                          {isPrimeJunk ? 'PRIME JUNK' : listing.type}
+                        <span className={`text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded ${
+                          isPrimeJunk 
+                            ? (isWTS 
+                                ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/30 font-semibold' 
+                                : 'bg-blue-950/20 text-blue-400 border border-blue-900/40')
+                            : (isWTS 
+                                ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/30' 
+                                : 'bg-blue-950/20 text-blue-400 border border-blue-900/35')
+                        }`}>
+                          {isPrimeJunk ? `PRIME JUNK (${listing.type})` : listing.type}
                         </span>
 
                         <span className="font-mono text-xs font-semibold text-[#e0e1e6] flex items-center gap-1 uppercase select-all">
@@ -1829,10 +2236,10 @@ export default function MarketTab() {
                       {isPrimeJunk ? (
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-baseline gap-2.5">
-                            <h4 className="text-[13px] font-extrabold text-[#f1f2f6] tracking-wide uppercase font-sans text-amber-400">
+                            <h4 className={`text-[13px] font-extrabold tracking-wide uppercase font-sans ${isWTS ? 'text-[#e06d6d]' : 'text-blue-400'}`}>
                               {listing.itemName || 'Bulk Prime Junk Bundle'}
                             </h4>
-                            <span className="text-xs text-zinc-500">
+                            <span className="text-xs text-zinc-500 font-sans">
                               Wholesale bundle — No single item purchases!
                             </span>
                           </div>
@@ -1875,7 +2282,7 @@ export default function MarketTab() {
                         </div>
                       ) : (
                         <div className="flex flex-wrap items-baseline gap-2.5">
-                          <h4 className="text-[13px] font-semibold text-[#f1f2f6] tracking-wide uppercase font-sans">
+                          <h4 className={`text-[13px] font-semibold tracking-wide uppercase font-sans ${isWTS ? 'text-[#e06d6d]' : 'text-blue-400'}`}>
                             {listing.itemName}
                           </h4>
                           <span className="text-xs text-zinc-500">
@@ -1884,22 +2291,74 @@ export default function MarketTab() {
                         </div>
                       )}
 
-                      {/* COPY FORUM COMMAND BLOCK */}
-                      {!isOwner && (
-                        <div className="flex items-center gap-1.5 mt-2 bg-[#0c0d10]/60 border border-[#2a2c33]/40 rounded-lg p-1 max-w-md shrink-0">
-                          <span className="text-[9px] text-[#8e9299] shrink-0 pl-1.5 font-mono uppercase tracking-wide">Copy command:</span>
-                          <div className="flex-1 font-mono text-[10px] text-[#22c55e] truncate select-all px-1 font-semibold">
-                            {tradeText}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(tradeText, false, listing.id)}
-                            className="p-1 px-2.5 bg-zinc-900 hover:bg-zinc-800 rounded text-[9px] text-[#d4af37] border border-[#d4af37]/15 hover:border-[#d4af37]/30 transition uppercase font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
-                          >
-                            {copiedCommandId === listing.id ? 'Copied!' : 'Copy'}
-                          </button>
+                      {/* Optional Listing note */}
+                      {listing.note && (
+                        <div className="text-[11px] text-zinc-300 bg-[#0c0d10]/40 border border-[#2a2c33]/40 p-2.5 rounded-lg italic pr-4 max-w-lg font-sans">
+                          "{listing.note}"
                         </div>
                       )}
+
+                      {/* Price Realism Valuation Insights */}
+                      {(() => {
+                        const derivedCounts = isPrimeJunk 
+                          ? (listing.counts || { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })
+                          : guessCountsFromItem(listing.itemName, listing.quantity);
+                        const valuation = getListingPriceSuggestion(derivedCounts);
+                        if (!valuation) return null;
+                        return (
+                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] mt-1.5">
+                            <span className="text-zinc-500 font-mono">Valuation range:</span>
+                            <span className="font-mono text-zinc-300 font-semibold">{valuation.min}-{valuation.max}p</span>
+                            <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold tracking-wide uppercase font-mono ${
+                              listing.price <= valuation.average
+                                ? 'bg-emerald-950/30 text-[#4ade80] border border-emerald-900/35'
+                                : listing.price > valuation.max * 1.15
+                                ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/25'
+                                : 'bg-zinc-950/50 text-zinc-400 border border-zinc-900/60'
+                            }`}>
+                              {listing.price <= valuation.average
+                                ? '🟢 Statistical Good Deal'
+                                : listing.price > valuation.max * 1.15
+                                ? '⚠️ Overpriced Strategy'
+                                : '⚖️ Fair market value'}
+                            </span>
+                          </div>
+                        );
+                      })()}
+
+                      {/* COPY FORUM COMMAND BLOCK */}
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        {!isOwner && (
+                          <div className="flex items-center gap-1.5 bg-[#0c0d10]/60 border border-[#2a2c33]/40 rounded-lg p-1 max-w-sm shrink-0 flex-1 sm:flex-initial">
+                            <span className="text-[9px] text-[#8e9299] shrink-0 pl-1.5 font-mono uppercase tracking-wide">Command:</span>
+                            <div className="flex-1 font-mono text-[10px] text-[#22c55e] truncate select-all px-1 font-semibold">
+                              {tradeText}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(tradeText, false, listing.id)}
+                              className="p-1 px-2.5 bg-zinc-900 hover:bg-zinc-800 rounded text-[9px] text-[#d4af37] border border-[#d4af37]/15 hover:border-[#d4af37]/30 transition uppercase font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                            >
+                              {copiedCommandId === listing.id ? 'Copied!' : 'Copy'}
+                            </button>
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const derivedCounts = isPrimeJunk 
+                              ? (listing.counts || { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })
+                              : guessCountsFromItem(listing.itemName, listing.quantity);
+                            onAnalyzeInCalculator?.(derivedCounts);
+                          }}
+                          className="px-3.5 py-1.5 bg-[#d4af37]/10 hover:bg-[#d4af37]/15 text-[#d4af37] border border-[#d4af37]/25 hover:border-[#d4af37]/45 text-[9px] font-extrabold uppercase tracking-widest rounded-lg transition duration-150 inline-flex items-center gap-1.5 cursor-pointer max-w-max select-none"
+                          title="Transmit item parameters to the main ANOVA statistical calculator"
+                        >
+                          <TrendingUp className="w-3.5 h-3.5 text-[#d4af37]" />
+                          <span>Analyze in Calculator</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Right Price section / Own operations */}
@@ -1944,18 +2403,7 @@ export default function MarketTab() {
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                      ) : (
-                        <a
-                          href={`https://forums.warframe.com/profile/${listing.normalizedSellerIGN}/`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-3 py-1.5 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 rounded-md text-[10px] text-zinc-300 font-semibold uppercase tracking-wide flex items-center justify-center gap-1 select-none cursor-pointer"
-                          title="Contact on forums"
-                        >
-                          <MessageSquare className="w-3 h-3 text-zinc-400 shrink-0" />
-                          Contact
-                        </a>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 );
