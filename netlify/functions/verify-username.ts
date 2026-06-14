@@ -7,17 +7,16 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
  */
 interface WfmUserProfile {
   id: string;
-  ingame_name: string;
+  ingameName: string; // CamelCase matches live payload
+  slug: string;
   about?: string;
   banned?: boolean;
-  avatar?: string;
 }
 
 interface WfmApiResponse {
-  payload?: {
-    profile: WfmUserProfile;
-  };
-  error?: string;
+  apiVersion: string;
+  data: WfmUserProfile; // Live data is nested inside the data envelope
+  error: string | null;
 }
 
 /**
@@ -206,7 +205,7 @@ export const handler: Handler = async (event) => {
     /**
      * Query WFM v2 API with JWT authorization
      */
-    const wfmApiUrl = `https://api.warframe.market/v2/profile/${encodeURIComponent(normalizedIGN)}`;
+    const wfmApiUrl = `https://api.warframe.market/v2/user/${encodeURIComponent(normalizedIGN)}`;
     const wfmJwtToken = process.env.WFM_JWT_TOKEN;
 
     if (!wfmJwtToken) {
@@ -256,9 +255,9 @@ export const handler: Handler = async (event) => {
       }
 
       const wfmData: WfmApiResponse = await wfmResponse.json();
-      wfmUserData = wfmData.payload?.profile || null;
+      wfmUserData = wfmData.data; // Extract the nested user profile directly
 
-      if (!wfmUserData) {
+      if (!wfmUserData || !wfmUserData.id) {
         console.warn(`[Verifier] Invalid WFM response structure for: ${normalizedIGN}`);
         return {
           statusCode: 500,
@@ -269,7 +268,7 @@ export const handler: Handler = async (event) => {
 
       // Security guard: check if account is banned
       if (wfmUserData.banned) {
-        console.warn(`[Verifier] Blocked verification of banned account: ${wfmUserData.ingame_name}`);
+        console.warn(`[Verifier] Blocked verification of banned account: ${wfmUserData.ingameName}`);
         return {
           statusCode: 403,
           headers: { "Content-Type": "application/json" },
@@ -319,7 +318,7 @@ export const handler: Handler = async (event) => {
 
     batch.update(userDocRef, {
       "verification.status": "verified",
-      "verification.verifiedIGN": wfmUserData.ingame_name,
+      "verification.verifiedIGN": wfmUserData.ingameName, // Maps official spelling from API
       "verification.normalizedIGN": normalizedIGN,
       "verification.wfmId": wfmUserData.id,
       "verification.verificationCode": null,
@@ -329,7 +328,7 @@ export const handler: Handler = async (event) => {
     await batch.commit();
 
     console.log(
-      `[Verifier] Verification SUCCESS: ${uid} -> ${wfmUserData.ingame_name}`
+      `[Verifier] Verification SUCCESS: ${uid} -> ${wfmUserData.ingameName}`
     );
 
     return {
@@ -337,7 +336,7 @@ export const handler: Handler = async (event) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         success: true,
-        verifiedIGN: wfmUserData.ingame_name,
+        verifiedIGN: wfmUserData.ingameName,
       }),
     };
   } catch (error: any) {
