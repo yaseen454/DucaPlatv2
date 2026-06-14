@@ -83,17 +83,24 @@ export const handler: Handler = async (event) => {
 
     // Initialize Firebase Admin securely
     if (!getApps().length) {
-      const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT;
-      if (!serviceAccountStr) {
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+      
+      if (!clientEmail || !privateKey) {
         return {
           statusCode: 500,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ error: "FIREBASE_SERVICE_ACCOUNT env key is missing on the server." }),
+          body: JSON.stringify({ error: "FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY env keys are missing on the server." }),
         };
       }
-      const serviceAccount = JSON.parse(serviceAccountStr);
+      
+      const serviceAccount = {
+        client_email: clientEmail,
+        private_key: privateKey.replace(/\\n/g, "\n"), // Handle escaped newlines
+      };
+      
       initializeApp({
-        credential: cert(serviceAccount),
+        credential: cert(serviceAccount as any),
       });
     }
 
