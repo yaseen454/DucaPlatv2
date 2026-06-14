@@ -45,12 +45,25 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const extractForumProfileSlug = (input: string): string => {
+    const extractWFMProfileUsername = (input: string): string => {
       let val = input.trim();
-      if (val.toLowerCase().includes("forums.warframe.com/profile/")) {
+      // Handle warframe.market/profile/username urls
+      if (val.toLowerCase().includes("warframe.market/profile/")) {
+        const parts = val.split(/warframe\.market\/profile\//i);
+        if (parts.length > 1) {
+          val = parts[1];
+        }
+      } else if (val.toLowerCase().includes("forums.warframe.com/profile/")) {
+        // Fallback for older links or forum layout formats
         const parts = val.split(/forums\.warframe\.com\/profile\//i);
         if (parts.length > 1) {
           val = parts[1];
+        }
+        if (val.includes("-")) {
+          const blocks = val.split("-");
+          if (/^\d+$/.test(blocks[0])) {
+            val = blocks.slice(1).join("-");
+          }
         }
       }
       while (val.endsWith("/")) {
@@ -60,12 +73,12 @@ export const handler: Handler = async (event) => {
         val = val.split("?")[0];
       }
       if (val.includes("/")) {
-        val = val.split("/")[0];
+        val = val.split("/").pop() || val;
       }
       return val.trim();
     };
 
-    const parsedSlug = extractForumProfileSlug(claimedIGN);
+    const parsedSlug = extractWFMProfileUsername(claimedIGN);
     const normalizedIGN = parsedSlug.toLowerCase();
 
     // Initialize Firebase Admin securely
@@ -108,53 +121,45 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Modern browser headers to bypass server/CDN automated scraper protections
-    const browserHeaders = {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.9",
-      "Cache-Control": "max-age=0",
-      "Referer": "https://forums.warframe.com/",
-      "Sec-Ch-Ua": '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
-      "Sec-Ch-Ua-Mobile": "?0",
-      "Sec-Ch-Ua-Platform": '"Windows"',
-      "Sec-Fetch-Dest": "document",
-      "Sec-Fetch-Mode": "navigate",
-      "Sec-Fetch-Site": "same-origin",
-      "Sec-Fetch-User": "?1",
-      "Upgrade-Insecure-Requests": "1"
+    // Modern API headers for warframe.market public profile fetch
+    const wfmHeaders = {
+      "Authorization": "JWT",       // required header even for public endpoints
+      "language": "en",
+      "platform": "pc",
+      "User-Agent": "WFJunkMarket/1.0",
+      "Accept": "application/json"
     };
 
-    // Append about me tab parameter to force loading the tab in initial HTML source
-    const profileUrl = `https://forums.warframe.com/profile/${normalizedIGN}/?tab=node_info_AboutMe`;
+    const profileUrl = `https://api.warframe.market/v1/profile/${encodeURIComponent(normalizedIGN)}`;
 
-    console.log(`Fetching profile: ${profileUrl}`);
+    console.log(`Fetching WFM profile: ${profileUrl}`);
     let response: Response;
     try {
       response = await fetchWithRetry(profileUrl, {
-        headers: browserHeaders,
-        redirect: "follow", // Automatically follow slug redirects
+        headers: wfmHeaders,
       });
     } catch (fetchErr: any) {
-      console.error("Forums fetch failed:", fetchErr);
+      console.error("WFM API fetch failed:", fetchErr);
       return {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           success: false,
-          error: `Could not reach Warframe Forums. Verify your internet, check if the IGN exists, and try again.`
+          error: `Could not reach Warframe.market API. Verify your connection and try again.`
         }),
       };
     }
 
     // Check if the response was successful (e.g. 200 OK)
     if (!response.ok) {
-      console.error(`Forum profile load failed with HTTP status: ${response.status}`);
-      let humanReadableError = `Forum server returned HTTP error ${response.status}.`;
-      if (response.status === 403) {
-        humanReadableError = "Forum CDN protection (Cloudflare) rejected the automated request (HTTP 403 Forbidden). Try updating your profile or verify the slug.";
-      } else if (response.status === 404) {
-        humanReadableError = `Profile URL not found (HTTP 404). Check if the forum slug/link is fully correct: "${normalizedIGN}"`;
+      console.error(`WFM profile load failed with HTTP status: ${response.status}`);
+      let humanReadableError = `Warframe.market API returned HTTP error ${response.status}.`;
+      if (response.status === 404) {
+        humanReadableError = `Warframe.market profile "${parsedSlug}" was not found. Ensure the spelling exactly matches your warframe.market username.`;
+      } else if (response.status === 429) {
+        humanReadableError = `Warframe.market API is busy (Rate Limit). Please wait a few seconds and try again.`;
+      } else if (response.status === 403) {
+        humanReadableError = "Warframe.market's Cloudflare protection blocked the verification query. Try again in a moment.";
       }
       return {
         statusCode: 200,
@@ -166,89 +171,29 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const htmlText = await response.text();
-    const root = parse(htmlText);
+    const data = await response.json();
+    console.log("WFM Profile Response Payload:", JSON.stringify(data?.payload?.profile || {}, null, 2));
 
-    // Isolate About Me content area. We look for specific containers first, falling back to broader layout slots.
-    let aboutContainer = root.querySelector("#elAboutMe") 
-      || root.querySelector(".cBioContent")
-      || root.querySelector('[data-role="memberContent"]')
-      || root.querySelector("#elProfileTabs_content")
-      || root.querySelector("#ipsLayout_mainArea")
-      || root.querySelector(".ipsLayout_container")
-      || root.querySelector("body"); // absolute fallback
-
-    if (!aboutContainer) {
-      console.warn("Targeted aboutContainer element not found on page.");
-      return {
-        statusCode: 200,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          success: false,
-          error: "About Me section container or main page body could not be located in the profile HTML."
-        }),
-      };
-    }
-
-    // Retrieve body content while stripping out global headers, footers and navigation to prevent false-positives
-    let containerText = aboutContainer.text || "";
-    
-    // Quick sanitization to exclude common global chunks if using body fallback
-    if (aboutContainer.tagName?.toLowerCase() === "body") {
-      const headerObj = root.querySelector("header") || root.querySelector("#ipsHeader");
-      const footerObj = root.querySelector("footer") || root.querySelector("#ipsFooter");
-      const navObj = root.querySelector("nav");
-      
-      let headerText = headerObj?.text || "";
-      let footerText = footerObj?.text || "";
-      let navText = navObj?.text || "";
-
-      containerText = containerText
-        .replace(headerText, "")
-        .replace(footerText, "")
-        .replace(navText, "");
-    }
+    const wfmProfile = data?.payload?.profile || {};
+    const aboutText = wfmProfile.about || wfmProfile.about_raw || wfmProfile.about_formatted || "";
+    // Correct actual casing of username from the response if available
+    const verifiedIGN = wfmProfile.ingame_name || wfmProfile.username || parsedSlug;
 
     const lowercaseToken = token.trim().toLowerCase();
-    const lowercaseAboutText = containerText.toLowerCase();
+    const lowercaseAboutText = aboutText.toLowerCase();
 
-    console.log("Checking token containment in About Me container...");
+    console.log("Checking token containment in warframe.market profile's Custom About/Bio Info...");
     const hasToken = lowercaseAboutText.includes(lowercaseToken);
 
     if (!hasToken) {
-      // Let's check if there is a permission error or login notification on the page
-      const pageTextLowercase = htmlText.toLowerCase();
-      let extraHint = "";
-      if (pageTextLowercase.includes("must sign in") || pageTextLowercase.includes("do not have permission") || pageTextLowercase.includes("sign in")) {
-        extraHint = " Your forum profile appears restricted or private to guest viewers. Check your forum privacy settings.";
-      }
-
       return {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           success: false,
-          error: `Verification token not found in your profile info.${extraHint} Ensure "${token}" is saved inside your 'About Me' tab, and verify your forum profile is public.`
+          error: `Verification token not found in your warframe.market 'About' text. Ensure you paste and save "${token}" inside your 'About' / 'Custom biography' field on your warframe.market profile settings, and try again.`
         }),
       };
-    }
-
-    // Extract canonical In-Game Name from the <title> tag
-    // Format: "ShyKnees - Warframe Forums" or "ShyKnees - Page 2 - Warframe Forums"
-    const titleElement = root.querySelector("title");
-    let verifiedIGN = parsedSlug; // Fallback from parsed slug
-    if (parsedSlug.includes("-")) {
-      const parts = parsedSlug.split("-");
-      if (/^\d+$/.test(parts[0])) {
-        verifiedIGN = parts.slice(1).join("-");
-      }
-    }
-
-    if (titleElement) {
-      const titleText = titleElement.text || "";
-      if (titleText.includes(" - ")) {
-        verifiedIGN = titleText.split(" - ")[0].trim();
-      }
     }
 
     // Secure batch write to verify status

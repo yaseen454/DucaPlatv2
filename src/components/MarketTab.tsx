@@ -72,13 +72,26 @@ interface UserVerification {
   updatedAt: any;
 }
 
-// Extract ID and user slug from full forum links to handle routing correctly
-function extractForumProfileSlug(input: string): string {
+// Extract profile username/slug from warframe.market profile links or raw usernames
+function extractWFMProfileUsername(input: string): string {
   let val = input.trim();
-  if (val.toLowerCase().includes("forums.warframe.com/profile/")) {
+  // Handle warframe.market/profile/username urls
+  if (val.toLowerCase().includes("warframe.market/profile/")) {
+    const parts = val.split(/warframe\.market\/profile\//i);
+    if (parts.length > 1) {
+      val = parts[1];
+    }
+  } else if (val.toLowerCase().includes("forums.warframe.com/profile/")) {
+    // Fallback for older links or forum layout formats
     const parts = val.split(/forums\.warframe\.com\/profile\//i);
     if (parts.length > 1) {
       val = parts[1];
+    }
+    if (val.includes("-")) {
+      const blocks = val.split("-");
+      if (/^\d+$/.test(blocks[0])) {
+        val = blocks.slice(1).join("-");
+      }
     }
   }
   while (val.endsWith("/")) {
@@ -88,7 +101,7 @@ function extractForumProfileSlug(input: string): string {
     val = val.split("?")[0];
   }
   if (val.includes("/")) {
-    val = val.split("/")[0];
+    val = val.split("/").pop() || val;
   }
   return val.trim();
 }
@@ -240,13 +253,13 @@ export default function MarketTab() {
 
     const claimed = claimedInput.trim();
     if (!claimed) {
-      setErrorMsg('Please enter a valid claimed Warframe In-Game Name (IGN) or Forum Profile Link.');
+      setErrorMsg('Please enter a valid claimed Warframe.market Username or Profile Link.');
       return;
     }
 
     setActionLoading(true);
     const token = generateVerifyToken();
-    const parsedSlug = extractForumProfileSlug(claimed);
+    const parsedSlug = extractWFMProfileUsername(claimed);
     const normalized = parsedSlug.toLowerCase();
 
     try {
@@ -451,7 +464,7 @@ export default function MarketTab() {
           Warframe Live Market Tab
         </h2>
         <p className="text-xs text-[#8e9299]">
-          Trade Prime parts and Junk safely. Authenticate your In-Game name via official forum profile signatures to guarantee seller identities.
+          Trade Prime parts and Junk safely. Authenticate your In-Game name via warframe.market profile bios to guarantee seller identities.
         </p>
       </div>
 
@@ -504,13 +517,13 @@ export default function MarketTab() {
                 {userVerification.status === 'unverified' && (
                   <form onSubmit={handleInitiateVerification} className="space-y-3">
                     <p className="text-xs text-[#8e9299] leading-relaxed">
-                      To safely post trades, prove you own your In-Game Name. Paste your <strong>Warframe Forums Profile URL</strong> (or numeric slug) below:
+                      To safely post trades, prove you own your In-Game Name. Paste your <strong>Warframe.market Profile URL</strong> (or username) below:
                     </p>
                     <div className="space-y-2">
-                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">Your Forum Profile URL or Slug</label>
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">Your warframe.market Username or Profile Link</label>
                       <input
                         type="text"
-                        placeholder="e.g. https://forums.warframe.com/profile/123456-shyknees/"
+                        placeholder="e.g. shyknees2 or https://warframe.market/profile/shyknees2"
                         value={claimedInput}
                         onChange={(e) => setClaimedInput(e.target.value)}
                         className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder:text-zinc-700"
@@ -543,7 +556,7 @@ export default function MarketTab() {
 
                     <div className="space-y-2">
                       <p className="text-xs text-[#8e9299] leading-relaxed">
-                        Copy the token code below, access your official login forum settings and paste it inside the <span className="text-white font-semibold">"About Me"</span> container block, save, then hit verify!
+                        Copy the token code below, access your warframe.market profile settings and paste it inside your <span className="text-white font-semibold">"About" (custom biography)</span> text block, save customisation, then hit verify!
                       </p>
 
                       <div className="flex items-center gap-2">
@@ -563,12 +576,12 @@ export default function MarketTab() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <a
-                        href={`https://forums.warframe.com/profile/${userVerification.normalizedIGN}/`}
+                        href={`https://warframe.market/profile/${userVerification.normalizedIGN}/`}
                         target="_blank"
                         rel="noreferrer"
                         className="py-2.5 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] text-zinc-300 uppercase tracking-wider font-semibold flex items-center justify-center gap-1.5 transition select-none cursor-pointer"
                       >
-                        Forum Profile
+                        Market Profile
                         <ExternalLink className="w-3 h-3" />
                       </a>
                       <button
@@ -611,7 +624,7 @@ export default function MarketTab() {
 
                     <div className="space-y-2">
                       <p className="text-[11px] text-[#8e9299]">
-                        Authenticated via Warframe Forum signature checks. Your listings display as certified.
+                        Authenticated via warframe.market profile biography checks. Your listings display as certified.
                       </p>
 
                       <button
