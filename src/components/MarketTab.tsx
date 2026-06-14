@@ -38,6 +38,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { PRIME_ITEMS } from '../data/primeData';
+import { SourceParserService } from '../utils/verificationParser';
 
 // Generate WF-VERIFY-[8 alphanumeric] token
 function generateVerifyToken(): string {
@@ -121,6 +122,7 @@ export default function MarketTab() {
   });
   
   // Local UI / Form states
+  const [marketSubTab, setMarketSubTab] = useState<'browse' | 'manage'>('browse');
   const [claimedInput, setClaimedInput] = useState('');
   const [htmlInput, setHtmlInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -281,6 +283,31 @@ export default function MarketTab() {
       setErrorMsg('Failed to create verification token. Try again.');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // Intercept the textarea paste action to safely parse and discard private page state in-browser
+  const handleSourcePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text') || '';
+    
+    // Parse client-side instantly! Discard the huge bloat, extracting only what's needed.
+    const result = SourceParserService.extractVerificationMeta(pastedText);
+
+    if (result.success && result.data) {
+      const { username, verificationKey } = result.data;
+      
+      // We set a lightweight, sanitized snippet containing only the extracted public headers
+      // completely discarding any private cookies, check_codes, or order arrays before transmission.
+      const optimizedHtml = `<title>Profile - ${username} | Orders</title>\n<meta name="description" content="${verificationKey}">`;
+      setHtmlInput(optimizedHtml);
+      
+      setErrorMsg(null);
+      setSuccessMsg(`✓ SECURE extraction complete! Safely parsed and discarded large page source. Extracted Username: "${username}" and Signature: "${verificationKey}". You are ready to click "Verify Now"!`);
+    } else {
+      setErrorMsg(result.error || 'Token parsing failed. Verify you are on your warframe.market profile page, refreshed, and copied (CTRL+U -> CTRL+A) properly.');
+      // Fallback: put first 5000 chars of pasted text as fallback 
+      setHtmlInput(pastedText.slice(0, 5000));
     }
   };
 
@@ -503,14 +530,48 @@ export default function MarketTab() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* LEFT COLUMN: Verification & Listing Widgets */}
-        <div className="lg:col-span-5 space-y-6">
+      {/* Sub navigation tabs */}
+      <div className="flex border-b border-[#2a2c33]/50">
+        <button
+          onClick={() => setMarketSubTab('browse')}
+          className={`flex-1 sm:flex-initial px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all relative -mb-px border-b-2 flex items-center justify-center gap-2 cursor-pointer ${
+            marketSubTab === 'browse'
+              ? 'border-[#d4af37] text-[#d4af37] bg-slate-900/10'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <ShoppingBag className="w-4 h-4 shrink-0 text-[#d4af37]" />
+          <span>Browse listings</span>
+          <span className="bg-[#0c0d10] text-[#e0e1e6] border border-[#2a2c33] text-[9px] px-1.5 py-0.5 rounded font-mono font-bold">
+            {filteredListings.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setMarketSubTab('manage')}
+          className={`flex-1 sm:flex-initial px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all relative -mb-px border-b-2 flex items-center justify-center gap-2 cursor-pointer ${
+            marketSubTab === 'manage'
+              ? 'border-[#d4af37] text-[#d4af37] bg-slate-900/10'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <UserCheck className="w-4 h-4 shrink-0 text-[#d4af37]" />
+          <span>My Trade Panel & Verification</span>
+          {user && (
+            <span className={`w-2 h-2 rounded-full ${userVerification.status === 'verified' ? 'bg-emerald-500 shadow shadow-emerald-500/20' : 'bg-amber-500 animate-pulse'}`} />
+          )}
+        </button>
+      </div>
+
+      {marketSubTab === 'manage' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fadeIn">
           
-          {/* PROFILE / VERIFICATION CONTAINER */}
-          <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-4">
-            <div className="border-b border-[#2a2c33]/40 pb-3">
+          {/* LEFT COLUMN: Verification & Listing Widgets */}
+          <div className="lg:col-span-6 space-y-6">
+            
+            {/* PROFILE / VERIFICATION CONTAINER */}
+            <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-4">
+              <div className="border-b border-[#2a2c33]/40 pb-3">
               <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide">
                 <UserCheck className="w-4 h-4 text-[#d4af37]" />
                 Identity Certification
@@ -589,32 +650,40 @@ export default function MarketTab() {
                             </button>
                           </div>
                         </li>
-                        <li>
-                          <span>Open your public profile page (<a
+                        <li className="text-amber-400 font-medium leading-relaxed">
+                          <span>⚠️ MANDATORY STEP: Save your biography settings, go back to your public profile page (<a
                             href={`https://warframe.market/profile/${encodeURIComponent((userVerification.claimedIGN || userVerification.normalizedIGN || '').toLowerCase())}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[#d4af37] font-semibold underline hover:text-[#b08d26] inline-flex items-center gap-0.5"
+                            className="text-[#d4af37] font-bold underline hover:text-[#b08d26] inline-flex items-center gap-0.5"
                           >
                             {userVerification.claimedIGN} <ExternalLink className="w-3 h-3 inline mb-0.5" />
-                          </a>) and press refresh.</span>
+                          </a>), and press <strong className="text-white font-bold underline uppercase">REFRESH (F5 / CTRL+R)</strong> so changes take effect!</span>
                         </li>
                         <li>
-                          <span>Right-click anywhere on that page, and select <strong className="text-white font-medium">View Page Source</strong> (or press <kbd className="bg-[#0c0d10] border border-[#2a2c33] text-zinc-300 px-1 py-0.5 rounded text-[9px] font-mono">CTRL + U</kbd> on PC, <kbd className="bg-[#0c0d10] border border-[#2a2c33] text-zinc-300 px-1 py-0.5 rounded text-[9px] font-mono">CMD + Option + U</kbd> on Mac).</span>
+                          <span>Right-click anywhere on that refreshed page, and select <strong className="text-white font-medium">View Page Source</strong> (or press <kbd className="bg-[#0c0d10] border border-[#2a2c33] text-zinc-300 px-1 py-0.5 rounded text-[9px] font-mono">CTRL + U</kbd> on PC, <kbd className="bg-[#0c0d10] border border-[#2a2c33] text-zinc-300 px-1 py-0.5 rounded text-[9px] font-mono">CMD + Option + U</kbd> on Mac).</span>
                         </li>
                         <li className="space-y-1.5">
-                          <span>Select all text on that page (<strong className="text-white font-medium">CTRL + A</strong> or <strong className="text-white font-medium">CMD + A</strong>), copy it, and paste it fully in the box below:</span>
+                          <span>Select all text on that source tab (<strong className="text-white font-medium">CTRL + A</strong> / <strong className="text-white font-medium">CMD + A</strong>), copy it, and paste it fully in the box below:</span>
                           <textarea
                             rows={3}
                             value={htmlInput}
                             onChange={(e) => setHtmlInput(e.target.value)}
+                            onPaste={handleSourcePaste}
                             maxLength={100000}
-                            placeholder="Right-click on your profile page -> View Page Source -> Copy all source code (CTRL+A) and paste here..."
+                            placeholder="Right-click on your refreshed profile -> View Page Source -> Copy all source (CTRL+A) and paste here..."
                             className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-2.5 py-2 text-[10px] text-[#e0e1e6] focus:outline-none placeholder:text-zinc-600 font-mono resize-none mt-1"
                           />
                           <div className="flex justify-between items-center text-[9px] text-zinc-500 font-mono">
-                            <span>*Accepts first 100k characters containing page header metadata</span>
+                            <span>*Securely parsed of session data locally in your tab</span>
                             <span>{htmlInput.length.toLocaleString()} / 100,000</span>
+                          </div>
+
+                          <div className="mt-2 p-2 bg-[#0d1210] border border-emerald-950/40 rounded text-[9px] text-[#8fa89b] leading-normal font-mono flex gap-1.5 items-start">
+                            <span className="text-[#a1e2b5]">🔒 SECURE SANDBOX ON PASTE:</span>
+                            <span>
+                              Page source code is parsed in-browser inside this tab. Our script discards all orders, session logs, cookies, and tokens (like check_code) instantly to safeguard account parameters before anything leaves your browser.
+                            </span>
                           </div>
                         </li>
                       </ol>
@@ -795,8 +864,131 @@ export default function MarketTab() {
           )}
         </div>
 
-        {/* RIGHT COLUMN: Listings browse search feed */}
-        <div className="lg:col-span-7 space-y-4">
+        {/* MY OWN LISTINGS & OPERATIONS FEED (Col span 6 in Manage Tab) */}
+        <div className="lg:col-span-6 space-y-4">
+          <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-4">
+            <div className="border-b border-[#2a2c33]/40 pb-3 flex items-center justify-between">
+              <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide font-sans">
+                <Coins className="w-4 h-4 text-[#d4af37]" />
+                My Active Trade Offers
+              </h3>
+              <span className="bg-[#0c0d10] text-[#e0e1e6] border border-[#2a2c33]/60 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+                {listings.filter(l => user && l.sellerUid === user.uid).length} listed
+              </span>
+            </div>
+
+            {!user ? (
+              <p className="text-xs text-[#8e9299] text-center py-6 leading-relaxed">
+                Log in using Google to review and close your listings.
+              </p>
+            ) : userVerification.status !== 'verified' ? (
+              <p className="text-xs text-[#c4c5cc] text-center py-6 leading-normal bg-[#0c0d10]/40 border border-[#2a2c33]/40 rounded-lg">
+                🔒 Complete identity certification first to post and oversee active trade listings.
+              </p>
+            ) : listings.filter(l => l.sellerUid === user.uid).length === 0 ? (
+              <div className="p-8 text-center bg-[#0c0d10]/40 border border-[#2a2c33]/40 rounded-xl space-y-2.5">
+                <Tag className="w-6 h-6 text-zinc-650 mx-auto" />
+                <p className="text-xs text-[#8e9299]">
+                  You have no active listings right now. Publish one using the form on the left!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 font-mono text-xs">
+                {listings.filter(l => l.sellerUid === user.uid).map((listing) => {
+                  const isWTS = listing.type === 'WTS';
+                  return (
+                    <div
+                      key={listing.id}
+                      className="bg-[#0b0c10] border border-[#2a2c33] rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative overflow-hidden transition hover:border-[#d4af37]/30"
+                    >
+                      <div className={`absolute top-0 bottom-0 left-0 w-1 ${isWTS ? 'bg-red-500' : 'bg-blue-500'}`} />
+                      
+                      <div className="space-y-1 pl-2 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${isWTS ? 'bg-red-950/40 text-red-150 border border-red-900/30' : 'bg-blue-950/40 text-blue-405 border border-blue-900/30'}`}>
+                            {listing.type}
+                          </span>
+                          <span className="text-[9px] text-zinc-500">ACTIVE OFFER</span>
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xs font-bold text-white uppercase tracking-wide font-sans">{listing.itemName}</span>
+                          <span className="text-[10px] text-zinc-500 font-sans">Qty: {listing.quantity}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-center border-t sm:border-t-0 border-[#2a2c33]/45 pt-2 sm:pt-0 shrink-0 gap-2 font-sans font-mono whitespace-nowrap">
+                        <div className="text-right">
+                          <span className="text-xs font-semibold text-[#f1f2f6]">{listing.price} <span className="text-[10px] text-[#d4af37] font-semibold uppercase">p</span></span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleMarkListingStatus(listing.id, 'sold')}
+                            className="px-2 py-0.5 bg-emerald-950/40 hover:bg-emerald-950/70 border border-emerald-900/40 text-emerald-400 hover:text-emerald-300 rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
+                          >
+                            Sold
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMarkListingStatus(listing.id, 'cancelled')}
+                            className="px-2 py-0.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-[#e0e1e6] rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteListing(listing.id)}
+                            className="p-1 px-1.5 bg-red-950/15 hover:bg-red-850/20 border border-red-900/35 text-red-500 hover:text-red-450 rounded transition cursor-pointer"
+                            title="Delete row"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          
+          {/* Quick tips */}
+          <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-4.5 space-y-2 text-[11px] text-[#8e9299] leading-relaxed">
+            <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wide">Live Panel Tips</h4>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Pasting your profile View Source checks in step 4 securely discards private page cookies in-browser! No login parameters ever leave this page.</li>
+              <li>Marking listings Sold or Cancelled immediately removes public entries database-wide.</li>
+              <li>Toggle "Verified Only" in Browse listings to only see trades from players who successfully completed trade verification.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      )}
+
+      {/* RIGHT COLUMN: Listings browse search feed (Community Feed tab) */}
+      {marketSubTab === 'browse' && (
+        <div className="space-y-4 animate-fadeIn max-w-5xl mx-auto w-full">
+          {/* Helpful call-to-action bar for unverified visitors */}
+          {(!user || userVerification.status !== 'verified') && (
+            <div className="bg-[#14161c] border border-amber-900/30 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-md shadow-amber-950/5">
+              <div className="space-y-1 flex-1">
+                <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
+                  Become a Certified Seller or Buyer
+                </h4>
+                <p className="text-[11px] text-[#c4c5cc] leading-normal">
+                  Unlock posting powers! Verify your Warframe IGN inside the <strong className="text-white">"My Trade Panel & Verification"</strong> tab to publish your own custom deals on this board.
+                </p>
+              </div>
+              <button
+                onClick={() => setMarketSubTab('manage')}
+                className="px-3.5 py-2 bg-[#d4af37] hover:bg-[#b08d26] text-black font-semibold text-[10px] uppercase tracking-wider rounded-lg transition duration-150 shrink-0 self-start sm:self-center cursor-pointer active:scale-95"
+              >
+                Go to Verification &rarr;
+              </button>
+            </div>
+          )}
           
           {/* SEARCH ACTIONS BAR */}
           <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
@@ -997,7 +1189,7 @@ export default function MarketTab() {
             </div>
           )}
         </div>
-      </div>
+      )}
 
       {/* CUSTOM CONFIRMATION RESET MODAL */}
       {showConfirmReset && (

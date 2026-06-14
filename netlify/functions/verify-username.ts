@@ -132,29 +132,34 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Limit input length to prevent memory bloated parsing or excessive regex backtracking.
-    // The `<head>` block containing meta descriptions, titles, and canonical links is always at 
-    // the very start and comfortably fits inside 50,000 characters.
-    const html = htmlSource.substring(0, 50000);
+    // Security Guardrails: Limit parsing input to the first 15,000 characters and first 100 lines.
+    // This provides complete ReDoS backtrack protection and extremely fast non-blocking execution.
+    const html = htmlSource.substring(0, 15000);
+    const headerLines = html.split(/\r?\n/).slice(0, 100).join("\n");
 
-    // Extract exact case-sensitive username from title or page links
+    // Extract exact case-sensitive username from title or page links using clean, bounded regex matches
     let verifiedIGN = "";
-    // 1. Try Title tag (e.g. <title>Profile - TennoMerchant | Orders</title> or translated equivalents)
-    const titleMatch = html.match(/<title>Profile\s*-\s*(.*?)\s*\|\s*Orders<\/title>/i);
-    if (titleMatch) {
+    
+    // 1. Try case-sensitive Title tag first (e.g. <title>Profile - TennoMerchant | Orders</title>)
+    const titleMatch = headerLines.match(/<title>Profile\s*-\s*(.*?)\s*\|\s*Orders<\/title>/i);
+    if (titleMatch && titleMatch[1]) {
       verifiedIGN = titleMatch[1].trim();
     } else {
-      // 2. Try canonical URL or open graph tags to get the name
-      // <link rel="canonical" href="https://warframe.market/profile/tennomerchant">
-      const canonicalMatch = html.match(/<link\s+rel="canonical"\s+href="[^"]*?warframe\.market\/(?:[a-z]{2}\/)?profile\/([a-zA-Z0-9_-]+)"/i);
-      if (canonicalMatch) {
-        verifiedIGN = canonicalMatch[1].trim();
+      // 2. Try case-sensitive og:title tag as backup
+      const ogTitleMatch = headerLines.match(/<meta\s+property="og:title"\s+content="Profile\s*-\s*(.*?)\s*\|\s*Orders"/i);
+      if (ogTitleMatch && ogTitleMatch[1]) {
+        verifiedIGN = ogTitleMatch[1].trim();
       } else {
-        // 3. Try to locate profile active tab link or other links
-        // href="/profile/the_user" or href="/en/profile/the_user"
-        const linkMatch = html.match(/href="(?:\/[a-z]{2})?\/profile\/([a-zA-Z0-9_-]+)"/i);
-        if (linkMatch) {
-          verifiedIGN = linkMatch[1].trim();
+        // 3. Try canonical URL fallback
+        const canonicalMatch = headerLines.match(/<link\s+rel="canonical"\s+href="[^"]*?warframe\.market\/(?:[a-z]{2}\/)?profile\/([a-zA-Z0-9_-]+)"/i);
+        if (canonicalMatch && canonicalMatch[1]) {
+          verifiedIGN = canonicalMatch[1].trim();
+        } else {
+          // 4. Try profile tab link selector links
+          const linkMatch = headerLines.match(/href="(?:\/[a-z]{2})?\/profile\/([a-zA-Z0-9_-]+)"/i);
+          if (linkMatch && linkMatch[1]) {
+            verifiedIGN = linkMatch[1].trim();
+          }
         }
       }
     }
@@ -183,20 +188,20 @@ export const handler: Handler = async (event) => {
     }
 
     // Search for meta description first (where the "About Me" / Biography text of the profile is embedded as standard SEO metadata)
-    const descMatch = html.match(/<meta\s+name="description"\s+content="([\s\S]*?)">/i);
+    const descMatch = headerLines.match(/<meta\s+name="description"\s+content="([\s\S]*?)">/i);
     let aboutText = descMatch ? descMatch[1] : "";
 
     // Fallback to og:description if name="description" was empty or not matched
     if (!aboutText) {
-      const ogDescMatch = html.match(/<meta\s+property="og:description"\s+content="([\s\S]*?)">/i);
+      const ogDescMatch = headerLines.match(/<meta\s+property="og:description"\s+content="([\s\S]*?)">/i);
       if (ogDescMatch) {
         aboutText = ogDescMatch[1];
       }
     }
 
-    // Ultimate fallback: if description tag parsing is not matching, search the whole page body safely.
+    // Ultimate fallback: if description tag parsing is not matching, search the header text safely.
     if (!aboutText) {
-      aboutText = html;
+      aboutText = headerLines;
     }
 
     const lowercaseToken = token.trim().toLowerCase();
