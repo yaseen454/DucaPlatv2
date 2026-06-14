@@ -12,6 +12,7 @@ import AnalysisResults from './components/AnalysisResults';
 import AboutInfo from './components/AboutInfo';
 import SettingsTab from './components/SettingsTab';
 import SavedItemsTab from './components/SavedItemsTab';
+import MarketTab from './components/MarketTab';
 import { PRIME_ITEMS } from './data/primeData';
 import { 
   Coins, 
@@ -26,7 +27,8 @@ import {
   BookOpen,
   ShieldAlert,
   Bookmark,
-  Coffee
+  Coffee,
+  ShoppingBag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from './context/AuthContext';
@@ -444,6 +446,7 @@ export default function App() {
             { id: 'DataSelection', label: 'Directory', icon: Search },
             { id: 'OCR', label: 'Image Scan', icon: Clipboard },
             { id: 'SavedItems', label: 'Saved Items', icon: Bookmark },
+            { id: 'Market', label: 'Live Market', icon: ShoppingBag },
             { id: 'Settings', label: 'Settings', icon: Settings },
             { id: 'Help', label: 'Guide', icon: HelpCircle }
           ].map((tab) => {
@@ -884,6 +887,10 @@ export default function App() {
                 onClearAll={handleClearAllSavedInventories}
                 onNavigateToCalculator={() => setActiveTab('Calculator')}
               />
+            )}
+
+            {activeTab === 'Market' && (
+              <MarketTab />
             )}
 
             {activeTab === 'Settings' && (

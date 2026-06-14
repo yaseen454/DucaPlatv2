@@ -37,7 +37,20 @@ service cloud.firestore {
       return data.uid == request.auth.uid 
         && (data.email == null || (data.email is string && data.email.size() <= 200))
         && (data.displayName == null || (data.displayName is string && data.displayName.size() <= 150))
-        && (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 500));
+        && (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 500))
+        && (
+          !data.keys().hasAll(['verification']) 
+          || (
+            data.verification is map
+            && data.verification.status is string
+            && (data.verification.status == 'unverified' || data.verification.status == 'pending' || data.verification.status == 'verified')
+            && (data.verification.claimedIGN == null || (data.verification.claimedIGN is string && data.verification.claimedIGN.size() <= 100))
+            && (data.verification.normalizedIGN == null || (data.verification.normalizedIGN is string && data.verification.normalizedIGN.size() <= 100))
+            && (data.verification.verifiedIGN == null || (data.verification.verifiedIGN is string && data.verification.verifiedIGN.size() <= 100))
+            && (data.verification.token == null || (data.verification.token is string && data.verification.token.size() <= 150))
+            && (data.verification.updatedAt == null || data.verification.updatedAt is timestamp)
+          )
+        );
     }
 
     function isValidSavedItem(data) {
@@ -48,6 +61,18 @@ service cloud.firestore {
         && data.totalDucats is int && data.totalDucats >= 0
         && data.totalItems is int && data.totalItems >= 0
         && data.counts is map;
+    }
+
+    function isValidListing(data) {
+      return data.sellerUid == request.auth.uid
+        && data.sellerIGN is string && data.sellerIGN.size() <= 100
+        && data.normalizedSellerIGN is string && data.normalizedSellerIGN.size() <= 100
+        && data.isSellerVerified == true
+        && data.itemName is string && data.itemName.size() <= 200
+        && data.price is int && data.price >= 0
+        && data.quantity is int && data.quantity > 0
+        && (data.type == 'WTS' || data.type == 'WTB')
+        && (data.status == 'active' || data.status == 'sold' || data.status == 'cancelled');
     }
 
     // Rules for collections
@@ -63,11 +88,11 @@ service cloud.firestore {
 
       allow update: if isOwner(userId) 
         && isValidUserProfile(incoming()) 
-        && incoming().lastLoginAt == request.time
+        && (incoming().lastLoginAt == existing().lastLoginAt || incoming().lastLoginAt == request.time)
         // Protect original creation timestamp
         && incoming().createdAt == existing().createdAt
         // Limit which fields the client might dynamically edit in profile
-        && incoming().diff(existing()).affectedKeys().hasOnly(['lastLoginAt', 'displayName', 'photoURL', 'email']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['lastLoginAt', 'displayName', 'photoURL', 'email', 'verification']);
       
       allow delete: if false; // Profiles are permanent
 
@@ -90,6 +115,27 @@ service cloud.firestore {
 
         allow delete: if isOwner(userId) && isValidId(itemId);
       }
+    }
+
+    // Live listings market collection
+    match /listings/{listingId} {
+      allow get, list: if true;
+
+      allow create: if isSignedIn() && isValidId(listingId)
+        && isValidListing(incoming())
+        && incoming().createdAt == request.time
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verification.status == 'verified'
+        && incoming().normalizedSellerIGN == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verification.normalizedIGN;
+
+      allow update: if isSignedIn() && isValidId(listingId)
+        && existing().sellerUid == request.auth.uid
+        && isValidListing(incoming())
+        && incoming().sellerUid == existing().sellerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'price', 'quantity', 'itemName', 'type']);
+
+      allow delete: if isSignedIn() && isValidId(listingId)
+        && existing().sellerUid == request.auth.uid;
     }
   }
 }

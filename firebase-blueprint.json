@@ -30,9 +30,86 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of user document creation."
+        },
+        "verification": {
+          "type": "object",
+          "description": "In-Game Name verification status information.",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["unverified", "pending", "verified"]
+            },
+            "claimedIGN": {
+              "type": "string"
+            },
+            "normalizedIGN": {
+              "type": "string"
+            },
+            "verifiedIGN": {
+              "type": "string"
+            },
+            "token": {
+              "type": "string"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
         }
       },
       "required": ["uid"]
+    },
+    "MarketListing": {
+      "title": "MarketListing",
+      "description": "A live trade listing on the Warframe Prime junk and part market.",
+      "type": "object",
+      "properties": {
+        "sellerUid": {
+          "type": "string",
+          "description": "The UID of the seller."
+        },
+        "sellerIGN": {
+          "type": "string",
+          "description": "Canonical verified in-game name."
+        },
+        "normalizedSellerIGN": {
+          "type": "string",
+          "description": "Lowercased verified in-game name for comparisons."
+        },
+        "isSellerVerified": {
+          "type": "boolean",
+          "description": "Whether the seller is fully verified."
+        },
+        "itemName": {
+          "type": "string",
+          "description": "The name of the Prime piece/set (e.g. Bronze Junk, Sellsheet item)."
+        },
+        "price": {
+          "type": "number",
+          "description": "The trade price in Platinum."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity available."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["WTS", "WTB"],
+          "description": "Whether listing is WTS (Want to sell) or WTB (Want to buy)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "sold", "cancelled"],
+          "description": "Status of the listing."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Raw server timestamp of listing creation."
+        }
+      },
+      "required": ["sellerUid", "sellerIGN", "normalizedSellerIGN", "isSellerVerified", "itemName", "price", "quantity", "type", "status"]
     },
     "SavedItemEntry": {
       "title": "SavedItemEntry",
@@ -84,6 +161,10 @@
     "/users/{userId}/savedItems/{itemId}": {
       "schema": "SavedItemEntry",
       "description": "Cached collections of saved prime calculator batches."
+    },
+    "/listings/{listingId}": {
+      "schema": "MarketListing",
+      "description": "Active or completed trading listings on the live market."
     }
   }
 }
