@@ -5,7 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import { InventoryCount, CostRecord, CostTuple } from '../types';
 import { getProfitStats, runAnova, calculateProfit } from '../utils/mathUtils';
-import { Sparkles, BarChart, Table, AlertTriangle, HelpCircle, ChevronDown, ChevronUp, Check, X, TrendingUp } from 'lucide-react';
+import { Sparkles, BarChart, Table, AlertTriangle, HelpCircle, ChevronDown, ChevronUp, Check, X, TrendingUp, Copy } from 'lucide-react';
 import platinumIcon from '../data/platinum.png';
 import ducatIcon from '../data/480px-OrokinDucats.png';
 
@@ -43,6 +43,7 @@ interface AnalysisResultsProps {
   baseCosts: CostTuple[];
   enablePlot?: boolean;
   displayAnova?: boolean;
+  showDecision?: boolean;
 }
 
 export default function AnalysisResults({ 
@@ -50,7 +51,8 @@ export default function AnalysisResults({
   calcType, 
   baseCosts,
   enablePlot = true,
-  displayAnova = true
+  displayAnova = true,
+  showDecision = true
 }: AnalysisResultsProps) {
   const [showAllRates, setShowAllRates] = useState(false);
   const [activeGroupIndex, setActiveGroupIndex] = useState<number | null>(null);
@@ -62,6 +64,23 @@ export default function AnalysisResults({
     color: string;
   } | null>(null);
   const [hoveredPerm, setHoveredPerm] = useState<any | null>(null);
+  const [copiedType, setCopiedType] = useState<string | null>(null);
+
+  const handleCopyTradeChat = (type: string, prices: number[]) => {
+    const chatText = `WTS Prime Junk 15 :ducats: = ${prices[0]} :platinum , ` +
+      `25 :ducats: = ${prices[1]} :platinum , ` +
+      `45 :ducats: = ${prices[2]} :platinum , ` +
+      `65 :ducats: = ${prices[3]} :platinum , ` +
+      `100 :ducats: = ${prices[4]} :platinum`;
+    navigator.clipboard.writeText(chatText).then(() => {
+      setCopiedType(type);
+      setTimeout(() => {
+        setCopiedType(null);
+      }, 2000);
+    }).catch((err) => {
+      console.error("Failed to copy trade chat text:", err);
+    });
+  };
 
   // Compute base statistical reports
   const stats = useMemo(() => {
@@ -116,6 +135,118 @@ export default function AnalysisResults({
       };
     });
   }, [costRecords]);
+
+  // Compute boundaries for pricing tiers to estimate trade realism relative to inventory density
+  const dynamicRanges = useMemo(() => {
+    if (baseCosts.length === 0) return [];
+    return Array.from({ length: 5 }, (_, i) => {
+      const vals = baseCosts.map(c => c[i]);
+      return {
+        min: Math.min(...vals),
+        max: Math.max(...vals)
+      };
+    });
+  }, [baseCosts]);
+
+  // Strategic recommendations calculated via density & pricing ranges
+  const recommendations = useMemo(() => {
+    if (adjustedRecords.length === 0 || dynamicRanges.length === 0) return null;
+
+    const totalCount = stats.totalCount || 1;
+    const densities = [
+      { key: 'bronze15', label: 'Bronze 15d', count: counts.bronze15, weight: 15, index: 0 },
+      { key: 'bronze25', label: 'Bronze 25d', count: counts.bronze25, weight: 25, index: 1 },
+      { key: 'silver45', label: 'Silver 45d', count: counts.silver45, weight: 45, index: 2 },
+      { key: 'silver65', label: 'Silver 65d', count: counts.silver65, weight: 65, index: 3 },
+      { key: 'gold',     label: 'Gold 100d',   count: counts.gold,     weight: 100, index: 4 }
+    ];
+
+    const validDensities = densities
+      .filter(d => d.count > 0)
+      .sort((a, b) => b.count - a.count);
+
+    // Compute metrics for all vectors
+    const scoredVectors = adjustedRecords.map((record) => {
+      const prices = record.prices;
+      
+      // Calculate realism score (percentage)
+      let weightedRealismSum = 0;
+      let dividingSum = 0;
+      
+      const countsArray = [
+        counts.bronze15,
+        counts.bronze25,
+        counts.silver45,
+        counts.silver65,
+        counts.gold
+      ];
+
+      for (let i = 0; i < 5; i++) {
+        const count = countsArray[i];
+        if (count > 0) {
+          const r = dynamicRanges[i];
+          const span = r.max - r.min;
+          // If pricing is single-valued (min === max), ease of selling is 100%
+          const easeOfSelling = span === 0 ? 1 : (r.max - prices[i]) / span;
+          weightedRealismSum += count * easeOfSelling;
+          dividingSum += count;
+        }
+      }
+
+      const realismPercentage = dividingSum === 0 ? 100 : Math.round((weightedRealismSum / dividingSum) * 100);
+
+      return {
+        ...record,
+        realism: realismPercentage
+      };
+    });
+
+    // Strategy 1: The Patient Max Profit Strategy (Optimistic Maximum)
+    const maxProfitVector = scoredVectors[0];
+
+    // Strategy 2: High trade liquidity / Realism-Value sweet spot (Optimistic balanced representation)
+    // Filter vectors that have realism >= 60% and sort by profit descending
+    const balancedCandidates = scoredVectors.filter(v => v.realism >= 60).sort((a, b) => b.profit - a.profit);
+    const balancedVector = balancedCandidates[0] || scoredVectors[Math.floor(scoredVectors.length / 2)];
+
+    // Strategy 3: Ultra fast bulk sellout (Fast Turnover)
+    // High realism/ease of selling. Realism >= 80%, highest profit in that range
+    const budgetCandidates = scoredVectors.filter(v => v.realism >= 80).sort((a, b) => b.profit - a.profit);
+    const rapidVector = budgetCandidates[0] || scoredVectors[scoredVectors.length - 1];
+
+    return {
+      items: [
+        {
+          type: 'Maximalist Strategy',
+          title: 'Patient Max Profit (Optimistic Cap)',
+          vector: maxProfitVector,
+          icon: 'TrendingUp',
+          description: 'Aim for the highest possible platinum rate on all rarity tiers. Requires high listing patience or multiple trade window negotiations.',
+          badge: 'Optimistic Peak',
+          badgeColor: 'bg-amber-950/40 text-amber-400 border-amber-900/30'
+        },
+        {
+          type: 'Balanced Strategy',
+          title: 'Pragmatic Turn Rate (Density Optimized)',
+          vector: balancedVector,
+          icon: 'Sparkles',
+          description: 'Optimized pricing centered primarily around your high-density assets, maintaining nominal/lower pricing on sparse items to ensure quick sales.',
+          badge: 'Sweet Spot',
+          badgeColor: 'bg-blue-950/40 text-blue-400 border-blue-900/30'
+        },
+        {
+          type: 'Liquidity Strategy',
+          title: 'Ultra Fast Turnaround (Bulk Clearing)',
+          vector: rapidVector,
+          icon: 'BarChart',
+          description: 'Extremely realistic low-friction prices. Ensures parts are cleared in seconds. Ideal if you want rapid platinum now or are low on trade windows.',
+          badge: 'Maximum Velocity',
+          badgeColor: 'bg-emerald-950/40 text-emerald-400 border-emerald-900/30'
+        }
+      ],
+      validDensities
+    };
+  }, [adjustedRecords, dynamicRanges, counts, stats.totalCount]);
 
   // Helper to calculate Q1 and Q3 for boxplot from raw numerical array
   const calculateQuartiles = (arr: number[]) => {
@@ -326,19 +457,34 @@ export default function AnalysisResults({
             }
           }
 
+          const metrics = [
+            { name: 'Minimum Scenario (Lowest Yield)', value: boxPlotCoords.minVal, x: boxPlotCoords.minX, desc: 'The absolute lowest expected yield from the pricing matrices. Occurs under extremely conservative settings.', color: '#cd7f32' },
+            { name: 'First Quartile (Q1)', value: boxPlotCoords.q1, x: boxPlotCoords.q1X, desc: '25% of all potential pricing configurations result in a yield at or below this level.', color: '#3182ce' },
+            { name: 'Median (Q2 Midpoint)', value: boxPlotCoords.medianVal, x: boxPlotCoords.medianX, desc: 'The exact center of potential earnings. 50% of scenarios are higher, and 50% are lower.', color: '#d4af37' },
+            { name: 'Mathematical Mean (Average)', value: Number(boxPlotCoords.meanVal.toFixed(2)), x: boxPlotCoords.meanX, desc: 'The weight-center of all expected outcomes. Often represents the most probable outcome over many trades.', color: '#ffffff' },
+            { name: 'Third Quartile (Q3)', value: boxPlotCoords.q3, x: boxPlotCoords.q3X, desc: '75% of potential pricing configurations result in a yield at or below this level.', color: '#3182ce' },
+            { name: 'Maximum Scenario (Peak Profit)', value: boxPlotCoords.maxVal, x: boxPlotCoords.maxX, desc: 'The absolute highest expected yield from the pricing matrices. Achievable under aggressive seller markets.', color: '#a855f7' },
+          ];
+
           const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const x = ((e.clientX - rect.left) / rect.width) * 100; // 0 to 100%
             
-            const metrics = [
-              { name: 'Minimum Scenario (Lowest Yield)', value: boxPlotCoords.minVal, x: boxPlotCoords.minX, desc: 'The absolute lowest expected yield from the pricing matrices. Occurs under extremely conservative settings.', color: '#cd7f32' },
-              { name: 'First Quartile (Q1)', value: boxPlotCoords.q1, x: boxPlotCoords.q1X, desc: '25% of all potential pricing configurations result in a yield at or below this level.', color: '#3182ce' },
-              { name: 'Median (Q2 Midpoint)', value: boxPlotCoords.medianVal, x: boxPlotCoords.medianX, desc: 'The exact center of potential earnings. 50% of scenarios are higher, and 50% are lower.', color: '#d4af37' },
-              { name: 'Mathematical Mean (Average)', value: Number(boxPlotCoords.meanVal.toFixed(2)), x: boxPlotCoords.meanX, desc: 'The weight-center of all expected outcomes. Often represents the most probable outcome over many trades.', color: '#ffffff' },
-              { name: 'Third Quartile (Q3)', value: boxPlotCoords.q3, x: boxPlotCoords.q3X, desc: '75% of potential pricing configurations result in a yield at or below this level.', color: '#3182ce' },
-              { name: 'Maximum Scenario (Peak Profit)', value: boxPlotCoords.maxVal, x: boxPlotCoords.maxX, desc: 'The absolute highest expected yield from the pricing matrices. Achievable under aggressive seller markets.', color: '#a855f7' },
-            ];
-            
+            let closest = metrics[0];
+            let minDiff = Math.abs(x - metrics[0].x);
+            for (let i = 1; i < metrics.length; i++) {
+              const diff = Math.abs(x - metrics[i].x);
+              if (diff < minDiff) {
+                minDiff = diff;
+                closest = metrics[i];
+              }
+            }
+            setHoveredMetric(closest);
+          };
+
+          const handleTouchInteract = (clientX: number, target: HTMLDivElement) => {
+            const rect = target.getBoundingClientRect();
+            const x = ((clientX - rect.left) / rect.width) * 100; // 0 to 100%
             let closest = metrics[0];
             let minDiff = Math.abs(x - metrics[0].x);
             for (let i = 1; i < metrics.length; i++) {
@@ -390,6 +536,16 @@ export default function AnalysisResults({
                 className="relative h-24 bg-[#07080a] rounded-xl border border-[#2a2c33] p-4 cursor-crosshair select-none overflow-hidden group/track"
                 onMouseMove={handleMouseMove}
                 onMouseLeave={() => setHoveredMetric(null)}
+                onTouchStart={(e) => {
+                  if (e.touches.length > 0) {
+                    handleTouchInteract(e.touches[0].clientX, e.currentTarget);
+                  }
+                }}
+                onTouchMove={(e) => {
+                  if (e.touches.length > 0) {
+                    handleTouchInteract(e.touches[0].clientX, e.currentTarget);
+                  }
+                }}
               >
                 {/* Visual guidelines when hovering anywhere on coordinates */}
                 <div className="absolute inset-0 pointer-events-none opacity-20 bg-radial-gradient from-transparent to-[#07080a]" />
@@ -510,6 +666,40 @@ export default function AnalysisResults({
                 ))}
               </div>
 
+              {/* Mobile Swipe Cursor Slider */}
+              <div className="bg-[#0c0d10] border border-[#2a2c33]/60 rounded-xl p-3.5 flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-1.5 select-none font-sans">
+                    <span>📱 Swipe Cursor Slider</span>
+                    <span className="text-[8px] bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/30 px-1 py-0.5 rounded font-sans font-bold hidden sm:inline-block col-span-1">Recommended for Mobile</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-[#d4af37] font-semibold text-right max-w-[200px] truncate select-none">
+                    {hoveredMetric ? hoveredMetric.name.split(' (')[0] : "Adjust Slider"}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={hoveredMetric ? hoveredMetric.x : 50}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    let closest = metrics[0];
+                    let minDiff = Math.abs(val - metrics[0].x);
+                    for (let i = 1; i < metrics.length; i++) {
+                      const diff = Math.abs(val - metrics[i].x);
+                      if (diff < minDiff) {
+                        minDiff = diff;
+                        closest = metrics[i];
+                      }
+                    }
+                    setHoveredMetric(closest);
+                  }}
+                  className="w-full h-1.5 bg-[#14161c] rounded-lg appearance-none cursor-pointer accent-[#d4af37] border border-[#2a2c33]/50 focus:outline-none"
+                />
+              </div>
+
               {/* Descriptive Legend Indicators */}
               <div className="grid grid-cols-2 md:grid-cols-6 gap-2 pt-2">
                 <div key="legend-min" className="bg-[#0c0d10]/50 border border-[#2a2c33]/50 p-2.5 rounded-lg flex flex-col cursor-pointer hover:border-[#cd7f32]/40 transition" onClick={() => setHoveredMetric({ name: 'Minimum Scenario (Lowest Yield)', value: boxPlotCoords.minVal, x: boxPlotCoords.minX, desc: 'The absolute lowest expected yield from the pricing matrices. Occurs under extremely conservative settings.', color: '#cd7f32' })}>
@@ -541,6 +731,207 @@ export default function AnalysisResults({
           );
         })()}
       </div>
+      )}
+
+      {/* Strategic Recommendation Decision Advisor powered by ANOVA & Density of Items */}
+      {showDecision && recommendations && recommendations.items && (
+        <div className="bg-[#14161c] border border-[#d4af37]/30 rounded-xl p-6 shadow-xl space-y-5 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2a2c33]/60 pb-3">
+            <div>
+              <h3 className="text-base font-light text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide" style={{ fontFamily: "'Georgia', serif" }}>
+                <Sparkles className="w-5 h-5 text-[#d4af37]" />
+                ANOVA & Density-Powered Decisions Advisor
+              </h3>
+              <p className="text-xs text-[#8e9299] max-w-2xl mt-1">
+                Utilizes item density correlations combined with ANOVA variance to suggest the top 3 optimal seller strategies tailored to your exact inventory weight.
+              </p>
+            </div>
+            {recommendations.validDensities.length > 0 && (
+              <span className="text-[10px] bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 px-2 py-1 rounded font-mono uppercase">
+                Primacy: {recommendations.validDensities[0].label}
+              </span>
+            )}
+          </div>
+
+          {/* 1. Inventory Density Stacked Visual Representation */}
+          <div className="space-y-2 bg-[#0c0d10] border border-[#2a2c33]/50 p-4 rounded-xl">
+            <div className="flex justify-between items-center text-[10px] font-mono text-[#8e9299] select-none uppercase">
+              <span>Inventory Density Ratio Bar</span>
+              <span className="font-semibold text-zinc-300">Total Represented: {stats.totalCount} Parts</span>
+            </div>
+            <div className="h-3 w-full bg-[#14161c] rounded-full overflow-hidden flex border border-[#1a1c22]">
+              {recommendations.validDensities.map((d) => {
+                const pct = (d.count / stats.totalCount) * 100;
+                const color = d.index === 0 ? 'bg-amber-800' :
+                             d.index === 1 ? 'bg-amber-600' :
+                             d.index === 2 ? 'bg-[#94a3b8]' :
+                             d.index === 3 ? 'bg-[#cbd5e1]' :
+                             'bg-[#d4af37]';
+                return (
+                  <div 
+                    key={d.key} 
+                    className={`${color} h-full transition-all`} 
+                    style={{ width: `${pct}%` }}
+                    title={`${d.label}: ${d.count} parts (${pct.toFixed(1)}%)`}
+                  />
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[10px] text-zinc-400 font-mono mt-1 select-none">
+              {recommendations.validDensities.map((d) => {
+                const pct = (d.count / stats.totalCount) * 100;
+                const dotColor = d.index === 0 ? 'bg-amber-800' :
+                                 d.index === 1 ? 'bg-amber-600' :
+                                 d.index === 2 ? 'bg-[#94a3b8]' :
+                                 d.index === 3 ? 'bg-[#cbd5e1]' :
+                                 'bg-[#d4af37]';
+                return (
+                  <span key={d.key} className="flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full ${dotColor}`} />
+                    <span className="text-zinc-300">{d.label}</span>
+                    <span className="text-zinc-500 font-bold">{pct.toFixed(1)}%</span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. ANOVA Actionable Recommendations Banner */}
+          <div className={`p-4 rounded-xl border text-xs flex gap-3.5 ${
+            statSuite.anova.pValue <= 0.05 
+              ? 'bg-emerald-950/20 border-emerald-900/30 text-emerald-300' 
+              : 'bg-[#1a1515] border-[#442222]/30 text-rose-300'
+          }`}>
+            <AlertTriangle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${statSuite.anova.pValue <= 0.05 ? 'text-emerald-400' : 'text-rose-450'}`} />
+            <div className="space-y-1">
+              <span className="font-semibold block text-slate-200 text-xs uppercase font-mono tracking-wider">
+                {statSuite.anova.pValue <= 0.05 
+                  ? 'Strategic Verdict: High Variance Leveraged' 
+                  : 'Strategic Verdict: Constant Performance Horizon'}
+              </span>
+              <p className="leading-relaxed font-sans text-zinc-400 text-[11px]">
+                {statSuite.anova.pValue <= 0.05 ? (
+                  <>
+                    ANOVA rejects the null hypothesis (p = {statSuite.anova.pValue}). Because you have high volume in <strong className="text-white">{statSuite.focusLabels?.join(' & ') || 'Gold rarity'}</strong> assets, minor price shifts generate statistically overwhelming variance in returns. <strong>Decision:</strong> We recommend selecting the <strong className="text-[#d4af37]">Patient Max Profit</strong> strategy. Do not settle for low offers on your gold assets.
+                  </>
+                ) : (
+                  <>
+                    ANOVA accepts the null hypothesis (p = {statSuite.anova.pValue}). Expected average margins are statistically uniform compared to overall market volatility. <strong>Decision:</strong> We recommend utilizing the <strong className="text-emerald-400">Ultra Fast Turnaround</strong> strategy to clear items instantly. Squeezing for high pricing vectors yields negligible extra return over trade waiting.
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* 3. Top N (3) Strategy Columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {recommendations.items.map((rec) => {
+              if (!rec.vector) return null;
+              
+              const isSelectedByAnova = 
+                (statSuite.anova.pValue <= 0.05 && rec.type === 'Maximalist Strategy') ||
+                (statSuite.anova.pValue > 0.05 && rec.type === 'Liquidity Strategy');
+
+              return (
+                <div 
+                  key={rec.type} 
+                  className={`bg-[#0c0d10] border rounded-xl p-4 flex flex-col justify-between space-y-4 transition-all duration-300 ${
+                    isSelectedByAnova 
+                      ? 'border-[#d4af37]/40 ring-1 ring-[#d4af37]/25 shadow-[0_0_12px_rgba(212,175,55,0.06)]' 
+                      : 'border-[#2a2c33]/70 opacity-80 hover:opacity-100 hover:border-[#2a2c33]'
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-start">
+                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border font-mono uppercase tracking-wider ${rec.badgeColor}`}>
+                        {rec.badge}
+                      </span>
+                      {isSelectedByAnova && (
+                        <span className="text-[8px] bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/30 px-1.5 py-0.5 rounded font-mono font-bold animate-pulse">
+                          🔥 RECOMMENDED
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                        {rec.icon === 'TrendingUp' && <TrendingUp className="w-4 h-4 text-[#d4af37]" />}
+                        {rec.icon === 'Sparkles' && <Sparkles className="w-4 h-4 text-blue-400" />}
+                        {rec.icon === 'BarChart' && <BarChart className="w-4 h-4 text-emerald-400" />}
+                        {rec.title}
+                      </h4>
+                      <p className="text-[10.5px] text-zinc-400 leading-relaxed font-sans mt-1.5">
+                        {rec.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-[#2a2c33]/40 space-y-2.5">
+                    <div className="flex justify-between items-baseline text-xs">
+                      <span className="text-[10px] text-[#8e9299]">Expected Yield:</span>
+                      <strong className="text-base text-white flex items-center gap-0.5 font-bold">
+                        <PlatValue val={rec.vector.profit} size="w-4 h-4" className="text-white" />
+                      </strong>
+                    </div>
+
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-[10px] text-[#8e9299]">Trade Realism:</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-12 h-1 bg-[#14161c] rounded-full overflow-hidden border border-[#2a2c33]/50">
+                          <div 
+                            className={`h-full ${
+                              rec.vector.realism >= 80 ? 'bg-emerald-500' :
+                              rec.vector.realism >= 60 ? 'bg-blue-500' : 'bg-amber-500'
+                            }`}
+                            style={{ width: `${rec.vector.realism}%` }}
+                          />
+                        </div>
+                        <span className={`font-mono text-[10px] font-bold ${
+                          rec.vector.realism >= 80 ? 'text-emerald-400' :
+                          rec.vector.realism >= 60 ? 'text-blue-400' : 'text-[#d4af37]'
+                        }`}>{rec.vector.realism}%</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-1 select-none">
+                      <span className="text-[8px] text-[#8e9299] uppercase tracking-wider font-mono block mb-1">Vector Combination:</span>
+                      <span className="text-[9.5px] font-mono text-zinc-300 bg-[#14161c] px-1.5 py-1 rounded border border-[#2a2c33]/60 block text-center">
+                        B({rec.vector.prices[0]},{rec.vector.prices[1]}) S({rec.vector.prices[2]},{rec.vector.prices[3]}) G({rec.vector.prices[4]})
+                      </span>
+                    </div>
+
+                    {/* Copy Trade Chat Template Button */}
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleCopyTradeChat(rec.type, rec.vector.prices)}
+                        className={`w-full py-1.5 px-3 rounded-lg border text-[10.5px] font-mono flex items-center justify-center gap-1.5 transition-all select-none cursor-pointer ${
+                          copiedType === rec.type
+                            ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-400 font-bold shadow-[0_0_8px_rgba(16,185,129,0.15)]'
+                            : 'bg-[#181a20]/80 border-[#2a2c33]/80 text-zinc-300 hover:text-[#d4af37] hover:border-[#d4af37]/40 hover:bg-[#1a1d24]'
+                        }`}
+                      >
+                        {copiedType === rec.type ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Trade Chat Tag Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5 text-zinc-400" />
+                            <span>Copy Trade Chat Tag</span>
+                          </>
+                        )}
+                      </button>
+                      <span className="text-[8px] text-zinc-500 text-center block mt-1 select-none uppercase tracking-wide font-mono">
+                        Formats trade chat symbols instantly
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* 2.5 Pricing Permutations Line Plot */}
@@ -637,6 +1028,42 @@ export default function AnalysisResults({
                   }
                 }
                 setHoveredPerm(closest.record);
+              }}
+              onTouchStart={(e) => {
+                if (e.touches.length > 0) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const xInPixels = e.touches[0].clientX - rect.left;
+                  const svgX = (xInPixels / rect.width) * lineChartCoords.width;
+
+                  let closest = lineChartCoords.points[0];
+                  let minDiff = Math.abs(svgX - lineChartCoords.points[0].x);
+                  for (let i = 1; i < lineChartCoords.points.length; i++) {
+                    const diff = Math.abs(svgX - lineChartCoords.points[i].x);
+                    if (diff < minDiff) {
+                      minDiff = diff;
+                      closest = lineChartCoords.points[i];
+                    }
+                  }
+                  setHoveredPerm(closest.record);
+                }
+              }}
+              onTouchMove={(e) => {
+                if (e.touches.length > 0) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const xInPixels = e.touches[0].clientX - rect.left;
+                  const svgX = (xInPixels / rect.width) * lineChartCoords.width;
+
+                  let closest = lineChartCoords.points[0];
+                  let minDiff = Math.abs(svgX - lineChartCoords.points[0].x);
+                  for (let i = 1; i < lineChartCoords.points.length; i++) {
+                    const diff = Math.abs(svgX - lineChartCoords.points[i].x);
+                    if (diff < minDiff) {
+                      minDiff = diff;
+                      closest = lineChartCoords.points[i];
+                    }
+                  }
+                  setHoveredPerm(closest.record);
+                }
               }}
               onMouseLeave={() => setHoveredPerm(null)}
             >
@@ -784,9 +1211,43 @@ export default function AnalysisResults({
             </div>
             
             {/* Axis Labels */}
-            <div className="flex justify-between items-center text-[9px] text-[#8e9299] px-2 font-mono uppercase tracking-wider">
+            <div className="flex justify-between items-center text-[9px] text-[#8e9299] px-2 font-mono uppercase tracking-wider select-none">
               <span>Optimized Combinations (Max Gold Weight)</span>
               <span>Conservative Combinations (Min Gold Weight)</span>
+            </div>
+
+            {/* Mobile Playhead Curve Slider */}
+            <div className="bg-[#0c0d10] border border-[#2a2c33]/60 rounded-xl p-3.5 flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-1.5 select-none font-sans">
+                  <span>📱 Curve Playhead Slider</span>
+                  <span className="text-[8px] bg-[#38bdf8]/10 text-[#38bdf8] border border-[#38bdf8]/30 px-1 py-0.5 rounded font-sans font-bold hidden sm:inline-block">Recommended for Mobile</span>
+                </span>
+                {hoveredPerm ? (
+                  <span className="text-[10px] font-mono text-[#d4af37] font-semibold select-none flex items-center gap-1">
+                    {hoveredPerm.key}: <PlatValue val={hoveredPerm.profit} size="w-3 h-3" className="text-[#d4af37]" />
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-mono text-[#8e9299] select-none">
+                    Slide playhead to sweep points
+                  </span>
+                )}
+              </div>
+              <input
+                type="range"
+                min="0"
+                max={lineChartCoords.points.length - 1}
+                step="1"
+                value={hoveredPerm ? Math.max(0, lineChartCoords.points.findIndex(p => p.record.key === hoveredPerm.key)) : 0}
+                onChange={(e) => {
+                  const idx = Number(e.target.value);
+                  const pt = lineChartCoords.points[idx];
+                  if (pt) {
+                    setHoveredPerm(pt.record);
+                  }
+                }}
+                className="w-full h-1.5 bg-[#14161c] rounded-lg appearance-none cursor-pointer accent-[#d4af37] border border-[#2a2c33]/50 focus:outline-none"
+              />
             </div>
           </div>
         )}

@@ -61,6 +61,7 @@ export default function App() {
   const [calcType, setCalcType] = useState<1 | 2>(1); // 1 = narrow, 2 = broad
   const [enablePlot, setEnablePlot] = useState<boolean>(true);
   const [displayAnova, setDisplayAnova] = useState<boolean>(false);
+  const [showDecision, setShowDecision] = useState<boolean>(true);
 
   // Directory search states
   const [dbSearch, setSearch] = useState('');
@@ -788,6 +789,28 @@ export default function App() {
                               </div>
                             </div>
                           </label>
+
+                          <label className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer select-none transition-all ${
+                            showDecision 
+                              ? 'bg-[#14161c] border-[#d4af37]/30 text-white font-medium' 
+                              : 'bg-[#0c0d10]/40 border-transparent text-[#8e9299] hover:bg-[#0c0d10]'
+                          }`}>
+                            <span className="flex items-center gap-2">
+                              <span className={`w-1.5 h-1.5 rounded-full transition-all ${showDecision ? 'bg-[#d4af37] shadow-[0_0_6px_#d4af37]' : 'bg-[#2a2c33]'}`} />
+                              Strategic Decisions Advisor
+                            </span>
+                            <div className="relative flex items-center">
+                              <input 
+                                type="checkbox" 
+                                checked={showDecision} 
+                                onChange={(e) => setShowDecision(e.target.checked)}
+                                className="sr-only"
+                              />
+                              <div className={`w-7 h-4 rounded-full transition-colors relative flex items-center ${showDecision ? 'bg-[#d4af37]' : 'bg-[#2a2c33]'}`}>
+                                <div className={`w-3 h-3 rounded-full bg-[#0c0d10] shadow transform transition-transform ${showDecision ? 'translate-x-3.5' : 'translate-x-[2px]'}`} />
+                              </div>
+                            </div>
+                          </label>
                         </div>
                       </div>
                     </div>
@@ -811,6 +834,7 @@ export default function App() {
                       baseCosts={baseCosts} 
                       enablePlot={enablePlot}
                       displayAnova={displayAnova}
+                      showDecision={showDecision}
                     />
                   ) : (
                     <div className="bg-slate-900/60 border border-slate-850 rounded-xl p-12 text-center text-slate-500 flex flex-col items-center justify-center space-y-4">
