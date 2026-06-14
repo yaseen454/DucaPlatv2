@@ -34,7 +34,7 @@ service cloud.firestore {
 
     // Validation Validators (Rule-Side Enforcers with Type & Size Checks)
     function isValidUserProfile(data) {
-      return true;
+      return true; 
     }
 
     function isValidSavedItem(data) {
@@ -63,7 +63,6 @@ service cloud.firestore {
     // Rules for collections
     match /users/{userId} {
       allow get: if isOwner(userId);
-      // Forbid blanket queries/listings
       allow list: if false;
 
       allow create: if isOwner(userId) 
@@ -74,42 +73,38 @@ service cloud.firestore {
       allow update: if isOwner(userId) 
         && isValidUserProfile(incoming()) 
         && (incoming().lastLoginAt == existing().lastLoginAt || incoming().lastLoginAt == request.time)
-        // Protect original creation timestamp
         && incoming().createdAt == existing().createdAt
-        // Limit which fields the client might dynamically edit in profile
         && incoming().diff(existing()).affectedKeys().hasOnly(['lastLoginAt', 'displayName', 'photoURL', 'email', 'verification'])
         // Guard against client-side self-verification and privilege escalation
         && (
           !incoming().keys().hasAll(['verification'])
-          || incoming().verification == existing().verification
+          // 🛡️ Guard 1: Only check equality if verification map actually exists in database
+          || ('verification' in existing() && incoming().verification == existing().verification)
           || (
             // Client is initiating verification (transition to pending with null verifiedIGN)
             incoming().verification.status == 'pending'
             && incoming().verification.verifiedIGN == null
             && incoming().verification.updatedAt is timestamp
-            && (existing().verification == null || existing().verification.status != 'verified')
+            // 🛡️ Guard 2: Safe evaluation using short-circuit if map is completely missing
+            && (!('verification' in existing()) || existing().verification.status != 'verified')
           )
           || (
-            // Client is resetting/disconnecting verification back to unverified (clears backend fields too)
+            // Client is resetting/disconnecting verification back to unverified
             incoming().verification.status == 'unverified'
             && incoming().verification.claimedIGN == ''
             && incoming().verification.normalizedIGN == ''
             && incoming().verification.verifiedIGN == null
             && incoming().verification.token == null
             && incoming().verification.updatedAt is timestamp
-            // Allow backend fields to be cleared when resetting
-            && (!incoming().keys().hasAll(['wfmId']) || incoming().verification.wfmId == null)
-            && (!incoming().keys().hasAll(['verificationCode']) || incoming().verification.verificationCode == null)
-            && (!incoming().keys().hasAll(['verifiedAt']) || incoming().verification.verifiedAt == null)
           )
         );
       
-      allow delete: if false; // Profiles are permanent
+      allow delete: if false;
 
       // Subcollection for cached Saved Items
       match /savedItems/{itemId} {
         allow get: if isOwner(userId) && isValidId(itemId);
-        allow list: if isOwner(userId); // list is secure because user is owner of parent path
+        allow list: if isOwner(userId);
 
         allow create: if isOwner(userId) && isValidId(itemId)
           && isValidSavedItem(incoming())
@@ -117,10 +112,9 @@ service cloud.firestore {
 
         allow update: if isOwner(userId) && isValidId(itemId)
           && isValidSavedItem(incoming())
-          && incoming().createdAt == existing().createdAt // Immutable creation time
-          && incoming().id == existing().id // Immutable entry ID
-          && incoming().source == existing().source // Immutable source type
-          // Explicit action field modifications allowed
+          && incoming().createdAt == existing().createdAt 
+          && incoming().id == existing().id 
+          && incoming().source == existing().source 
           && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'counts', 'totalDucats', 'totalItems', 'timestamp']);
 
         allow delete: if isOwner(userId) && isValidId(itemId);
@@ -134,6 +128,8 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidId(listingId)
         && isValidListing(incoming())
         && incoming().createdAt == request.time
+        // 🛡️ Guard 3: Ensure listing queries don't crash if an unverified user's profile is blank
+        && 'verification' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verification.status == 'verified'
         && incoming().normalizedSellerIGN == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verification.normalizedIGN;
 

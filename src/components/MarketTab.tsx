@@ -534,16 +534,12 @@ export default function MarketTab({
     try {
       const userRef = doc(db, 'users', user.uid);
       // Reset verification ONLY using field-level updates (listings remain active)
-      // Include backend-set fields so they get cleared as well
       await updateDoc(userRef, {
         'verification.status': 'unverified',
         'verification.claimedIGN': '',
         'verification.normalizedIGN': '',
         'verification.verifiedIGN': null,
         'verification.token': null,
-        'verification.wfmId': null,
-        'verification.verificationCode': null,
-        'verification.verifiedAt': null,
         'verification.updatedAt': serverTimestamp()
       });
       setSuccessMsg('Ready to try a different username.');
@@ -573,9 +569,6 @@ export default function MarketTab({
         'verification.normalizedIGN': '',
         'verification.verifiedIGN': null,
         'verification.token': null,
-        'verification.wfmId': null,
-        'verification.verificationCode': null,
-        'verification.verifiedAt': null,
         'verification.updatedAt': serverTimestamp()
       });
 
