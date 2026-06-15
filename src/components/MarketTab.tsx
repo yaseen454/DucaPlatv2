@@ -81,6 +81,10 @@ interface MarketListing {
   totalParts?: number;
   partDistribution?: string;
   tradesRequired?: number;
+  isBatchMode?: boolean;
+  rarityPrices?: any;
+  note?: string;
+  isRateBased?: boolean;
 }
 
 interface UserVerification {
@@ -253,8 +257,43 @@ export default function MarketTab({
   const [currentPage, setCurrentPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState<'all' | 'WTS' | 'WTB'>('all');
   const [verifiedFilter, setVerifiedFilter] = useState<boolean>(false);
+  const [myListingsFilter, setMyListingsFilter] = useState<boolean>(false);
   const [copiedToken, setCopiedToken] = useState(false);
   const [copiedCommandIds, setCopiedCommandIds] = useState<Record<string, boolean>>({});
+
+  const [myListingsPage, setMyListingsPage] = useState(1);
+  const [editingRarityPrices, setEditingRarityPrices] = useState<any>({});
+  const [editingPriceListingId, setEditingPriceListingId] = useState<string | null>(null);
+  const [newPriceValue, setNewPriceValue] = useState<string>('');
+
+  const handleUpdatePrice = async (listing: Listing) => {
+    if (!user || !userVerification || userVerification.status !== 'verified') return;
+    try {
+      const listingRef = doc(db, 'listings', listing.id);
+      if (listing.isPrimeJunk || listing.isRateBased) {
+        let updates: any = { rarityPrices: editingRarityPrices };
+        if (listing.isPrimeJunk && listing.counts) {
+          const newPrice = (listing.counts.bronze15 || 0) * (editingRarityPrices.bronze15 || 0) +
+                           (listing.counts.bronze25 || 0) * (editingRarityPrices.bronze25 || 0) +
+                           (listing.counts.silver45 || 0) * (editingRarityPrices.silver45 || 0) +
+                           (listing.counts.silver65 || 0) * (editingRarityPrices.silver65 || 0) +
+                           (listing.counts.gold || 0) * (editingRarityPrices.gold || 0);
+          updates.price = newPrice;
+        }
+        await updateDoc(listingRef, updates);
+      } else {
+        const numericPrice = parseInt(newPriceValue);
+        if (isNaN(numericPrice) || numericPrice <= 0) return;
+        await updateDoc(listingRef, { price: numericPrice });
+      }
+      setEditingPriceListingId(null);
+      setNewPriceValue('');
+      setEditingRarityPrices({});
+    } catch (error) {
+      console.error("Failed to update price", error);
+    }
+  };
+
 
   // Saved presets & bulk custom junk states
   const [savedTrades, setSavedTrades] = useState<any[]>([]);
@@ -318,6 +357,7 @@ export default function MarketTab({
   const [bulkListType, setBulkListType] = useState<'WTS' | 'WTB'>('WTS');
   const [standardNote, setStandardNote] = useState('');
   const [bulkNote, setBulkNote] = useState('');
+  const [isBatchMode, setIsBatchMode] = useState<boolean>(false);
   const [bulkPriceCustom, setBulkPriceCustom] = useState<number | null>(null);
   const [bulkRarityPrices, setBulkRarityPrices] = useState<InventoryCount>({
     bronze15: 1,
@@ -769,6 +809,7 @@ export default function MarketTab({
         totalParts,
         partDistribution,
         tradesRequired,
+        isBatchMode,
         createdAt: serverTimestamp()
       });
 
@@ -996,6 +1037,68 @@ export default function MarketTab({
   };
 
   // Complete / delete user listed items
+  
+  const handleUpdateBatchPart = async (listing: MarketListing, partKey: keyof InventoryCount, delta: number) => {
+    if (!listing.counts) return;
+    try {
+      const currentCount = listing.counts[partKey] || 0;
+      const proposedCount = currentCount + delta;
+      
+      if (proposedCount < 0) return;
+      
+      const newCounts = { ...listing.counts, [partKey]: proposedCount };
+      
+      const totalParts = (newCounts.bronze15 || 0) + 
+        (newCounts.bronze25 || 0) + 
+        (newCounts.silver45 || 0) + 
+        (newCounts.silver65 || 0) + 
+        (newCounts.gold || 0);
+
+      if (totalParts === 0) {
+        // Automatically mark as sold if this was the last item
+        await handleMarkListingStatus(listing.id, 'sold');
+        return;
+      }
+
+      const totalDucats = 
+        (newCounts.bronze15 || 0) * 15 + 
+        (newCounts.bronze25 || 0) * 25 + 
+        (newCounts.silver45 || 0) * 45 + 
+        (newCounts.silver65 || 0) * 65 + 
+        (newCounts.gold || 0) * 100;
+
+      const rarityPrices = listing.rarityPrices || { bronze15: 1, bronze25: 2, silver45: 3, silver65: 5, gold: 8 };
+
+      const finalPrice = (newCounts.bronze15 || 0) * (rarityPrices.bronze15 || 0) +
+                         (newCounts.bronze25 || 0) * (rarityPrices.bronze25 || 0) +
+                         (newCounts.silver45 || 0) * (rarityPrices.silver45 || 0) +
+                         (newCounts.silver65 || 0) * (rarityPrices.silver65 || 0) +
+                         (newCounts.gold || 0) * (rarityPrices.gold || 0);
+
+      const tradesRequired = Math.ceil(totalParts / 6);
+      
+      const distList = [];
+      if (newCounts.bronze15 > 0) distList.push(`15d x ${newCounts.bronze15}`);
+      if (newCounts.bronze25 > 0) distList.push(`25d x ${newCounts.bronze25}`);
+      if (newCounts.silver45 > 0) distList.push(`45d x ${newCounts.silver45}`);
+      if (newCounts.silver65 > 0) distList.push(`65d x ${newCounts.silver65}`);
+      if (newCounts.gold > 0) distList.push(`100d x ${newCounts.gold}`);
+      const partDistribution = distList.join(', ');
+
+      const listingRef = doc(db, 'listings', listing.id);
+      await updateDoc(listingRef, {
+        counts: newCounts,
+        totalParts,
+        totalDucats,
+        price: finalPrice,
+        tradesRequired,
+        partDistribution
+      });
+    } catch (err) {
+      console.error("Failed to update batch/bulk part", err);
+    }
+  };
+
   const handleMarkListingStatus = async (id: string, newStatus: 'sold' | 'cancelled') => {
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -1037,14 +1140,463 @@ export default function MarketTab({
   // Perform client filters on listing sets
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, typeFilter, verifiedFilter]);
+  }, [searchQuery, typeFilter, verifiedFilter, myListingsFilter]);
+
+
+  const renderListing = (listing: Listing, isCompact: boolean = false) => {
+    
+                const isPrimeJunk = !!listing.isPrimeJunk;
+                const isWTS = listing.type === 'WTS';
+                const isOwner = user && listing.sellerUid === user.uid;
+                const listPrices = listing.rarityPrices || {
+                  bronze15: 1,
+                  bronze25: 2,
+                  silver45: 3,
+                  silver65: 5,
+                  gold: 8
+                };
+                
+                // Copy-paste trade command for Warframe Chat
+                let tradeText = "";
+                if (listing.isRateBased) {
+                  tradeText = isWTS
+                    ? `/w ${listing.sellerIGN} Hi I want to buy Prime Junk 15 :ducats: = ${listPrices.bronze15} :platinum: , 25 :ducats: = ${listPrices.bronze25} :platinum: , 45 :ducats: = ${listPrices.silver45} :platinum: , 65 :ducats: = ${listPrices.silver65} :platinum: , 100 :ducats: = ${listPrices.gold} :platinum:`
+                    : `/w ${listing.sellerIGN} Hi I want to sell Prime Junk 15 :ducats: = ${listPrices.bronze15} :platinum: , 25 :ducats: = ${listPrices.bronze25} :platinum: , 45 :ducats: = ${listPrices.silver45} :platinum: , 65 :ducats: = ${listPrices.silver65} :platinum: , 100 :ducats: = ${listPrices.gold} :platinum:`;
+                } else if (isPrimeJunk) {
+                  const formattedParts = listing.partDistribution ? `(${listing.partDistribution.replace(/(\d+)d/g, '$1 :ducats:')}) ` : '';
+                  const tradeInfo = `(${listing.totalParts} parts for ${listing.price} :platinum:) (${Math.round(listing.price / (listing.tradesRequired || 1))} :platinum: / 1 Trade) (Total Trades = ${listing.tradesRequired || 1}) (Total Ducats = ${listing.totalDucats || 0})`;
+                  tradeText = isWTS
+                    ? `/w ${listing.sellerIGN} Hi! I want to buy your Bulk Prime Junk Bundle ${formattedParts}${tradeInfo}`
+                    : `/w ${listing.sellerIGN} Hi! I want to sell you a Bulk Prime Junk Bundle ${formattedParts}${tradeInfo}`;
+                } else {
+                  tradeText = isWTS 
+                    ? `/w ${listing.sellerIGN} Hi! I want to buy ${listing.itemName} for ${listing.price}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> [DucaPlat]`
+                    : `/w ${listing.sellerIGN} Hi! I want to sell ${listing.itemName} for ${listing.price}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> [DucaPlat]`;
+                }
+
+                return (
+                  <div
+                    key={listing.id}
+                    className={`bg-[#14161c] border rounded-xl p-6 transition duration-150 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-5 ${isOwner ? 'border-[#d4af37]/45 shadow-lg shadow-[#d4af37]/3' : 'border-[#2a2c33]'}`}
+                  >
+                    
+                    {/* Left Accent Bar depending on listing type */}
+                    <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${isWTS ? 'bg-[#c55353]' : 'bg-[#3b82f6]'}`} />
+
+                    <div className="space-y-2 flex-1 pl-1">
+                      
+                      {/* Top seller tag & verification */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded ${
+                          listing.isRateBased
+                            ? (isWTS 
+                                ? 'bg-amber-950/35 text-amber-400 border border-amber-900/40' 
+                                : 'bg-teal-950/35 text-teal-400 border border-teal-900/40')
+                            : isPrimeJunk 
+                            ? (isWTS 
+                                ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/30 font-semibold' 
+                                : 'bg-blue-950/20 text-blue-400 border border-blue-900/40')
+                            : (isWTS 
+                                ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/30' 
+                                : 'bg-blue-950/20 text-blue-400 border border-blue-900/35')
+                        }`}>
+                          {listing.isRateBased ? `RATE-BASED JUNK (${listing.type})` : isPrimeJunk ? `PRIME JUNK (${listing.type})` : listing.type}
+                        </span>
+
+                        <span className="font-mono text-xs font-semibold text-[#e0e1e6] flex items-center gap-1 uppercase select-all">
+                          {listing.sellerIGN}
+                        </span>
+
+                        {listing.isSellerVerified ? (
+                          <div className="flex items-center text-[9px] font-semibold text-emerald-400 gap-0.5 bg-emerald-950/10 px-1.5 py-0.5 border border-emerald-900/25 rounded" title="Identity Verified">
+                            <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+                            <span>VERIFIED</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-[9px] font-semibold text-zinc-500 gap-0.5 bg-[#0c0d10] px-1.5 py-0.5 border border-transparent rounded" title="Identity Unverified">
+                            <HelpCircle className="w-3 h-3 shrink-0" />
+                            <span>UNVERIFIED</span>
+                          </div>
+                        )}
+
+                        {isOwner && (
+                          <span className="text-[9px] font-extrabold uppercase bg-zinc-950 text-[#d4af37] border border-[#d4af37]/30 px-1.5 py-0.5 rounded">
+                            YOUR LISTING
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Item and Quantity details */}
+                      {listing.isRateBased ? (
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-baseline gap-2.5">
+                            <h4 className={`text-[13px] font-extrabold tracking-wide uppercase font-sans text-amber-500`}>
+                              {listing.itemName}
+                            </h4>
+                            <span className="text-xs text-zinc-500 font-sans">
+                              Trade based on rarity rates below — Whisper to initiate deal!
+                            </span>
+                          </div>
+
+                          {/* Rate distribution chips */}
+                          {isCompact ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                              <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/45 p-2 rounded-lg flex flex-col items-center justify-center font-mono">
+                                <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider flex items-center gap-0.5">15<img src={ducatIcon} className="w-2.5 h-2.5 object-contain" alt="D" referrerPolicy="no-referrer" /></span>
+                                <span className="text-white font-black text-sm mt-0.5 flex items-center gap-0.5">{listPrices.bronze15}<img src={platinumIcon} className="w-3 h-3 object-contain" alt="Pt" /></span>
+                              </div>
+                              <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/60 p-2 rounded-lg flex flex-col items-center justify-center font-mono">
+                                <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider flex items-center gap-0.5">25<img src={ducatIcon} className="w-2.5 h-2.5 object-contain" alt="D" referrerPolicy="no-referrer" /></span>
+                                <span className="text-white font-black text-sm mt-0.5 flex items-center gap-0.5">{listPrices.bronze25}<img src={platinumIcon} className="w-3 h-3 object-contain" alt="Pt" /></span>
+                              </div>
+                              <div className="text-xs bg-[#0c0d10] border border-slate-600/70 p-2 rounded-lg flex flex-col items-center justify-center font-mono">
+                                <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider flex items-center gap-0.5">45<img src={ducatIcon} className="w-2.5 h-2.5 object-contain" alt="D" referrerPolicy="no-referrer" /></span>
+                                <span className="text-white font-black text-sm mt-0.5 flex items-center gap-0.5">{listPrices.silver45}<img src={platinumIcon} className="w-3 h-3 object-contain" alt="Pt" /></span>
+                              </div>
+                              <div className="text-xs bg-[#0c0d10] border border-slate-550/80 p-2 rounded-lg flex flex-col items-center justify-center font-mono">
+                                <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider flex items-center gap-0.5">65<img src={ducatIcon} className="w-2.5 h-2.5 object-contain" alt="D" referrerPolicy="no-referrer" /></span>
+                                <span className="text-white font-black text-sm mt-0.5 flex items-center gap-0.5">{listPrices.silver65}<img src={platinumIcon} className="w-3 h-3 object-contain" alt="Pt" /></span>
+                              </div>
+                              <div className="text-xs bg-[#0c0d10] border border-[#d4af37]/45 p-2 rounded-lg flex flex-col items-center justify-center font-mono">
+                                <span className="text-[#d4af37] font-black uppercase text-[10px] tracking-wider flex items-center gap-0.5">100<img src={ducatIcon} className="w-2.5 h-2.5 object-contain" alt="D" referrerPolicy="no-referrer" /></span>
+                                <span className="text-white font-black text-sm mt-0.5 flex items-center gap-0.5">{listPrices.gold}<img src={platinumIcon} className="w-3 h-3 object-contain" alt="Pt" /></span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                              <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/45 p-2.5 rounded-lg flex flex-col justify-between font-mono">
+                                <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider">Bronze (15<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                                <span className="text-white font-black text-sm mt-1">{listPrices.bronze15}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
+                              </div>
+                              <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/60 p-2.5 rounded-lg flex flex-col justify-between font-mono">
+                                <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider">Bronze (25<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                                <span className="text-white font-black text-sm mt-1">{listPrices.bronze25}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
+                              </div>
+                              <div className="text-xs bg-[#0c0d10] border border-slate-600/70 p-2.5 rounded-lg flex flex-col justify-between font-mono">
+                                <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider">Silver (45<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                                <span className="text-white font-black text-sm mt-1">{listPrices.silver45}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
+                              </div>
+                              <div className="text-xs bg-[#0c0d10] border border-slate-550/80 p-2.5 rounded-lg flex flex-col justify-between font-mono">
+                                <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider">Silver (65<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                                <span className="text-white font-black text-sm mt-1">{listPrices.silver65}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
+                              </div>
+                              <div className="text-xs bg-[#0c0d10] border border-[#d4af37]/45 p-2.5 rounded-lg flex flex-col justify-between font-mono">
+                                <span className="text-[#d4af37] font-black uppercase text-[10px] tracking-wider">Gold (100<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                                <span className="text-white font-black text-sm mt-1">{listPrices.gold}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Seller storage stock holds if present */}
+                          {listing.counts && (listing.counts.bronze15 > 0 || listing.counts.bronze25 > 0 || listing.counts.silver45 > 0 || listing.counts.silver65 > 0 || listing.counts.gold > 0) && (
+                            <div className="space-y-2.5 pt-2 border-t border-[#2a2c33]/50 border-dashed mt-3">
+                              <span className="text-xs uppercase font-black text-zinc-300 tracking-wider font-sans block">Seller's Stored Warehouse Stock:</span>
+                              <div className="flex flex-wrap gap-2 pt-0.5">
+                                {listing.counts.bronze15 > 0 && (
+                                  <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/40 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
+                                    15 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.bronze15}</span>
+                                  </span>
+                                )}
+                                {listing.counts.bronze25 > 0 && (
+                                  <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/50 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
+                                    25 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.bronze25}</span>
+                                  </span>
+                                )}
+                                {listing.counts.silver45 > 0 && (
+                                  <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-600/70 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
+                                    45 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.silver45}</span>
+                                  </span>
+                                )}
+                                {listing.counts.silver65 > 0 && (
+                                  <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-550/80 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
+                                    65 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.silver65}</span>
+                                  </span>
+                                )}
+                                {listing.counts.gold > 0 && (
+                                  <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#d4af37]/45 text-[#d4af37] rounded-md flex items-center gap-1.5 font-bold">
+                                    100 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.gold}</span>
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-zinc-300 font-mono items-center mt-2">
+                                <span>Total Stock Parts: <span className="text-white font-black text-sm">{listing.totalParts}</span></span>
+                                <span className="flex items-center gap-1">Potential Stored Ducats: <span className="text-[#d4af37] font-black text-sm">{listing.totalDucats}</span><img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline" alt="D" referrerPolicy="no-referrer" /></span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : isPrimeJunk ? (
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-baseline gap-2.5">
+                            <h4 className={`text-[13px] font-extrabold tracking-wide uppercase font-sans ${isWTS ? 'text-[#e06d6d]' : 'text-blue-400'}`}>
+                              {listing.itemName || 'Bulk Prime Junk Bundle'}
+                            </h4>
+                            <span className="text-xs text-zinc-500 font-sans">
+                              {listing.isBatchMode ? 'Batch stock available — Can buy individual parts!' : 'Wholesale bundle — No single item purchases!'}
+                            </span>
+                          </div>
+                          
+                          {/* Part distribution chips */}
+                          <div className="flex flex-wrap gap-2 pt-0.5">
+                            {listing.counts && listing.counts.bronze15 > 0 && (
+                              <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/40 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
+                                15 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.bronze15}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.bronze15}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
+                                {isOwner && (
+                                  <div className="flex items-center gap-0.5 ml-1">
+                                    <button onClick={() => handleUpdateBatchPart(listing, 'bronze15', -1)} className="px-1.5 py-0.5 bg-red-950/40 text-red-400 hover:bg-red-900/60 rounded border border-red-900/50 cursor-pointer" title="Subtract 1">-1</button>
+                                    <button onClick={() => handleUpdateBatchPart(listing, 'bronze15', 1)} className="px-1.5 py-0.5 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/60 rounded border border-emerald-900/50 cursor-pointer" title="Add 1">+1</button>
+                                  </div>
+                                )}
+                              </span>
+                            )}
+                            {listing.counts && listing.counts.bronze25 > 0 && (
+                              <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/50 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
+                                25 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.bronze25}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.bronze25}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
+                                {isOwner && (
+                                  <div className="flex items-center gap-0.5 ml-1">
+                                    <button onClick={() => handleUpdateBatchPart(listing, 'bronze25', -1)} className="px-1.5 py-0.5 bg-red-950/40 text-red-400 hover:bg-red-900/60 rounded border border-red-900/50 cursor-pointer" title="Subtract 1">-1</button>
+                                    <button onClick={() => handleUpdateBatchPart(listing, 'bronze25', 1)} className="px-1.5 py-0.5 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/60 rounded border border-emerald-900/50 cursor-pointer" title="Add 1">+1</button>
+                                  </div>
+                                )}
+                              </span>
+                            )}
+                            {listing.counts && listing.counts.silver45 > 0 && (
+                              <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-600/70 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
+                                45 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.silver45}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.silver45}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
+                                {isOwner && (
+                                  <div className="flex items-center gap-0.5 ml-1">
+                                    <button onClick={() => handleUpdateBatchPart(listing, 'silver45', -1)} className="px-1.5 py-0.5 bg-red-950/40 text-red-400 hover:bg-red-900/60 rounded border border-red-900/50 cursor-pointer" title="Subtract 1">-1</button>
+                                    <button onClick={() => handleUpdateBatchPart(listing, 'silver45', 1)} className="px-1.5 py-0.5 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/60 rounded border border-emerald-900/50 cursor-pointer" title="Add 1">+1</button>
+                                  </div>
+                                )}
+                              </span>
+                            )}
+                            {listing.counts && listing.counts.silver65 > 0 && (
+                              <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-550/80 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
+                                65 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.silver65}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.silver65}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
+                                {isOwner && (
+                                  <div className="flex items-center gap-0.5 ml-1">
+                                    <button onClick={() => handleUpdateBatchPart(listing, 'silver65', -1)} className="px-1.5 py-0.5 bg-red-950/40 text-red-400 hover:bg-red-900/60 rounded border border-red-900/50 cursor-pointer" title="Subtract 1">-1</button>
+                                    <button onClick={() => handleUpdateBatchPart(listing, 'silver65', 1)} className="px-1.5 py-0.5 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/60 rounded border border-emerald-900/50 cursor-pointer" title="Add 1">+1</button>
+                                  </div>
+                                )}
+                              </span>
+                            )}
+                            {listing.counts && listing.counts.gold > 0 && (
+                              <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#d4af37]/45 text-[#d4af37] rounded-md flex items-center gap-1.5 font-bold">
+                                100 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.gold}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.gold}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
+                                {isOwner && (
+                                  <div className="flex items-center gap-0.5 ml-1">
+                                    <button onClick={() => handleUpdateBatchPart(listing, 'gold', -1)} className="px-1.5 py-0.5 bg-red-950/40 text-red-400 hover:bg-red-900/60 rounded border border-red-900/50 cursor-pointer" title="Subtract 1">-1</button>
+                                    <button onClick={() => handleUpdateBatchPart(listing, 'gold', 1)} className="px-1.5 py-0.5 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/60 rounded border border-emerald-900/50 cursor-pointer" title="Add 1">+1</button>
+                                  </div>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-zinc-300 font-mono items-center pt-1.5 mt-2 border-t border-zinc-800/40">
+                            <span>Total Parts: <span className="text-white font-black text-sm">{listing.totalParts}</span></span>
+                            <span className="flex items-center gap-1">Total Ducats: <span className="text-[#d4af37] font-black text-sm">{listing.totalDucats}</span><img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline hover:-translate-y-0.5 transition-transform" alt="D" referrerPolicy="no-referrer" /></span>
+                            <span>Trades Needed: <span className="text-[#8e9299] font-black text-sm">{Math.ceil((listing.totalParts || 0) / 6)}</span></span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-0.5 pt-0.5">
+                          <h4 className={`text-[14px] font-extrabold tracking-wide uppercase font-sans ${isWTS ? 'text-[#e06d6d]' : 'text-blue-400'}`}>
+                            {listing.itemName} {listing.quantity > 1 ? <span className="text-zinc-500 font-medium">x{listing.quantity}</span> : ''}
+                          </h4>
+                          {listing.rank !== undefined && (
+                            <span className="text-[10px] text-zinc-400 font-mono inline-block bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded mt-0.5">
+                              Rank {listing.rank}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Optional Listing note */}
+                      {listing.note && (
+                        <div className="text-[11px] text-zinc-300 bg-[#0c0d10]/40 border border-[#2a2c33]/40 p-2.5 rounded-lg italic pr-4 max-w-lg font-sans">
+                          "{listing.note}"
+                        </div>
+                      )}
+
+                      {/* Price Realism Valuation Insights */}
+                      {(() => {
+                        const derivedCounts = isPrimeJunk 
+                          ? (listing.counts || { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })
+                          : guessCountsFromItem(listing.itemName, listing.quantity);
+                        const valuation = getListingPriceSuggestion(derivedCounts);
+                        if (!valuation) return null;
+                        return (
+                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] mt-1.5">
+                            <span className="text-zinc-500 font-mono">Valuation range:</span>
+                            <span className="font-mono text-zinc-300 font-semibold">{valuation.min}-{valuation.max}p</span>
+                            <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold tracking-wide uppercase font-mono ${
+                              listing.price <= valuation.average
+                                ? 'bg-emerald-950/30 text-[#4ade80] border border-emerald-900/35'
+                                : listing.price > valuation.max * 1.15
+                                ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/25'
+                                : 'bg-zinc-950/50 text-zinc-400 border border-zinc-900/60'
+                            }`}>
+                              {listing.price <= valuation.average
+                                ? '🟢 Statistical Good Deal'
+                                : listing.price > valuation.max * 1.15
+                                ? '⚠️ Overpriced Strategy'
+                                : '⚖️ Fair market value'}
+                            </span>
+                          </div>
+                        );
+                      })()}
+
+                      {/* COPY FORUM COMMAND BLOCK */}
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        {!isOwner && (
+                          <div className="flex items-center gap-1.5 bg-[#0c0d10]/60 border border-[#2a2c33]/40 rounded-lg p-1 shrink-0 max-w-sm sm:flex-initial">
+                            {copiedCommandIds[listing.id] && (
+                              <>
+                                <span className="text-[9px] text-[#8e9299] shrink-0 pl-1.5 font-mono uppercase tracking-wide">Command:</span>
+                                <div className="flex-1 font-mono text-[10px] text-[#22c55e] truncate select-all px-1 font-semibold">
+                                  {tradeText}
+                                </div>
+                              </>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(tradeText, false, listing.id)}
+                              className="p-1 px-2.5 bg-zinc-900 hover:bg-zinc-800 rounded text-[9px] text-[#22c55e] border border-[#22c55e]/15 hover:border-[#22c55e]/30 transition uppercase font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                              title="Copy Command"
+                            >
+                              {copiedCommandIds[listing.id] ? <Check className="w-3.5 h-3.5" /> : <ClipboardPaste className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        )}
+
+                        {!listing.isRateBased && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const derivedCounts = isPrimeJunk 
+                                ? (listing.counts || { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })
+                                : guessCountsFromItem(listing.itemName, listing.quantity);
+                              onAnalyzeInCalculator?.(derivedCounts);
+                            }}
+                            className="px-3.5 py-1.5 bg-[#d4af37]/10 hover:bg-[#d4af37]/15 text-[#d4af37] border border-[#d4af37]/25 hover:border-[#d4af37]/45 text-[9px] font-extrabold uppercase tracking-widest rounded-lg transition duration-150 inline-flex items-center gap-1.5 cursor-pointer max-w-max select-none"
+                            title="Transmit item parameters to the main ANOVA statistical calculator"
+                          >
+                            <TrendingUp className="w-3.5 h-3.5 text-[#d4af37]" />
+                            <span>Analyze in Calculator</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Price section / Own operations */}
+                    <div className="flex sm:flex-col items-end gap-3.5 sm:gap-1.5 justify-between border-t sm:border-0 border-zinc-800/55 pt-3 sm:pt-0 shrink-0">
+                      
+                      {!listing.isRateBased && (
+                        <div className="text-right">
+                          <span className="text-[10px] font-mono text-[#8e9299] uppercase select-none block">
+                            {isPrimeJunk ? 'Total Bundle Price' : 'Price Per Item'}
+                          </span>
+                          <div className="flex items-center gap-1 text-base font-semibold text-[#f1f2f6] justify-end">
+                            <span className="font-mono text-emerald-400 font-extrabold">{listing.price}</span>
+                            <img src={platinumIcon} className="w-4 h-4 object-contain inline" alt="Pt" referrerPolicy="no-referrer" />
+                          </div>
+                          {isPrimeJunk && (
+                            <span className="text-[9px] text-[#d4af37] font-mono block">Wholesale combo</span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Owner Operations to manage or clear active listed rows */}
+                      {isOwner ? (
+                        editingPriceListingId === listing.id ? (
+                          (listing.isPrimeJunk || listing.isRateBased) ? (
+                            <div className="flex flex-col gap-2 mt-2 w-full pt-2 border-t border-zinc-800/50">
+                              <span className="text-[10px] text-[#d4af37] font-bold uppercase">Update Plat Rates per Ducat Part</span>
+                              <div className="flex flex-wrap items-center gap-2 text-xs pt-1">
+                                <label className="flex items-center gap-1.5 font-mono text-[#cd7f32] text-[10px] font-bold uppercase tracking-wider">15D <input type="number" min="1" className="w-[50px] bg-[#0c0d10] border border-[#cd7f32]/40 px-1 py-1 rounded-md text-white text-center" value={editingRarityPrices.bronze15 || ''} onChange={e => setEditingRarityPrices({ ...editingRarityPrices, bronze15: parseInt(e.target.value) || 1})} /></label>
+                                <label className="flex items-center gap-1.5 font-mono text-[#cd7f32] text-[10px] font-bold uppercase tracking-wider">25D <input type="number" min="1" className="w-[50px] bg-[#0c0d10] border border-[#cd7f32]/60 px-1 py-1 rounded-md text-white text-center" value={editingRarityPrices.bronze25 || ''} onChange={e => setEditingRarityPrices({ ...editingRarityPrices, bronze25: parseInt(e.target.value) || 1})} /></label>
+                                <label className="flex items-center gap-1.5 font-mono text-zinc-300 text-[10px] font-bold uppercase tracking-wider">45D <input type="number" min="1" className="w-[50px] bg-[#0c0d10] border border-slate-600/70 px-1 py-1 rounded-md text-white text-center" value={editingRarityPrices.silver45 || ''} onChange={e => setEditingRarityPrices({ ...editingRarityPrices, silver45: parseInt(e.target.value) || 1})} /></label>
+                                <label className="flex items-center gap-1.5 font-mono text-zinc-300 text-[10px] font-bold uppercase tracking-wider">65D <input type="number" min="1" className="w-[50px] bg-[#0c0d10] border border-slate-550/80 px-1 py-1 rounded-md text-white text-center" value={editingRarityPrices.silver65 || ''} onChange={e => setEditingRarityPrices({ ...editingRarityPrices, silver65: parseInt(e.target.value) || 1})} /></label>
+                                <label className="flex items-center gap-1.5 font-mono text-[#d4af37] text-[10px] font-bold uppercase tracking-wider">100D <input type="number" min="1" className="w-[50px] bg-[#0c0d10] border border-[#d4af37]/60 px-1 py-1 rounded-md text-white text-center" value={editingRarityPrices.gold || ''} onChange={e => setEditingRarityPrices({ ...editingRarityPrices, gold: parseInt(e.target.value) || 1})} /></label>
+                              </div>
+                              <div className="flex justify-end gap-1.5 mt-2">
+                                <button onClick={() => handleUpdatePrice(listing)} className="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 text-[10px] rounded border border-emerald-900/50 transition font-bold uppercase tracking-widest">Save Rates</button>
+                                <button onClick={() => setEditingPriceListingId(null)} className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 text-[10px] rounded border border-zinc-800 transition font-bold uppercase tracking-widest">Cancel</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 mt-1.5 flex-wrap justify-end">
+                              <input 
+                                type="number" 
+                                value={newPriceValue} 
+                                onChange={(e) => setNewPriceValue(e.target.value)} 
+                                className="bg-black border border-zinc-800 text-white rounded px-2 py-1 text-xs w-20 outline-none focus:border-[#d4af37]/50"
+                                placeholder="New Price"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleUpdatePrice(listing);
+                                  if (e.key === 'Escape') setEditingPriceListingId(null);
+                                }}
+                              />
+                              <button onClick={() => handleUpdatePrice(listing)} className="px-2 py-1 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 text-xs rounded border border-emerald-900/50 transition">Save</button>
+                              <button onClick={() => setEditingPriceListingId(null)} className="px-2 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 text-xs rounded border border-zinc-800 transition">Cancel</button>
+                            </div>
+                          )
+                        ) : (
+                          <div className="flex items-center gap-1 mt-1.5 flex-wrap justify-end">
+                            <button
+                              type="button"
+                              onClick={() => { 
+                                setEditingPriceListingId(listing.id); 
+                                if (listing.isPrimeJunk || listing.isRateBased) {
+                                  setEditingRarityPrices(listing.rarityPrices || listPrices);
+                                } else {
+                                  setNewPriceValue(listing.price.toString()); 
+                                }
+                              }}
+                              className="px-2.5 py-1 bg-blue-950/20 hover:bg-blue-950/45 border border-blue-900/30 text-blue-400 hover:text-blue-300 rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
+                            >
+                              Update Price
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMarkListingStatus(listing.id, 'sold')}
+                              className="px-2.5 py-1 bg-emerald-950/20 hover:bg-emerald-950/45 border border-emerald-900/30 text-emerald-400 hover:text-emerald-300 rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
+                            >
+                              Mark Sold
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMarkListingStatus(listing.id, 'cancelled')}
+                              className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-[#e0e1e6] rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteListing(listing.id)}
+                              className="p-1 bg-red-950/15 hover:bg-red-850/20 border border-red-900/20 text-red-400 rounded transition cursor-pointer"
+                              title="Delete Permanently"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )
+                      ) : null}
+                    </div>
+                  </div>
+                );
+
+  };
 
   const filteredListings = listings.filter(l => {
     const itemMatch = l.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
           l.sellerIGN.toLowerCase().includes(searchQuery.toLowerCase());
     const typeMatch = typeFilter === 'all' || l.type === typeFilter;
     const verifiedMatch = !verifiedFilter || l.isSellerVerified;
-    return itemMatch && typeMatch && verifiedMatch;
+    const myMatch = !myListingsFilter || (user && l.sellerUid === user.uid);
+    return itemMatch && typeMatch && verifiedMatch && myMatch;
   });
 
   const ITEMS_PER_PAGE = 20;
@@ -1154,6 +1706,35 @@ export default function MarketTab({
 
               {publishMode === 'count' ? (
                 <>
+
+                  {/* Batch vs Bulk Toggle (Count Mode Only) */}
+                  <div className="bg-[#0c0d10] p-3 border border-[#2a2c33] rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-bold text-[#e0e1e6] uppercase">Selling Mode</h4>
+                        <p className="text-[10px] text-zinc-500 mt-0.5 max-w-[200px] sm:max-w-none">
+                          {isBatchMode ? 'Batches: buyers can buy parts individually from your stock. Subtraction controls are added to active listings.' : 'Bulk Bundle: sells everything entirely as a single listing package.'}
+                        </p>
+                      </div>
+                      <div className="flex bg-[#14161c] rounded-lg overflow-hidden border border-[#2a2c33]">
+                        <button
+                          type="button"
+                          onClick={() => setIsBatchMode(false)}
+                          className={`px-3 py-1.5 text-[10px] font-bold uppercase transition ${!isBatchMode ? 'bg-[#d4af37] text-black' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                          Bulk
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsBatchMode(true)}
+                          className={`px-3 py-1.5 text-[10px] font-bold uppercase transition ${isBatchMode ? 'bg-[#d4af37] text-black' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                          Batch
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Prime Junk Count resets */}
                   <div className="flex items-center justify-between pb-1">
                     <span className="block text-xs font-extrabold uppercase text-zinc-400 tracking-wider">
@@ -2206,61 +2787,44 @@ export default function MarketTab({
               </div>
             ) : (
               <div className="space-y-3 font-mono text-xs">
-                {listings.filter(l => l.sellerUid === user.uid).map((listing) => {
-                  const isWTS = listing.type === 'WTS';
+                {(() => {
+                  const myListings = listings.filter(l => l.sellerUid === user?.uid);
+                  const maxPerPage = 3;
+                  const totalMyPages = Math.max(1, Math.ceil(myListings.length / maxPerPage));
+                  const currentMyPage = Math.min(myListingsPage, totalMyPages);
+                  const startIndex = (currentMyPage - 1) * maxPerPage;
+                  const paginatedMyListings = myListings.slice(startIndex, startIndex + maxPerPage);
                   return (
-                    <div
-                      key={listing.id}
-                      className="bg-[#0b0c10] border border-[#2a2c33] rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative overflow-hidden transition hover:border-[#d4af37]/30"
-                    >
-                      <div className={`absolute top-0 bottom-0 left-0 w-1 ${isWTS ? 'bg-red-500' : 'bg-blue-500'}`} />
-                      
-                      <div className="space-y-1 pl-2 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${isWTS ? 'bg-red-950/40 text-red-150 border border-red-900/30' : 'bg-blue-950/40 text-blue-405 border border-blue-900/30'}`}>
-                            {listing.type}
-                          </span>
-                          <span className="text-[9px] text-zinc-500">ACTIVE OFFER</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-xs font-bold text-white uppercase tracking-wide font-sans">{listing.itemName}</span>
-                          <span className="text-[10px] text-zinc-500 font-sans">Qty: {listing.quantity}</span>
-                        </div>
+                    <div className="space-y-4">
+                      <div className="space-y-3 font-mono text-xs">
+                        {paginatedMyListings.map(l => renderListing(l, true))}
                       </div>
-
-                      <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-center border-t sm:border-t-0 border-[#2a2c33]/45 pt-2 sm:pt-0 shrink-0 gap-2 font-sans font-mono whitespace-nowrap">
-                        <div className="text-right">
-                          <span className="text-xs font-semibold text-[#f1f2f6]">{listing.price} <img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /></span>
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
+                      {totalMyPages > 1 && (
+                        <div className="flex items-center justify-between border-t border-[#2a2c33]/40 pt-4">
                           <button
                             type="button"
-                            onClick={() => handleMarkListingStatus(listing.id, 'sold')}
-                            className="px-2 py-0.5 bg-emerald-950/40 hover:bg-emerald-950/70 border border-emerald-900/40 text-emerald-400 hover:text-emerald-300 rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
+                            onClick={() => setMyListingsPage(p => Math.max(1, p - 1))}
+                            disabled={currentMyPage === 1}
+                            className="px-3 py-1.5 bg-[#14161c] border border-[#2a2c33] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-800 rounded font-mono text-xs text-zinc-300 transition-colors"
                           >
-                            Sold
+                            Previous
                           </button>
+                          <div className="text-xs font-mono text-[#8e9299]">
+                            Page <span className="text-[#e0e1e6] font-bold">{currentMyPage}</span> of <span className="text-[#e0e1e6]">{totalMyPages}</span>
+                          </div>
                           <button
                             type="button"
-                            onClick={() => handleMarkListingStatus(listing.id, 'cancelled')}
-                            className="px-2 py-0.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-[#e0e1e6] rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
+                            onClick={() => setMyListingsPage(p => Math.min(totalMyPages, p + 1))}
+                            disabled={currentMyPage === totalMyPages}
+                            className="px-3 py-1.5 bg-[#14161c] border border-[#2a2c33] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-800 rounded font-mono text-xs text-zinc-300 transition-colors"
                           >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteListing(listing.id)}
-                            className="p-1 px-1.5 bg-red-950/15 hover:bg-red-850/20 border border-red-900/35 text-red-500 hover:text-red-450 rounded transition cursor-pointer"
-                            title="Delete row"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            Next
                           </button>
                         </div>
-                      </div>
+                      )}
                     </div>
                   );
-                })}
+                })()}
               </div>
             )}
           </div>
@@ -2271,8 +2835,7 @@ export default function MarketTab({
             <ul className="list-disc list-inside space-y-1">
               <li>Pasting your profile View Source checks in step 4 securely discards private page cookies in-browser! No login parameters ever leave this page.</li>
               <li>Marking listings Sold or Cancelled immediately removes public entries database-wide.</li>
-              <li>Toggle "Verified Only" in Browse listings to only see trades from players who successfully completed trade verification.</li>
-            </ul>
+                          </ul>
           </div>
         </div>
       </div>
@@ -2344,14 +2907,16 @@ export default function MarketTab({
               </div>
 
               {/* Verified Badge Checkbox */}
-              <button
-                type="button"
-                onClick={() => setVerifiedFilter(!verifiedFilter)}
-                className={`px-3 py-2 rounded-lg border text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 transition select-none ${verifiedFilter ? 'bg-emerald-950/10 border-emerald-900/50 text-emerald-400' : 'bg-[#0c0d10] border-[#2a2c33] text-zinc-400 hover:text-white'}`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Verified Only
-              </button>
+              {/* My Listings Checkbox */}
+              {user && (
+                <button
+                  type="button"
+                  onClick={() => setMyListingsFilter(!myListingsFilter)}
+                  className={`px-3 py-2 rounded-lg border text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 transition select-none ${myListingsFilter ? 'bg-[#d4af37]/10 border-[#d4af37]/50 text-[#d4af37]' : 'bg-[#0c0d10] border-[#2a2c33] text-zinc-400 hover:text-white'}`}
+                >
+                  My Listings
+                </button>
+              )}
             </div>
           </div>
 
@@ -2368,346 +2933,7 @@ export default function MarketTab({
             </div>
           ) : (
             <div className="space-y-3">
-              {paginatedListings.map((listing) => {
-                const isPrimeJunk = !!listing.isPrimeJunk;
-                const isWTS = listing.type === 'WTS';
-                const isOwner = user && listing.sellerUid === user.uid;
-                const listPrices = listing.rarityPrices || {
-                  bronze15: 1,
-                  bronze25: 2,
-                  silver45: 3,
-                  silver65: 5,
-                  gold: 8
-                };
-                
-                // Copy-paste trade command for Warframe Chat
-                let tradeText = "";
-                if (listing.isRateBased) {
-                  tradeText = isWTS
-                    ? `/w ${listing.sellerIGN} Hi I want to buy Prime Junk 15 :ducats: = ${listPrices.bronze15} :platinum: , 25 :ducats: = ${listPrices.bronze25} :platinum: , 45 :ducats: = ${listPrices.silver45} :platinum: , 65 :ducats: = ${listPrices.silver65} :platinum: , 100 :ducats: = ${listPrices.gold} :platinum:`
-                    : `/w ${listing.sellerIGN} Hi I want to sell Prime Junk 15 :ducats: = ${listPrices.bronze15} :platinum: , 25 :ducats: = ${listPrices.bronze25} :platinum: , 45 :ducats: = ${listPrices.silver45} :platinum: , 65 :ducats: = ${listPrices.silver65} :platinum: , 100 :ducats: = ${listPrices.gold} :platinum:`;
-                } else if (isPrimeJunk) {
-                  const formattedParts = listing.partDistribution ? `(${listing.partDistribution.replace(/(\d+)d/g, '$1 :ducats:')}) ` : '';
-                  const tradeInfo = `(${listing.totalParts} parts for ${listing.price} :platinum:) (${Math.round(listing.price / (listing.tradesRequired || 1))} :platinum: / 1 Trade) (Total Trades = ${listing.tradesRequired || 1}) (Total Ducats = ${listing.totalDucats || 0})`;
-                  tradeText = isWTS
-                    ? `/w ${listing.sellerIGN} Hi! I want to buy your Bulk Prime Junk Bundle ${formattedParts}${tradeInfo}`
-                    : `/w ${listing.sellerIGN} Hi! I want to sell you a Bulk Prime Junk Bundle ${formattedParts}${tradeInfo}`;
-                } else {
-                  tradeText = isWTS 
-                    ? `/w ${listing.sellerIGN} Hi! I want to buy ${listing.itemName} for ${listing.price}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> [DucaPlat]`
-                    : `/w ${listing.sellerIGN} Hi! I want to sell ${listing.itemName} for ${listing.price}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> [DucaPlat]`;
-                }
-
-                return (
-                  <div
-                    key={listing.id}
-                    className={`bg-[#14161c] border rounded-xl p-6 transition duration-150 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-5 ${isOwner ? 'border-[#d4af37]/45 shadow-lg shadow-[#d4af37]/3' : 'border-[#2a2c33]'}`}
-                  >
-                    
-                    {/* Left Accent Bar depending on listing type */}
-                    <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${isWTS ? 'bg-[#c55353]' : 'bg-[#3b82f6]'}`} />
-
-                    <div className="space-y-2 flex-1 pl-1">
-                      
-                      {/* Top seller tag & verification */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded ${
-                          listing.isRateBased
-                            ? (isWTS 
-                                ? 'bg-amber-950/35 text-amber-400 border border-amber-900/40' 
-                                : 'bg-teal-950/35 text-teal-400 border border-teal-900/40')
-                            : isPrimeJunk 
-                            ? (isWTS 
-                                ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/30 font-semibold' 
-                                : 'bg-blue-950/20 text-blue-400 border border-blue-900/40')
-                            : (isWTS 
-                                ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/30' 
-                                : 'bg-blue-950/20 text-blue-400 border border-blue-900/35')
-                        }`}>
-                          {listing.isRateBased ? `RATE-BASED JUNK (${listing.type})` : isPrimeJunk ? `PRIME JUNK (${listing.type})` : listing.type}
-                        </span>
-
-                        <span className="font-mono text-xs font-semibold text-[#e0e1e6] flex items-center gap-1 uppercase select-all">
-                          {listing.sellerIGN}
-                        </span>
-
-                        {listing.isSellerVerified ? (
-                          <div className="flex items-center text-[9px] font-semibold text-emerald-400 gap-0.5 bg-emerald-950/10 px-1.5 py-0.5 border border-emerald-900/25 rounded" title="Identity Verified">
-                            <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                            <span>VERIFIED</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center text-[9px] font-semibold text-zinc-500 gap-0.5 bg-[#0c0d10] px-1.5 py-0.5 border border-transparent rounded" title="Identity Unverified">
-                            <HelpCircle className="w-3 h-3 shrink-0" />
-                            <span>UNVERIFIED</span>
-                          </div>
-                        )}
-
-                        {isOwner && (
-                          <span className="text-[9px] font-extrabold uppercase bg-zinc-950 text-[#d4af37] border border-[#d4af37]/30 px-1.5 py-0.5 rounded">
-                            YOUR LISTING
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Item and Quantity details */}
-                      {listing.isRateBased ? (
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-baseline gap-2.5">
-                            <h4 className={`text-[13px] font-extrabold tracking-wide uppercase font-sans text-amber-500`}>
-                              {listing.itemName}
-                            </h4>
-                            <span className="text-xs text-zinc-500 font-sans">
-                              Trade based on rarity rates below — Whisper to initiate deal!
-                            </span>
-                          </div>
-
-                          {/* Rate distribution chips */}
-                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
-                            <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/45 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                              <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider">Bronze (15<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
-                              <span className="text-white font-black text-sm mt-1">{listPrices.bronze15}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
-                            </div>
-                            <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/60 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                              <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider">Bronze (25<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
-                              <span className="text-white font-black text-sm mt-1">{listPrices.bronze25}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
-                            </div>
-                            <div className="text-xs bg-[#0c0d10] border border-slate-600/70 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                              <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider">Silver (45<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
-                              <span className="text-white font-black text-sm mt-1">{listPrices.silver45}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
-                            </div>
-                            <div className="text-xs bg-[#0c0d10] border border-slate-550/80 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                              <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider">Silver (65<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
-                              <span className="text-white font-black text-sm mt-1">{listPrices.silver65}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
-                            </div>
-                            <div className="text-xs bg-[#0c0d10] border border-[#d4af37]/45 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                              <span className="text-[#d4af37] font-black uppercase text-[10px] tracking-wider">Gold (100<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
-                              <span className="text-white font-black text-sm mt-1">{listPrices.gold}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
-                            </div>
-                          </div>
-
-                          {/* Seller storage stock holds if present */}
-                          {listing.counts && (listing.counts.bronze15 > 0 || listing.counts.bronze25 > 0 || listing.counts.silver45 > 0 || listing.counts.silver65 > 0 || listing.counts.gold > 0) && (
-                            <div className="space-y-2.5 pt-2 border-t border-[#2a2c33]/50 border-dashed mt-3">
-                              <span className="text-xs uppercase font-black text-zinc-300 tracking-wider font-sans block">Seller's Stored Warehouse Stock:</span>
-                              <div className="flex flex-wrap gap-2 pt-0.5">
-                                {listing.counts.bronze15 > 0 && (
-                                  <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/40 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
-                                    15 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.bronze15}</span>
-                                  </span>
-                                )}
-                                {listing.counts.bronze25 > 0 && (
-                                  <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/50 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
-                                    25 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.bronze25}</span>
-                                  </span>
-                                )}
-                                {listing.counts.silver45 > 0 && (
-                                  <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-600/70 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
-                                    45 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.silver45}</span>
-                                  </span>
-                                )}
-                                {listing.counts.silver65 > 0 && (
-                                  <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-550/80 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
-                                    65 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.silver65}</span>
-                                  </span>
-                                )}
-                                {listing.counts.gold > 0 && (
-                                  <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#d4af37]/45 text-[#d4af37] rounded-md flex items-center gap-1.5 font-bold">
-                                    100 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.gold}</span>
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-zinc-300 font-mono items-center mt-2">
-                                <span>Total Stock Parts: <span className="text-white font-black text-sm">{listing.totalParts}</span></span>
-                                <span className="flex items-center gap-1">Potential Stored Ducats: <span className="text-[#d4af37] font-black text-sm">{listing.totalDucats}</span><img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline" alt="D" referrerPolicy="no-referrer" /></span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : isPrimeJunk ? (
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-baseline gap-2.5">
-                            <h4 className={`text-[13px] font-extrabold tracking-wide uppercase font-sans ${isWTS ? 'text-[#e06d6d]' : 'text-blue-400'}`}>
-                              {listing.itemName || 'Bulk Prime Junk Bundle'}
-                            </h4>
-                            <span className="text-xs text-zinc-500 font-sans">
-                              Wholesale bundle — No single item purchases!
-                            </span>
-                          </div>
-                          
-                          {/* Part distribution chips */}
-                          <div className="flex flex-wrap gap-2 pt-0.5">
-                            {listing.counts && listing.counts.bronze15 > 0 && (
-                              <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/40 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
-                                15 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.bronze15}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.bronze15}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
-                              </span>
-                            )}
-                            {listing.counts && listing.counts.bronze25 > 0 && (
-                              <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/50 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
-                                25 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.bronze25}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.bronze25}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
-                              </span>
-                            )}
-                            {listing.counts && listing.counts.silver45 > 0 && (
-                              <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-600/70 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
-                                45 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.silver45}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.silver45}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
-                              </span>
-                            )}
-                            {listing.counts && listing.counts.silver65 > 0 && (
-                              <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-550/80 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
-                                65 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.silver65}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.silver65}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
-                              </span>
-                            )}
-                            {listing.counts && listing.counts.gold > 0 && (
-                              <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#d4af37]/45 text-[#d4af37] rounded-md flex items-center gap-1.5 font-bold">
-                                100 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.gold}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.gold}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Extra info metrics */}
-                          <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-zinc-300 font-mono items-center mt-1">
-                            <span>Total Parts: <span className="text-white font-black text-sm">{listing.totalParts}</span></span>
-                            <span className="flex items-center gap-1">Total Ducats: <span className="text-[#d4af37] font-black text-sm">{listing.totalDucats}</span><img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline" alt="D" referrerPolicy="no-referrer" /></span>
-                            <span className="text-pink-400">Trades Needed: <span className="font-extrabold">{listing.tradesRequired}</span></span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap items-baseline gap-2.5">
-                          <h4 className={`text-[13px] font-semibold tracking-wide uppercase font-sans ${isWTS ? 'text-[#e06d6d]' : 'text-blue-400'}`}>
-                            {listing.itemName}
-                          </h4>
-                          <span className="text-xs text-zinc-500">
-                            Qty: <span className="font-bold text-zinc-300 font-mono">{listing.quantity}</span>
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Optional Listing note */}
-                      {listing.note && (
-                        <div className="text-[11px] text-zinc-300 bg-[#0c0d10]/40 border border-[#2a2c33]/40 p-2.5 rounded-lg italic pr-4 max-w-lg font-sans">
-                          "{listing.note}"
-                        </div>
-                      )}
-
-                      {/* Price Realism Valuation Insights */}
-                      {(() => {
-                        const derivedCounts = isPrimeJunk 
-                          ? (listing.counts || { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })
-                          : guessCountsFromItem(listing.itemName, listing.quantity);
-                        const valuation = getListingPriceSuggestion(derivedCounts);
-                        if (!valuation) return null;
-                        return (
-                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] mt-1.5">
-                            <span className="text-zinc-500 font-mono">Valuation range:</span>
-                            <span className="font-mono text-zinc-300 font-semibold">{valuation.min}-{valuation.max}p</span>
-                            <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold tracking-wide uppercase font-mono ${
-                              listing.price <= valuation.average
-                                ? 'bg-emerald-950/30 text-[#4ade80] border border-emerald-900/35'
-                                : listing.price > valuation.max * 1.15
-                                ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/25'
-                                : 'bg-zinc-950/50 text-zinc-400 border border-zinc-900/60'
-                            }`}>
-                              {listing.price <= valuation.average
-                                ? '🟢 Statistical Good Deal'
-                                : listing.price > valuation.max * 1.15
-                                ? '⚠️ Overpriced Strategy'
-                                : '⚖️ Fair market value'}
-                            </span>
-                          </div>
-                        );
-                      })()}
-
-                      {/* COPY FORUM COMMAND BLOCK */}
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        {!isOwner && (
-                          <div className="flex items-center gap-1.5 bg-[#0c0d10]/60 border border-[#2a2c33]/40 rounded-lg p-1 shrink-0 max-w-sm sm:flex-initial">
-                            {copiedCommandIds[listing.id] && (
-                              <>
-                                <span className="text-[9px] text-[#8e9299] shrink-0 pl-1.5 font-mono uppercase tracking-wide">Command:</span>
-                                <div className="flex-1 font-mono text-[10px] text-[#22c55e] truncate select-all px-1 font-semibold">
-                                  {tradeText}
-                                </div>
-                              </>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => copyToClipboard(tradeText, false, listing.id)}
-                              className="p-1 px-2.5 bg-zinc-900 hover:bg-zinc-800 rounded text-[9px] text-[#22c55e] border border-[#22c55e]/15 hover:border-[#22c55e]/30 transition uppercase font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
-                              title="Copy Command"
-                            >
-                              {copiedCommandIds[listing.id] ? <Check className="w-3.5 h-3.5" /> : <ClipboardPaste className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-                        )}
-
-                        {!listing.isRateBased && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const derivedCounts = isPrimeJunk 
-                                ? (listing.counts || { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })
-                                : guessCountsFromItem(listing.itemName, listing.quantity);
-                              onAnalyzeInCalculator?.(derivedCounts);
-                            }}
-                            className="px-3.5 py-1.5 bg-[#d4af37]/10 hover:bg-[#d4af37]/15 text-[#d4af37] border border-[#d4af37]/25 hover:border-[#d4af37]/45 text-[9px] font-extrabold uppercase tracking-widest rounded-lg transition duration-150 inline-flex items-center gap-1.5 cursor-pointer max-w-max select-none"
-                            title="Transmit item parameters to the main ANOVA statistical calculator"
-                          >
-                            <TrendingUp className="w-3.5 h-3.5 text-[#d4af37]" />
-                            <span>Analyze in Calculator</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right Price section / Own operations */}
-                    <div className="flex sm:flex-col items-end gap-3.5 sm:gap-1.5 justify-between border-t sm:border-0 border-zinc-800/55 pt-3 sm:pt-0 shrink-0">
-                      
-                      {!listing.isRateBased && (
-                        <div className="text-right">
-                          <span className="text-[10px] font-mono text-[#8e9299] uppercase select-none block">
-                            {isPrimeJunk ? 'Total Bundle Price' : 'Price Per Item'}
-                          </span>
-                          <div className="flex items-center gap-1 text-base font-semibold text-[#f1f2f6] justify-end">
-                            <span className="font-mono text-emerald-400 font-extrabold">{listing.price}</span>
-                            <img src={platinumIcon} className="w-4 h-4 object-contain inline" alt="Pt" referrerPolicy="no-referrer" />
-                          </div>
-                          {isPrimeJunk && (
-                            <span className="text-[9px] text-[#d4af37] font-mono block">Wholesale combo</span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Owner Operations to manage or clear active listed rows */}
-                      {isOwner ? (
-                        <div className="flex items-center gap-1 mt-1.5 flex-wrap justify-end">
-                          <button
-                            type="button"
-                            onClick={() => handleMarkListingStatus(listing.id, 'sold')}
-                            className="px-2.5 py-1 bg-emerald-950/20 hover:bg-emerald-950/45 border border-emerald-900/30 text-emerald-400 hover:text-emerald-300 rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
-                          >
-                            Mark Sold
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleMarkListingStatus(listing.id, 'cancelled')}
-                            className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-[#e0e1e6] rounded text-[9px] font-bold uppercase transition select-none cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteListing(listing.id)}
-                            className="p-1 bg-red-950/15 hover:bg-red-850/20 border border-red-900/20 text-red-400 rounded transition cursor-pointer"
-                            title="Delete Permanently"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
+                            {paginatedListings.map(l => renderListing(l, false))}
               {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-zinc-800/50">

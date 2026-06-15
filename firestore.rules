@@ -142,7 +142,7 @@ service cloud.firestore {
         && isValidListing(incoming())
         && incoming().sellerUid == existing().sellerUid
         && incoming().createdAt == existing().createdAt
-        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'price', 'quantity', 'itemName', 'type', 'isRateBased']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'price', 'quantity', 'itemName', 'type', 'isRateBased', 'counts', 'totalParts', 'totalDucats', 'tradesRequired', 'partDistribution', 'isBatchMode', 'rarityPrices']);
 
       allow delete: if isSignedIn() && isValidId(listingId)
         && existing().sellerUid == request.auth.uid;
