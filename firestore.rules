@@ -132,7 +132,6 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidId(listingId)
         && isValidListing(incoming())
         && incoming().createdAt == request.time
-        // 🛡️ Guard 3: Ensure listing queries don't crash if an unverified user's profile is blank
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && 'verification' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verification.status == 'verified'
