@@ -817,7 +817,7 @@ export default function MarketTab({
     }
   };
 
-  const handlePublishPresetDirectly = async (presetCounts: InventoryCount, presetName: string) => {
+  const handlePublishPresetDirectly = async (presetCounts: any, presetName: string) => {
     setErrorMsg(null);
     setSuccessMsg(null);
 
@@ -831,31 +831,39 @@ export default function MarketTab({
       return;
     }
 
-    const totalParts = Object.values(presetCounts).reduce((a, b) => a + b, 0);
+    const b15 = parseInt(presetCounts?.bronze15) || 0;
+    const b25 = parseInt(presetCounts?.bronze25) || 0;
+    const s45 = parseInt(presetCounts?.silver45) || 0;
+    const s65 = parseInt(presetCounts?.silver65) || 0;
+    const g100 = parseInt(presetCounts?.gold) || 0;
+
+    const totalParts = b15 + b25 + s45 + s65 + g100;
     if (totalParts === 0) {
       setErrorMsg('Cannot publish empty bundle.');
       return;
     }
 
-    const totalDucats = 
-      presetCounts.bronze15 * 15 + 
-      presetCounts.bronze25 * 25 + 
-      presetCounts.silver45 * 45 + 
-      presetCounts.silver65 * 65 + 
-      presetCounts.gold * 100;
-
+    const totalDucats = b15 * 15 + b25 * 25 + s45 * 45 + s65 * 65 + g100 * 100;
     const pricePlat = Math.round(totalDucats / 25);
     const tradesRequired = Math.ceil(totalParts / 6);
 
     const distList = [];
-    if (presetCounts.bronze15 > 0) distList.push(`15d x ${presetCounts.bronze15}`);
-    if (presetCounts.bronze25 > 0) distList.push(`25d x ${presetCounts.bronze25}`);
-    if (presetCounts.silver45 > 0) distList.push(`45d x ${presetCounts.silver45}`);
-    if (presetCounts.silver65 > 0) distList.push(`65d x ${presetCounts.silver65}`);
-    if (presetCounts.gold > 0) distList.push(`100d x ${presetCounts.gold}`);
+    if (b15 > 0) distList.push(`15d x ${b15}`);
+    if (b25 > 0) distList.push(`25d x ${b25}`);
+    if (s45 > 0) distList.push(`45d x ${s45}`);
+    if (s65 > 0) distList.push(`65d x ${s65}`);
+    if (g100 > 0) distList.push(`100d x ${g100}`);
     const partDistribution = distList.join(', ');
 
     setActionLoading(true);
+
+    const cleanCounts = {
+      bronze15: b15,
+      bronze25: b25,
+      silver45: s45,
+      silver65: s65,
+      gold: g100
+    };
 
     try {
       await addDoc(collection(db, 'listings'), {
@@ -870,7 +878,14 @@ export default function MarketTab({
         status: 'active',
         note: '',
         isPrimeJunk: true,
-        counts: { ...presetCounts },
+        counts: cleanCounts,
+        rarityPrices: {
+          bronze15: 1,
+          bronze25: 2,
+          silver45: 3,
+          silver65: 5,
+          gold: 8
+        },
         totalDucats,
         totalParts,
         partDistribution,
