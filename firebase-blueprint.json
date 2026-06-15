@@ -140,7 +140,7 @@
         },
         "source": {
           "type": "string",
-          "description": "Source of calculation: 'manual', 'directory', or 'ocr'."
+          "description": "Source of calculation: 'manual', 'directory', 'ocr', or 'trades'."
         },
         "counts": {
           "type": "object",

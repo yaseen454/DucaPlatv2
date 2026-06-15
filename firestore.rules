@@ -40,7 +40,7 @@ service cloud.firestore {
     function isValidSavedItem(data) {
       return data.id is string && data.id.size() <= 128
         && data.name is string && data.name.size() <= 120
-        && data.source is string && (data.source == 'manual' || data.source == 'directory' || data.source == 'ocr')
+        && data.source is string && (data.source == 'manual' || data.source == 'directory' || data.source == 'ocr' || data.source == 'trades')
         && data.timestamp is string && data.timestamp.size() <= 100
         && (data.totalDucats is int || data.totalDucats is float) && data.totalDucats >= 0
         && (data.totalItems is int || data.totalItems is float) && data.totalItems >= 0

@@ -1091,9 +1091,9 @@ export default function MarketTab({
       )}
 
       {marketSubTab === 'saved' && (
-        <div className="max-w-2xl mx-auto w-full animate-fadeIn">
+        <div className="max-w-5xl mx-auto w-full animate-fadeIn flex flex-col lg:flex-row gap-6 items-start">
           {/* Manual Quantity Seller / Editor */}
-          <div className="space-y-6">
+          <div className="flex-1 space-y-6 w-full">
             <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-5">
               <div className="border-b border-[#2a2c33]/40 pb-3">
                 <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide">
@@ -1836,6 +1836,55 @@ export default function MarketTab({
             </div>
           </div>
 
+          {/* Saved Trades Listing panel */}
+          <div className="bg-[#14161c] border border-emerald-900/30 rounded-xl p-5 space-y-4 w-full lg:w-[340px] shrink-0 sticky top-4">
+            <div className="border-b border-emerald-900/30 pb-3">
+              <h3 className="font-semibold text-sm text-emerald-400 flex items-center gap-2 uppercase tracking-wide">
+                <Bookmark className="w-4 h-4" />
+                Saved Trades
+              </h3>
+            </div>
+            
+            {savedEntries.filter((e: any) => e.source === 'trades').length === 0 ? (
+              <p className="text-xs text-zinc-500 text-center py-4">No saved trades available.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+                {savedEntries.filter((e: any) => e.source === 'trades').map((trade: any) => (
+                  <div key={trade.id} className="bg-[#0c0d10] border border-emerald-900/30 rounded-lg p-3 flex flex-col justify-between gap-3 group relative overflow-hidden">
+                    <div>
+                      <h4 className="text-xs font-bold text-[#e0e1e6] truncate pr-8" title={trade.name}>{trade.name}</h4>
+                      <p className="text-[10px] text-zinc-500 mt-0.5">{trade.timestamp}</p>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        <span className="text-[10px] bg-zinc-800/50 px-1.5 py-0.5 rounded text-zinc-400 font-mono">B15: {trade.counts.bronze15}</span>
+                        <span className="text-[10px] bg-zinc-800/50 px-1.5 py-0.5 rounded text-zinc-400 font-mono">B25: {trade.counts.bronze25}</span>
+                        <span className="text-[10px] bg-zinc-800/50 px-1.5 py-0.5 rounded text-zinc-300 font-mono">S45: {trade.counts.silver45}</span>
+                        <span className="text-[10px] bg-zinc-800/50 px-1.5 py-0.5 rounded text-zinc-300 font-mono">S65: {trade.counts.silver65}</span>
+                        <span className="text-[10px] bg-emerald-950/40 border border-emerald-900/30 px-1.5 py-0.5 rounded text-emerald-400 font-mono font-bold">G: {trade.counts.gold}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setPublishMode('count');
+                        setBulkCounts(trade.counts);
+                        setSuccessMsg(`Loaded ${trade.name} into Prime Junk Publisher!`);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="w-full py-1.5 mt-1 bg-emerald-900/20 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/50 rounded text-[10px] font-bold uppercase transition-colors cursor-pointer"
+                    >
+                      Load into Publisher
+                    </button>
+                    <button
+                      onClick={() => onDeleteEntry && onDeleteEntry(trade.id)}
+                      className="absolute top-2 right-2 text-zinc-500 hover:text-red-400 bg-[#14161c] p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      title="Delete Trade"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
         </div>
       )}
@@ -2330,7 +2379,7 @@ export default function MarketTab({
                     : `/w ${listing.sellerIGN} Hi I want to sell Prime Junk 15 :ducats: = ${listPrices.bronze15} :platinum: , 25 :ducats: = ${listPrices.bronze25} :platinum: , 45 :ducats: = ${listPrices.silver45} :platinum: , 65 :ducats: = ${listPrices.silver65} :platinum: , 100 :ducats: = ${listPrices.gold} :platinum:`;
                 } else if (isPrimeJunk) {
                   const formattedParts = listing.partDistribution ? `(${listing.partDistribution.replace(/(\d+)d/g, '$1 :ducats:')}) ` : '';
-                  const tradeInfo = `(${listing.totalParts} parts for ${listing.price} :platinum) (${Math.round(listing.price / (listing.tradesRequired || 1))} :platinum / 1 Trade) (Total Trades = ${listing.tradesRequired || 1})`;
+                  const tradeInfo = `(${listing.totalParts} parts for ${listing.price} :platinum:) (${Math.round(listing.price / (listing.tradesRequired || 1))} :platinum: / 1 Trade) (Total Trades = ${listing.tradesRequired || 1}) (Total Ducats = ${listing.totalDucats || 0})`;
                   tradeText = isWTS
                     ? `/w ${listing.sellerIGN} Hi! I want to buy your Bulk Prime Junk Bundle ${formattedParts}${tradeInfo}`
                     : `/w ${listing.sellerIGN} Hi! I want to sell you a Bulk Prime Junk Bundle ${formattedParts}${tradeInfo}`;
@@ -2583,20 +2632,22 @@ export default function MarketTab({
                           </div>
                         )}
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const derivedCounts = isPrimeJunk 
-                              ? (listing.counts || { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })
-                              : guessCountsFromItem(listing.itemName, listing.quantity);
-                            onAnalyzeInCalculator?.(derivedCounts);
-                          }}
-                          className="px-3.5 py-1.5 bg-[#d4af37]/10 hover:bg-[#d4af37]/15 text-[#d4af37] border border-[#d4af37]/25 hover:border-[#d4af37]/45 text-[9px] font-extrabold uppercase tracking-widest rounded-lg transition duration-150 inline-flex items-center gap-1.5 cursor-pointer max-w-max select-none"
-                          title="Transmit item parameters to the main ANOVA statistical calculator"
-                        >
-                          <TrendingUp className="w-3.5 h-3.5 text-[#d4af37]" />
-                          <span>Analyze in Calculator</span>
-                        </button>
+                        {!listing.isRateBased && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const derivedCounts = isPrimeJunk 
+                                ? (listing.counts || { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })
+                                : guessCountsFromItem(listing.itemName, listing.quantity);
+                              onAnalyzeInCalculator?.(derivedCounts);
+                            }}
+                            className="px-3.5 py-1.5 bg-[#d4af37]/10 hover:bg-[#d4af37]/15 text-[#d4af37] border border-[#d4af37]/25 hover:border-[#d4af37]/45 text-[9px] font-extrabold uppercase tracking-widest rounded-lg transition duration-150 inline-flex items-center gap-1.5 cursor-pointer max-w-max select-none"
+                            title="Transmit item parameters to the main ANOVA statistical calculator"
+                          >
+                            <TrendingUp className="w-3.5 h-3.5 text-[#d4af37]" />
+                            <span>Analyze in Calculator</span>
+                          </button>
+                        )}
                       </div>
                     </div>
 

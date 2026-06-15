@@ -743,7 +743,7 @@ export default function App() {
                     onChange={setCounts} 
                     onCalculate={() => alert('Calculated! Results are loaded and updated instantly on the right.')} 
                     activeConfig={calcType === 1 ? narrowConfig : broadConfig}
-                    onSaveToItems={(c, n) => handleSaveToItems(c, n, 'manual')}
+                    onSaveToItems={(c, n, src) => handleSaveToItems(c, n, src || 'manual')}
                     onNavigateToSettings={() => setActiveTab('Settings')}
                     calcType={calcType}
                     onChangeCalcType={setCalcType}
@@ -964,7 +964,7 @@ export default function App() {
                 setSelectedRarity={setDirRarity}
                 selectedStatus={dirStatus}
                 setSelectedStatus={setDirStatus}
-                onSaveToItems={(c, n) => handleSaveToItems(c, n, 'directory')}
+                onSaveToItems={(c, n, src) => handleSaveToItems(c, n, src || 'directory')}
               />
             )}
 
@@ -988,7 +988,7 @@ export default function App() {
                 setOcrItems={setOcrItems}
                 feedback={ocrFeedback}
                 setFeedback={setOcrFeedback}
-                onSaveToItems={(c, n) => handleSaveToItems(c, n, 'ocr')}
+                onSaveToItems={(c, n, src) => handleSaveToItems(c, n, src || 'ocr')}
               />
             )}
 
