@@ -144,6 +144,57 @@ export default function App() {
   // State for persistent "Saved Items" tab histories
   const [savedInventories, setSavedInventories] = useState<SavedItemEntry[]>([]);
 
+  // User presence state
+  const [userPresence, setUserPresence] = useState<'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE'>('OFFLINE');
+  const [isVerified, setIsVerified] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setIsVerified(false);
+      return;
+    }
+    let unsub: (() => void) | null = null;
+    import("firebase/firestore").then(({ doc, onSnapshot }) => {
+      const userRef = doc(db, 'users', user.uid);
+      unsub = onSnapshot(userRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.marketPresence) {
+            setUserPresence(data.marketPresence);
+          }
+          if (data.verification?.status === 'verified') {
+            setIsVerified(true);
+          } else {
+            setIsVerified(false);
+          }
+        }
+      });
+    });
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [user]);
+
+  const handlePresenceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const status = e.target.value as 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE';
+    setUserPresence(status);
+    if (!user) return;
+    try {
+      const { doc, updateDoc, writeBatch, collection, query, where, getDocs } = await import('firebase/firestore');
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, { marketPresence: status });
+      const q = query(collection(db, 'listings'), where('sellerUid', '==', user.uid));
+      const snap = await getDocs(q);
+      const batch = writeBatch(db);
+      snap.forEach(d => {
+        batch.update(d.ref, { sellerStatus: status });
+      });
+      await batch.commit();
+    } catch (err) {
+      console.error("Failed to update market presence", err);
+    }
+  };
+
   // Cloud/Offline Synchronization Engine (Rule 4: Snapshot cleanups dynamically managed)
   useEffect(() => {
     if (initializing) return;
@@ -422,13 +473,28 @@ export default function App() {
               <span className="hidden sm:inline text-[#ff5e5b] font-mono text-[10px] uppercase tracking-wider font-bold">Ko-fi</span>
             </a>
 
+            {user && isVerified && (
+              <div className="px-2 py-1 md:py-1.5 bg-[#111317] hover:bg-[#1a1c23] border border-[#2a2c33] hover:border-[#d4af37]/50 rounded-lg transition-colors flex items-center justify-center">
+                <select 
+                  value={userPresence}
+                  onChange={handlePresenceChange}
+                  className={`bg-transparent text-[10px] md:text-xs uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer ${userPresence === 'ONLINE IN GAME' ? 'text-purple-400' : userPresence === 'ONLINE' ? 'text-emerald-400' : 'text-zinc-500'}`}
+                  title="Market Presence Status"
+                >
+                  <option value="OFFLINE" className="text-zinc-500 bg-[#0c0d10]">OFFLINE</option>
+                  <option value="ONLINE" className="text-emerald-400 bg-[#0c0d10]">ONLINE</option>
+                  <option value="ONLINE IN GAME" className="text-purple-400 bg-[#0c0d10]">ONLINE IN GAME</option>
+                </select>
+              </div>
+            )}
+
             {user ? (
-              <div className="flex items-center gap-2.5 bg-[#111317] border border-[#d4af37]/20 p-1 pl-2.5 pr-2.5 md:pl-3 md:pr-3.5 rounded-lg">
+              <div className="flex items-center gap-2.5 bg-[#111317] border border-[#d4af37]/20 p-1 pl-2.5 pr-2.5 md:pl-3 md:pr-3.5 rounded-lg max-w-full">
                 {user.photoURL ? (
                   <img 
                     src={user.photoURL} 
                     alt={user.displayName || "User"} 
-                    className="w-6 h-6 md:w-7 md:h-7 rounded-full border border-[#d4af37]/30 object-cover"
+                    className="w-6 h-6 md:w-7 md:h-7 rounded-full border border-[#d4af37]/30 object-cover shrink-0"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
@@ -441,7 +507,11 @@ export default function App() {
                   <span className="block text-[11px] text-zinc-100 max-w-[100px] truncate leading-none font-medium">{user.displayName || user.email}</span>
                 </div>
                 <button
-                  onClick={logout}
+                  onClick={async () => {
+                    const e = { target: { value: 'OFFLINE' } } as React.ChangeEvent<HTMLSelectElement>;
+                    await handlePresenceChange(e);
+                    logout();
+                  }}
                   className="px-2 py-0.5 md:py-1 text-[8px] md:text-[9px] font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded transition-all uppercase tracking-wider select-none shrink-0"
                 >
                   Sign Out
@@ -1011,6 +1081,7 @@ export default function App() {
                 marketSubTab={marketSubTab}
                 setMarketSubTab={setMarketSubTab}
                 onNavigateToSettings={() => setActiveTab('Settings')}
+                userPresence={userPresence}
                 savedEntries={savedInventories}
                 onUseEntry={handleUseSavedInventory}
                 onRenameEntry={handleRenameSavedInventory}

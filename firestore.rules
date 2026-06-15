@@ -75,7 +75,7 @@ service cloud.firestore {
         && isValidUserProfile(incoming()) 
         && (incoming().lastLoginAt == existing().lastLoginAt || incoming().lastLoginAt == request.time)
         && incoming().createdAt == existing().createdAt
-        && incoming().diff(existing()).affectedKeys().hasOnly(['lastLoginAt', 'displayName', 'photoURL', 'email', 'verification'])
+        && incoming().diff(existing()).affectedKeys().hasOnly(['lastLoginAt', 'displayName', 'photoURL', 'email', 'verification', 'marketPresence'])
         // Guard against client-side self-verification and privilege escalation
         && (
           !incoming().keys().hasAll(['verification'])
@@ -142,7 +142,7 @@ service cloud.firestore {
         && isValidListing(incoming())
         && incoming().sellerUid == existing().sellerUid
         && incoming().createdAt == existing().createdAt
-        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'price', 'quantity', 'itemName', 'type', 'isRateBased', 'counts', 'totalParts', 'totalDucats', 'tradesRequired', 'partDistribution', 'isBatchMode', 'rarityPrices']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'price', 'quantity', 'itemName', 'type', 'isRateBased', 'counts', 'totalParts', 'totalDucats', 'tradesRequired', 'partDistribution', 'isBatchMode', 'rarityPrices', 'sellerStatus']);
 
       allow delete: if isSignedIn() && isValidId(listingId)
         && existing().sellerUid == request.auth.uid;

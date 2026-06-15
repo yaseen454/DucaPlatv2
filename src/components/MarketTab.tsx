@@ -68,6 +68,7 @@ interface MarketListing {
   sellerIGN: string;
   normalizedSellerIGN: string;
   isSellerVerified: boolean;
+  sellerStatus?: 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE';
   itemName: string;
   price: number;
   quantity: number;
@@ -185,7 +186,74 @@ interface MarketTabProps {
   onDeleteEntry?: (id: string) => void;
   onClearAll?: () => void;
   onUpdateEntryPrices?: (id: string, prices: InventoryCount) => void;
+  userPresence?: 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE';
 }
+
+export interface FilterState {
+  orderType: 'all' | 'WTS' | 'WTB';
+  minPrice: string;
+  maxPrice: string;
+  sellingType: 'all' | 'rate-based' | 'prime-junk';
+  orderScale: 'all' | 'batch' | 'bulk';
+}
+
+const AdvancedFilterBar = ({ filters, setFilters }: { filters: FilterState, setFilters: (f: FilterState) => void }) => {
+  return (
+    <div className="flex flex-col gap-3 bg-[#14161c] border border-transparent lg:rounded-xl text-xs font-sans mt-0 p-3 pt-1">
+      <div className="flex flex-wrap items-center gap-4 lg:gap-8">
+        
+        {/* Order Type */}
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[#8e9299]">Order Type</label>
+          <div className="flex bg-[#0c0d10] border border-[#2a2c33] rounded overflow-hidden">
+            <button onClick={() => setFilters({...filters, orderType: 'WTS'})} className={`px-3 py-1 font-bold transition ${filters.orderType === 'WTS' ? 'bg-[#b7437f] text-white' : 'text-zinc-500 hover:bg-[#2a2c33] hover:text-white'}`}>Sellers</button>
+            <button onClick={() => setFilters({...filters, orderType: 'WTB'})} className={`px-3 py-1 font-bold transition ${filters.orderType === 'WTB' ? 'bg-[#3e86a0] text-white' : 'text-zinc-500 hover:bg-[#2a2c33] hover:text-white'}`}>Buyers</button>
+            <button onClick={() => setFilters({...filters, orderType: 'all'})} className={`px-3 py-1 font-bold transition ${filters.orderType === 'all' ? 'bg-[#2a2c33] text-white' : 'text-zinc-500 hover:bg-[#2a2c33] hover:text-white'}`}>All</button>
+          </div>
+        </div>
+
+        {/* Max Price / Min Price */}
+        <div className="flex items-center gap-4 bg-[#0c0d10] border border-[#2a2c33] rounded px-3 py-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-bold text-zinc-400">Min Price</span>
+            <input type="number" min="0" value={filters.minPrice} onChange={e => setFilters({...filters, minPrice: e.target.value})} className="w-12 bg-transparent border-b border-[#2a2c33] focus:border-[#d4af37] text-white text-xs px-1 py-0 outline-none text-center" placeholder="0" />
+          </div>
+          <div className="w-[1px] h-3 bg-[#2a2c33]" />
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-bold text-zinc-400">Max Price</span>
+            <input type="number" min="0" value={filters.maxPrice} onChange={e => setFilters({...filters, maxPrice: e.target.value})} className="w-12 bg-transparent border-b border-[#2a2c33] focus:border-[#d4af37] text-white text-xs px-1 py-0 outline-none text-center" placeholder="Max" />
+          </div>
+          <span className="text-[10px] font-bold text-zinc-500 ml-1">Platinum</span>
+        </div>
+
+        {/* Selling Mode */}
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[#8e9299]">Selling Mode</label>
+          <div className="flex flex-wrap gap-1">
+            {['all', 'rate-based', 'prime-junk'].map(st => (
+              <button key={st} onClick={() => setFilters({...filters, sellingType: st as any})} className={`px-2.5 py-1 text-[10px] font-bold rounded border uppercase transition ${filters.sellingType === st ? 'bg-[#2a2c33] text-white border-zinc-500' : 'bg-[#0c0d10] text-zinc-500 border-[#2a2c33] hover:border-zinc-700 hover:text-zinc-300'}`}>
+                {st.replace(/-/g, ' ')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Trade Scale (Batch/Bulk) */}
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[#8e9299]">Volume</label>
+          <div className="flex flex-wrap gap-1">
+            {['all', 'batch', 'bulk'].map(st => (
+              <button key={st} onClick={() => setFilters({...filters, orderScale: st as any})} className={`px-2.5 py-1 text-[10px] font-bold rounded border uppercase transition ${filters.orderScale === st ? 'bg-[#2a2c33] text-white border-zinc-500' : 'bg-[#0c0d10] text-zinc-500 border-[#2a2c33] hover:border-zinc-700 hover:text-zinc-300'}`}>
+                {st.replace(/-/g, ' ')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
 
 export default function MarketTab({
   narrowConfig,
@@ -199,7 +267,8 @@ export default function MarketTab({
   onRenameEntry,
   onDeleteEntry,
   onClearAll,
-  onUpdateEntryPrices
+  onUpdateEntryPrices,
+  userPresence = 'OFFLINE'
 }: MarketTabProps) {
   const { user } = useAuth();
 
@@ -255,9 +324,17 @@ export default function MarketTab({
   const [profileSlugInput, setProfileSlugInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [typeFilter, setTypeFilter] = useState<'all' | 'WTS' | 'WTB'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'WTS' | 'WTB'>('all'); // Will remove its functionality if we switch completely, but keeping for compatibility
   const [verifiedFilter, setVerifiedFilter] = useState<boolean>(false);
   const [myListingsFilter, setMyListingsFilter] = useState<boolean>(false);
+  
+  const [browseFilters, setBrowseFilters] = useState<FilterState>({
+    orderType: 'all', minPrice: '', maxPrice: '', sellingType: 'all', orderScale: 'all'
+  });
+  const [myFilters, setMyFilters] = useState<FilterState>({
+    orderType: 'all', minPrice: '', maxPrice: '', sellingType: 'all', orderScale: 'all'
+  });
+
   const [copiedToken, setCopiedToken] = useState(false);
   const [copiedCommandIds, setCopiedCommandIds] = useState<Record<string, boolean>>({});
 
@@ -266,7 +343,7 @@ export default function MarketTab({
   const [editingPriceListingId, setEditingPriceListingId] = useState<string | null>(null);
   const [newPriceValue, setNewPriceValue] = useState<string>('');
 
-  const handleUpdatePrice = async (listing: Listing) => {
+  const handleUpdatePrice = async (listing: MarketListing) => {
     if (!user || !userVerification || userVerification.status !== 'verified') return;
     try {
       const listingRef = doc(db, 'listings', listing.id);
@@ -796,6 +873,7 @@ export default function MarketTab({
         sellerIGN: userVerification.verifiedIGN,
         normalizedSellerIGN: userVerification.normalizedIGN,
         isSellerVerified: true,
+        sellerStatus: userPresence,
         itemName: `Prime Junk (${totalParts} parts)`,
         price: finalPrice,
         quantity: 1,
@@ -861,6 +939,7 @@ export default function MarketTab({
         sellerIGN: userVerification.verifiedIGN,
         normalizedSellerIGN: userVerification.normalizedIGN,
         isSellerVerified: true,
+        sellerStatus: userPresence,
         itemName: `Rate-Based Prime Junk`,
         price: 0,
         quantity: 1,
@@ -939,6 +1018,7 @@ export default function MarketTab({
           sellerIGN: userVerification.verifiedIGN,
           normalizedSellerIGN: userVerification.normalizedIGN,
           isSellerVerified: true,
+          sellerStatus: userPresence,
           itemName: `Prime Junk (${totalParts} parts)`,
           price: pricePlat,
           quantity: 1,
@@ -970,6 +1050,7 @@ export default function MarketTab({
           sellerIGN: userVerification.verifiedIGN,
           normalizedSellerIGN: userVerification.normalizedIGN,
           isSellerVerified: true,
+          sellerStatus: userPresence,
           itemName: `Rate-Based Prime Junk`,
           price: 0,
           quantity: 1,
@@ -1143,7 +1224,7 @@ export default function MarketTab({
   }, [searchQuery, typeFilter, verifiedFilter, myListingsFilter]);
 
 
-  const renderListing = (listing: Listing, isCompact: boolean = false) => {
+  const renderListing = (listing: MarketListing, isCompact: boolean = false) => {
     
                 const isPrimeJunk = !!listing.isPrimeJunk;
                 const isWTS = listing.type === 'WTS';
@@ -1219,6 +1300,23 @@ export default function MarketTab({
                           </div>
                         )}
 
+                        {listing.sellerStatus === 'ONLINE IN GAME' ? (
+                          <div className="flex items-center text-[9px] font-semibold text-purple-400 gap-1 bg-purple-950/20 px-1.5 py-0.5 border border-purple-900/30 rounded" title="Online In-Game">
+                            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_4px_#c084fc]" />
+                            <span>IN GAME</span>
+                          </div>
+                        ) : listing.sellerStatus === 'ONLINE' ? (
+                          <div className="flex items-center text-[9px] font-semibold text-emerald-400 gap-1 bg-emerald-950/20 px-1.5 py-0.5 border border-emerald-900/30 rounded" title="Online">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_#34d399]" />
+                            <span>ONLINE</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-[9px] font-semibold text-zinc-500 gap-1 bg-zinc-900/40 px-1.5 py-0.5 border border-zinc-800 rounded" title="Offline">
+                            <div className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+                            <span>OFFLINE</span>
+                          </div>
+                        )}
+
                         {isOwner && (
                           <span className="text-[9px] font-extrabold uppercase bg-zinc-950 text-[#d4af37] border border-[#d4af37]/30 px-1.5 py-0.5 rounded">
                             YOUR LISTING
@@ -1239,53 +1337,33 @@ export default function MarketTab({
                           </div>
 
                           {/* Rate distribution chips */}
-                          {isCompact ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
-                              <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/45 p-2 rounded-lg flex flex-col items-center justify-center font-mono">
-                                <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider flex items-center gap-0.5">15<img src={ducatIcon} className="w-2.5 h-2.5 object-contain" alt="D" referrerPolicy="no-referrer" /></span>
-                                <span className="text-white font-black text-sm mt-0.5 flex items-center gap-0.5">{listPrices.bronze15}<img src={platinumIcon} className="w-3 h-3 object-contain" alt="Pt" /></span>
-                              </div>
-                              <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/60 p-2 rounded-lg flex flex-col items-center justify-center font-mono">
-                                <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider flex items-center gap-0.5">25<img src={ducatIcon} className="w-2.5 h-2.5 object-contain" alt="D" referrerPolicy="no-referrer" /></span>
-                                <span className="text-white font-black text-sm mt-0.5 flex items-center gap-0.5">{listPrices.bronze25}<img src={platinumIcon} className="w-3 h-3 object-contain" alt="Pt" /></span>
-                              </div>
-                              <div className="text-xs bg-[#0c0d10] border border-slate-600/70 p-2 rounded-lg flex flex-col items-center justify-center font-mono">
-                                <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider flex items-center gap-0.5">45<img src={ducatIcon} className="w-2.5 h-2.5 object-contain" alt="D" referrerPolicy="no-referrer" /></span>
-                                <span className="text-white font-black text-sm mt-0.5 flex items-center gap-0.5">{listPrices.silver45}<img src={platinumIcon} className="w-3 h-3 object-contain" alt="Pt" /></span>
-                              </div>
-                              <div className="text-xs bg-[#0c0d10] border border-slate-550/80 p-2 rounded-lg flex flex-col items-center justify-center font-mono">
-                                <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider flex items-center gap-0.5">65<img src={ducatIcon} className="w-2.5 h-2.5 object-contain" alt="D" referrerPolicy="no-referrer" /></span>
-                                <span className="text-white font-black text-sm mt-0.5 flex items-center gap-0.5">{listPrices.silver65}<img src={platinumIcon} className="w-3 h-3 object-contain" alt="Pt" /></span>
-                              </div>
-                              <div className="text-xs bg-[#0c0d10] border border-[#d4af37]/45 p-2 rounded-lg flex flex-col items-center justify-center font-mono">
-                                <span className="text-[#d4af37] font-black uppercase text-[10px] tracking-wider flex items-center gap-0.5">100<img src={ducatIcon} className="w-2.5 h-2.5 object-contain" alt="D" referrerPolicy="no-referrer" /></span>
-                                <span className="text-white font-black text-sm mt-0.5 flex items-center gap-0.5">{listPrices.gold}<img src={platinumIcon} className="w-3 h-3 object-contain" alt="Pt" /></span>
-                              </div>
+                          <div className="flex flex-wrap gap-2 pt-1 font-mono">
+                            <div className="text-[10px] bg-[#0c0d10] border border-[#cd7f32]/45 px-2.5 py-1.5 rounded-md flex items-center gap-1.5">
+                              <span className="text-[#cd7f32] font-black flex items-center gap-0.5">15<img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /></span>
+                              <span className="text-zinc-600">|</span>
+                              <span className="text-white font-black flex items-center gap-0.5">{listPrices.bronze15}<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /></span>
                             </div>
-                          ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
-                              <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/45 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                                <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider">Bronze (15<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
-                                <span className="text-white font-black text-sm mt-1">{listPrices.bronze15}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
-                              </div>
-                              <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/60 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                                <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider">Bronze (25<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
-                                <span className="text-white font-black text-sm mt-1">{listPrices.bronze25}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
-                              </div>
-                              <div className="text-xs bg-[#0c0d10] border border-slate-600/70 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                                <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider">Silver (45<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
-                                <span className="text-white font-black text-sm mt-1">{listPrices.silver45}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
-                              </div>
-                              <div className="text-xs bg-[#0c0d10] border border-slate-550/80 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                                <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider">Silver (65<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
-                                <span className="text-white font-black text-sm mt-1">{listPrices.silver65}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
-                              </div>
-                              <div className="text-xs bg-[#0c0d10] border border-[#d4af37]/45 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                                <span className="text-[#d4af37] font-black uppercase text-[10px] tracking-wider">Gold (100<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
-                                <span className="text-white font-black text-sm mt-1">{listPrices.gold}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
-                              </div>
+                            <div className="text-[10px] bg-[#0c0d10] border border-[#cd7f32]/60 px-2.5 py-1.5 rounded-md flex items-center gap-1.5">
+                              <span className="text-[#cd7f32] font-black flex items-center gap-0.5">25<img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /></span>
+                              <span className="text-zinc-600">|</span>
+                              <span className="text-white font-black flex items-center gap-0.5">{listPrices.bronze25}<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /></span>
                             </div>
-                          )}
+                            <div className="text-[10px] bg-[#0c0d10] border border-slate-600/70 px-2.5 py-1.5 rounded-md flex items-center gap-1.5">
+                              <span className="text-zinc-200 font-black flex items-center gap-0.5">45<img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /></span>
+                              <span className="text-zinc-600">|</span>
+                              <span className="text-white font-black flex items-center gap-0.5">{listPrices.silver45}<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /></span>
+                            </div>
+                            <div className="text-[10px] bg-[#0c0d10] border border-slate-550/80 px-2.5 py-1.5 rounded-md flex items-center gap-1.5">
+                              <span className="text-zinc-200 font-black flex items-center gap-0.5">65<img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /></span>
+                              <span className="text-zinc-600">|</span>
+                              <span className="text-white font-black flex items-center gap-0.5">{listPrices.silver65}<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /></span>
+                            </div>
+                            <div className="text-[10px] bg-[#0c0d10] border border-[#d4af37]/45 px-2.5 py-1.5 rounded-md flex items-center gap-1.5">
+                              <span className="text-[#d4af37] font-black flex items-center gap-0.5">100<img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /></span>
+                              <span className="text-zinc-600">|</span>
+                              <span className="text-white font-black flex items-center gap-0.5">{listPrices.gold}<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /></span>
+                            </div>
+                          </div>
 
                           {/* Seller storage stock holds if present */}
                           {listing.counts && (listing.counts.bronze15 > 0 || listing.counts.bronze25 > 0 || listing.counts.silver45 > 0 || listing.counts.silver65 > 0 || listing.counts.gold > 0) && (
@@ -1405,11 +1483,6 @@ export default function MarketTab({
                           <h4 className={`text-[14px] font-extrabold tracking-wide uppercase font-sans ${isWTS ? 'text-[#e06d6d]' : 'text-blue-400'}`}>
                             {listing.itemName} {listing.quantity > 1 ? <span className="text-zinc-500 font-medium">x{listing.quantity}</span> : ''}
                           </h4>
-                          {listing.rank !== undefined && (
-                            <span className="text-[10px] text-zinc-400 font-mono inline-block bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded mt-0.5">
-                              Rank {listing.rank}
-                            </span>
-                          )}
                         </div>
                       )}
 
@@ -1590,14 +1663,49 @@ export default function MarketTab({
 
   };
 
-  const filteredListings = listings.filter(l => {
-    const itemMatch = l.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          l.sellerIGN.toLowerCase().includes(searchQuery.toLowerCase());
-    const typeMatch = typeFilter === 'all' || l.type === typeFilter;
-    const verifiedMatch = !verifiedFilter || l.isSellerVerified;
-    const myMatch = !myListingsFilter || (user && l.sellerUid === user.uid);
-    return itemMatch && typeMatch && verifiedMatch && myMatch;
-  });
+  const applyFiltersAndSort = (list: MarketListing[], filters: FilterState, isMyListingsMode?: boolean) => {
+    let result = list.filter(l => {
+        let itemMatch = true;
+        if (!isMyListingsMode) {
+          itemMatch = l.itemName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      l.sellerIGN.toLowerCase().includes(searchQuery.toLowerCase());
+          if (verifiedFilter && !l.isSellerVerified) return false;
+          if (myListingsFilter && (!user || l.sellerUid !== user.uid)) return false;
+        } else {
+             if (!user || l.sellerUid !== user.uid) return false;
+        }
+
+        const typeMatch = filters.orderType === 'all' || l.type === filters.orderType;
+        
+        let priceMatch = true;
+        if (filters.minPrice !== '') priceMatch = priceMatch && l.price >= parseInt(filters.minPrice);
+        if (filters.maxPrice !== '') priceMatch = priceMatch && l.price <= parseInt(filters.maxPrice);
+
+        let sellingStyleMatch = true;
+        if (filters.sellingType === 'rate-based') sellingStyleMatch = !!l.isRateBased;
+        else if (filters.sellingType === 'prime-junk') sellingStyleMatch = !!l.isPrimeJunk && !l.isRateBased;
+
+        let scaleMatch = true;
+        if (filters.orderScale === 'batch') scaleMatch = !!l.isBatchMode;
+        else if (filters.orderScale === 'bulk') {
+            // For prime junk deals, it must not be batch mode to be considered a bundle block
+            if (l.isPrimeJunk || l.isRateBased) scaleMatch = !l.isBatchMode;
+            else scaleMatch = false; // Regular single items aren't bulk bundles 
+        }
+
+        return itemMatch && typeMatch && priceMatch && sellingStyleMatch && scaleMatch;
+    });
+
+    result.sort((a, b) => {
+        const timeA = typeof a.createdAt?.toMillis === 'function' ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+        const timeB = typeof b.createdAt?.toMillis === 'function' ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+        return timeB - timeA;
+    });
+    
+    return result;
+  };
+
+  const filteredListings = applyFiltersAndSort(listings, browseFilters, false);
 
   const ITEMS_PER_PAGE = 20;
   const totalPages = Math.max(1, Math.ceil(filteredListings.length / ITEMS_PER_PAGE));
@@ -2760,15 +2868,19 @@ export default function MarketTab({
         {/* MY OWN LISTINGS & OPERATIONS FEED (Col span 6 in Manage Tab) */}
         <div className="lg:col-span-6 space-y-4">
           <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-4">
-            <div className="border-b border-[#2a2c33]/40 pb-3 flex items-center justify-between">
+            <div className="border-b border-[#2a2c33]/40 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide font-sans">
                 <Coins className="w-4 h-4 text-[#d4af37]" />
                 My Active Trade Offers
               </h3>
-              <span className="bg-[#0c0d10] text-[#e0e1e6] border border-[#2a2c33]/60 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+              <span className="bg-[#0c0d10] text-[#e0e1e6] border border-[#2a2c33]/60 text-[10px] font-mono font-bold px-2 py-0.5 rounded w-max">
                 {listings.filter(l => user && l.sellerUid === user.uid).length} listed
               </span>
             </div>
+
+            {user && userVerification.status === 'verified' && listings.filter(l => l.sellerUid === user.uid).length > 0 && (
+               <AdvancedFilterBar filters={myFilters} setFilters={setMyFilters} />
+            )}
 
             {!user ? (
               <p className="text-xs text-[#8e9299] text-center py-6 leading-relaxed">
@@ -2788,7 +2900,7 @@ export default function MarketTab({
             ) : (
               <div className="space-y-3 font-mono text-xs">
                 {(() => {
-                  const myListings = listings.filter(l => l.sellerUid === user?.uid);
+                  const myListings = applyFiltersAndSort(listings, myFilters, true);
                   const maxPerPage = 3;
                   const totalMyPages = Math.max(1, Math.ceil(myListings.length / maxPerPage));
                   const currentMyPage = Math.min(myListingsPage, totalMyPages);
@@ -2796,9 +2908,15 @@ export default function MarketTab({
                   const paginatedMyListings = myListings.slice(startIndex, startIndex + maxPerPage);
                   return (
                     <div className="space-y-4">
-                      <div className="space-y-3 font-mono text-xs">
-                        {paginatedMyListings.map(l => renderListing(l, true))}
-                      </div>
+                      {myListings.length === 0 ? (
+                        <div className="py-6 text-center text-zinc-500 font-sans border border-[#2a2c33]/50 rounded border-dashed mt-2">
+                           No filtered results found in your active orders.
+                        </div>
+                      ) : (
+                        <div className="space-y-3 font-mono text-xs mt-2">
+                          {paginatedMyListings.map(l => renderListing(l, true))}
+                        </div>
+                      )}
                       {totalMyPages > 1 && (
                         <div className="flex items-center justify-between border-t border-[#2a2c33]/40 pt-4">
                           <button
@@ -2866,58 +2984,42 @@ export default function MarketTab({
           )}
           
           {/* SEARCH ACTIONS BAR */}
-          <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
-            
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search items or usernames..."
-                value={searchQuery}
-                onInput={(e: React.FormEvent<HTMLInputElement>) => setSearchQuery(e.currentTarget.value)}
-                className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 focus:outline-none rounded-lg pl-9 pr-4 py-2.5 text-xs text-white font-mono"
-              />
-            </div>
-
-            {/* Filter buttons */}
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <div className="flex bg-[#0c0d10] border border-[#2a2c33] rounded-lg p-0.5 text-[10px] font-bold uppercase transition">
-                <button
-                  type="button"
-                  onClick={() => setTypeFilter('all')}
-                  className={`px-3 py-1.5 rounded-md transition ${typeFilter === 'all' ? 'bg-[#2a2c33] text-white' : 'text-zinc-400 hover:text-white'}`}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTypeFilter('WTS')}
-                  className={`px-3 py-1.5 rounded-md transition ${typeFilter === 'WTS' ? 'bg-red-950/50 text-red-400' : 'text-zinc-400 hover:text-white'}`}
-                >
-                  Sells
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTypeFilter('WTB')}
-                  className={`px-3 py-1.5 rounded-md transition ${typeFilter === 'WTB' ? 'bg-blue-950/50 text-blue-400' : 'text-zinc-400 hover:text-white'}`}
-                >
-                  Buys
-                </button>
+          <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-4 flex flex-col gap-3">
+            <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between">
+              {/* Search Input */}
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search items or usernames..."
+                  value={searchQuery}
+                  onInput={(e: React.FormEvent<HTMLInputElement>) => setSearchQuery(e.currentTarget.value)}
+                  className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 focus:outline-none rounded-lg pl-9 pr-4 py-2.5 text-xs text-white font-mono"
+                />
               </div>
 
-              {/* Verified Badge Checkbox */}
-              {/* My Listings Checkbox */}
-              {user && (
+              {/* Filter buttons */}
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {user && (
+                  <button
+                    type="button"
+                    onClick={() => setMyListingsFilter(!myListingsFilter)}
+                    className={`px-3 py-2 rounded-lg border text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 transition select-none ${myListingsFilter ? 'bg-[#d4af37]/10 border-[#d4af37]/50 text-[#d4af37]' : 'bg-[#0c0d10] border-[#2a2c33] text-zinc-400 hover:text-white'}`}
+                  >
+                    My Listings
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => setMyListingsFilter(!myListingsFilter)}
-                  className={`px-3 py-2 rounded-lg border text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 transition select-none ${myListingsFilter ? 'bg-[#d4af37]/10 border-[#d4af37]/50 text-[#d4af37]' : 'bg-[#0c0d10] border-[#2a2c33] text-zinc-400 hover:text-white'}`}
+                  onClick={() => setVerifiedFilter(!verifiedFilter)}
+                  className={`px-3 py-2 rounded-lg border text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 transition select-none ${verifiedFilter ? 'bg-emerald-900/40 border-emerald-500/50 text-emerald-400' : 'bg-[#0c0d10] border-[#2a2c33] text-zinc-400 hover:text-white'}`}
                 >
-                  My Listings
+                  Verified Only
                 </button>
-              )}
+              </div>
             </div>
+            
+            <AdvancedFilterBar filters={browseFilters} setFilters={setBrowseFilters} />
           </div>
 
           {/* LISTINGS FEED CARDS CONTAINER */}
