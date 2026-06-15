@@ -40,7 +40,8 @@ import {
   Bookmark,
   Clock,
   ArrowLeft,
-  Info
+  Info,
+  ClipboardPaste
 } from 'lucide-react';
 import { PRIME_ITEMS } from '../data/primeData';
 import { InventoryCount } from '../types';
@@ -249,10 +250,11 @@ export default function MarketTab({
   const [claimedInput, setClaimedInput] = useState('');
   const [profileSlugInput, setProfileSlugInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState<'all' | 'WTS' | 'WTB'>('all');
   const [verifiedFilter, setVerifiedFilter] = useState<boolean>(false);
   const [copiedToken, setCopiedToken] = useState(false);
-  const [copiedCommandId, setCopiedCommandId] = useState<string | null>(null);
+  const [copiedCommandIds, setCopiedCommandIds] = useState<Record<string, boolean>>({});
 
   // Saved presets & bulk custom junk states
   const [savedTrades, setSavedTrades] = useState<any[]>([]);
@@ -979,11 +981,11 @@ export default function MarketTab({
                   gd * (bulkRarityPrices.gold || 8);
 
     const breakdownItems = [];
-    if (b15 > 0) breakdownItems.push(`${b15}x Bronze (15d)`);
-    if (b25 > 0) breakdownItems.push(`${b25}x Bronze (25d)`);
-    if (s45 > 0) breakdownItems.push(`${s45}x Silver (45d)`);
-    if (s65 > 0) breakdownItems.push(`${s65}x Silver (65d)`);
-    if (gd > 0) breakdownItems.push(`${gd}x Gold (100d)`);
+    if (b15 > 0) breakdownItems.push(`${b15}x Bronze (15<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)`);
+    if (b25 > 0) breakdownItems.push(`${b25}x Bronze (25<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)`);
+    if (s45 > 0) breakdownItems.push(`${s45}x Silver (45<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)`);
+    if (s65 > 0) breakdownItems.push(`${s65}x Silver (65<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)`);
+    if (gd > 0) breakdownItems.push(`${gd}x Gold (100<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)`);
 
     setSimResult({
       b15, b25, s45, s65, gd,
@@ -1028,12 +1030,15 @@ export default function MarketTab({
       setCopiedToken(true);
       setTimeout(() => setCopiedToken(false), 2000);
     } else if (commandId) {
-      setCopiedCommandId(commandId);
-      setTimeout(() => setCopiedCommandId(null), 2000);
+      setCopiedCommandIds(prev => ({ ...prev, [commandId]: true }));
     }
   };
 
   // Perform client filters on listing sets
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, typeFilter, verifiedFilter]);
+
   const filteredListings = listings.filter(l => {
     const itemMatch = l.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
           l.sellerIGN.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1041,6 +1046,10 @@ export default function MarketTab({
     const verifiedMatch = !verifiedFilter || l.isSellerVerified;
     return itemMatch && typeMatch && verifiedMatch;
   });
+
+  const ITEMS_PER_PAGE = 20;
+  const totalPages = Math.max(1, Math.ceil(filteredListings.length / ITEMS_PER_PAGE));
+  const paginatedListings = filteredListings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-6">
@@ -1147,13 +1156,13 @@ export default function MarketTab({
                 <>
                   {/* Prime Junk Count resets */}
                   <div className="flex items-center justify-between pb-1">
-                    <span className="block text-[10px] font-extrabold uppercase text-zinc-400 tracking-wider">
+                    <span className="block text-xs font-extrabold uppercase text-zinc-400 tracking-wider">
                       Selected Junk Counts:
                     </span>
                     <button
                       type="button"
                       onClick={() => setBulkCounts({ bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })}
-                      className="text-[10px] font-bold text-red-400/90 hover:text-red-300 transition-all uppercase bg-red-950/20 px-2.5 py-1 rounded border border-red-900/30 cursor-pointer active:scale-95 flex items-center gap-1 hover:bg-red-950/40"
+                      className="text-xs font-bold text-red-400/90 hover:text-red-300 transition-all uppercase bg-red-950/20 px-2.5 py-1 rounded border border-red-900/30 cursor-pointer active:scale-95 flex items-center gap-1 hover:bg-red-950/40"
                     >
                       <span>Reset all counts</span>
                     </button>
@@ -1163,14 +1172,14 @@ export default function MarketTab({
                     {/* Bronze 15 */}
                     <div className="bg-[#0c0d10] p-3 border border-[#cd7f32]/20 rounded-lg flex items-center justify-between gap-2">
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (15 Ducats)</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">15d parts count</span>
+                        <span className="block text-xs font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (15 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                        <span className="text-xs text-zinc-500 font-mono">15 <img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> parts count</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setBulkCounts(prev => ({ ...prev, bronze15: Math.max(0, prev.bronze15 - 1) }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
                           -
                         </button>
@@ -1182,12 +1191,12 @@ export default function MarketTab({
                             const val = parseInt(e.target.value) || 0;
                             setBulkCounts(prev => ({ ...prev, bronze15: val >= 0 ? val : 0 }));
                           }}
-                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                          className="w-16 text-center bg-[#14161c] border border-zinc-700 text-sm text-white font-mono h-8 focus:outline-none focus:border-[#d4af37]"
                         />
                         <button
                           type="button"
                           onClick={() => setBulkCounts(prev => ({ ...prev, bronze15: prev.bronze15 + 1 }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
                           +
                         </button>
@@ -1197,14 +1206,14 @@ export default function MarketTab({
                     {/* Bronze 25 */}
                     <div className="bg-[#0c0d10] p-3 border border-[#cd7f32]/45 rounded-lg flex items-center justify-between gap-2">
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (25 Ducats)</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">25d parts count</span>
+                        <span className="block text-xs font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (25 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                        <span className="text-xs text-zinc-500 font-mono">25 <img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> parts count</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setBulkCounts(prev => ({ ...prev, bronze25: Math.max(0, prev.bronze25 - 1) }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
                           -
                         </button>
@@ -1216,12 +1225,12 @@ export default function MarketTab({
                             const val = parseInt(e.target.value) || 0;
                             setBulkCounts(prev => ({ ...prev, bronze25: val >= 0 ? val : 0 }));
                           }}
-                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                          className="w-16 text-center bg-[#14161c] border border-zinc-700 text-sm text-white font-mono h-8 focus:outline-none focus:border-[#d4af37]"
                         />
                         <button
                           type="button"
                           onClick={() => setBulkCounts(prev => ({ ...prev, bronze25: prev.bronze25 + 1 }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
                           +
                         </button>
@@ -1231,14 +1240,14 @@ export default function MarketTab({
                     {/* Silver 45 */}
                     <div className="bg-[#0c0d10] p-3 border border-[#c0c0c0]/25 rounded-lg flex items-center justify-between gap-2">
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-slate-300 tracking-wider">Silver (45 Ducats)</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">45d parts count</span>
+                        <span className="block text-xs font-extrabold uppercase text-slate-300 tracking-wider">Silver (45 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                        <span className="text-xs text-zinc-500 font-mono">45 <img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> parts count</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setBulkCounts(prev => ({ ...prev, silver45: Math.max(0, prev.silver45 - 1) }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
                           -
                         </button>
@@ -1250,12 +1259,12 @@ export default function MarketTab({
                             const val = parseInt(e.target.value) || 0;
                             setBulkCounts(prev => ({ ...prev, silver45: val >= 0 ? val : 0 }));
                           }}
-                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                          className="w-16 text-center bg-[#14161c] border border-zinc-700 text-sm text-white font-mono h-8 focus:outline-none focus:border-[#d4af37]"
                         />
                         <button
                           type="button"
                           onClick={() => setBulkCounts(prev => ({ ...prev, silver45: prev.silver45 + 1 }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
                           +
                         </button>
@@ -1265,14 +1274,14 @@ export default function MarketTab({
                     {/* Silver 65 */}
                     <div className="bg-[#0c0d10] p-3 border border-[#c0c0c0]/45 rounded-lg flex items-center justify-between gap-2">
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-slate-300 tracking-wider">Silver (65 Ducats)</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">65d parts count</span>
+                        <span className="block text-xs font-extrabold uppercase text-slate-300 tracking-wider">Silver (65 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                        <span className="text-xs text-zinc-500 font-mono">65 <img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> parts count</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setBulkCounts(prev => ({ ...prev, silver65: Math.max(0, prev.silver65 - 1) }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
                           -
                         </button>
@@ -1284,12 +1293,12 @@ export default function MarketTab({
                             const val = parseInt(e.target.value) || 0;
                             setBulkCounts(prev => ({ ...prev, silver65: val >= 0 ? val : 0 }));
                           }}
-                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                          className="w-16 text-center bg-[#14161c] border border-zinc-700 text-sm text-white font-mono h-8 focus:outline-none focus:border-[#d4af37]"
                         />
                         <button
                           type="button"
                           onClick={() => setBulkCounts(prev => ({ ...prev, silver65: prev.silver65 + 1 }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
                           +
                         </button>
@@ -1299,14 +1308,14 @@ export default function MarketTab({
                     {/* Gold 100 */}
                     <div className="bg-[#0c0d10] p-3 border border-[#d4af37]/30 rounded-lg flex items-center justify-between gap-2 sm:col-span-2">
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-[#d4af37] tracking-wider">Gold (100 Ducats)</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">100d parts count</span>
+                        <span className="block text-xs font-extrabold uppercase text-[#d4af37] tracking-wider">Gold (100 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                        <span className="text-xs text-zinc-500 font-mono">100 <img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> parts count</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setBulkCounts(prev => ({ ...prev, gold: Math.max(0, prev.gold - 1) }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
                           -
                         </button>
@@ -1323,7 +1332,7 @@ export default function MarketTab({
                         <button
                           type="button"
                           onClick={() => setBulkCounts(prev => ({ ...prev, gold: prev.gold + 1 }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
                           +
                         </button>
@@ -1359,22 +1368,22 @@ export default function MarketTab({
                         <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Dynamic Bundle Appraisal</h4>
                         <div className="grid grid-cols-2 gap-3.5 pt-1">
                           <div className="space-y-0.5">
-                            <span className="text-[10px] text-[#8e9299] uppercase">Total Parts Selected</span>
-                            <div className="text-white text-base font-mono font-extrabold">{totalParts} <span className="text-[10px] text-zinc-500 font-normal font-sans">pieces</span></div>
+                            <span className="text-xs text-[#8e9299] uppercase">Total Parts Selected</span>
+                            <div className="text-white text-base font-mono font-extrabold">{totalParts} <span className="text-xs text-zinc-500 font-normal font-sans">pieces</span></div>
                           </div>
                           <div className="space-y-0.5">
-                            <span className="text-[10px] text-[#8e9299] uppercase">Total Ducat Pool</span>
+                            <span className="text-xs text-[#8e9299] uppercase">Total Ducat Pool</span>
                             <div className="text-[#d4af37] text-base font-mono font-extrabold flex items-center gap-0.5">
                               <span>{totalDucats}</span>
                               <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline" alt="D" referrerPolicy="no-referrer" />
                             </div>
                           </div>
                           <div className="space-y-0.5">
-                            <span className="text-[10px] text-[#8e9299] uppercase">Trades Needed</span>
-                            <div className="text-pink-400 text-base font-mono font-extrabold">{tradesRequired} <span className="text-[10px] text-zinc-500 font-normal font-sans">trades (max 6/trade)</span></div>
+                            <span className="text-xs text-[#8e9299] uppercase">Trades Needed</span>
+                            <div className="text-pink-400 text-base font-mono font-extrabold">{tradesRequired} <span className="text-xs text-zinc-500 font-normal font-sans">trades (max 6/trade)</span></div>
                           </div>
                           <div className="space-y-0.5">
-                            <span className="text-[10px] text-[#d4af37] uppercase">Summed Total Bundle Price</span>
+                            <span className="text-xs text-[#d4af37] uppercase">Summed Total Bundle Price</span>
                             <div className="text-emerald-400 text-base font-mono font-extrabold flex items-center gap-0.5">
                               <span>{sumPricePlat}</span>
                               <img src={platinumIcon} className="w-4 h-4 object-contain inline" alt="Pt" referrerPolicy="no-referrer" />
@@ -1382,26 +1391,26 @@ export default function MarketTab({
                           </div>
                         </div>
 
-                        <div className="text-[10px] text-[#8e9299] leading-normal p-2.5 bg-zinc-950/40 border border-zinc-900 rounded-md">
-                          Formula: <strong className="text-zinc-300 font-mono">({bulkCounts.bronze15 || 0}x{bulkRarityPrices.bronze15}p + {bulkCounts.bronze25 || 0}x{bulkRarityPrices.bronze25}p + {bulkCounts.silver45 || 0}x{bulkRarityPrices.silver45}p + {bulkCounts.silver65 || 0}x{bulkRarityPrices.silver65}p + {bulkCounts.gold || 0}x{bulkRarityPrices.gold}p) = {sumPricePlat}p</strong>
+                        <div className="text-xs text-[#8e9299] leading-normal p-2.5 bg-zinc-950/40 border border-zinc-900 rounded-md">
+                          Formula: <strong className="text-zinc-300 font-mono">({bulkCounts.bronze15 || 0}x{bulkRarityPrices.bronze15}<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /> + {bulkCounts.bronze25 || 0}x{bulkRarityPrices.bronze25}<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /> + {bulkCounts.silver45 || 0}x{bulkRarityPrices.silver45}<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /> + {bulkCounts.silver65 || 0}x{bulkRarityPrices.silver65}<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /> + {bulkCounts.gold || 0}x{bulkRarityPrices.gold}<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" />) = {sumPricePlat}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /></strong>
                         </div>
 
                         {/* Integrated ANOVA modal triggers */}
                         <div className="bg-[#14161c]/50 p-3 rounded-lg border border-[#2a2c33] text-xs text-zinc-400 space-y-2">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-[#d4af37] font-semibold text-[10px] uppercase tracking-wider">
+                            <div className="flex items-center gap-1.5 text-[#d4af37] font-semibold text-xs uppercase tracking-wider">
                               <TrendingUp className="w-3.5 h-3.5" />
                               <span>ANOVA STRATEGIC PRICING</span>
                             </div>
                             <button
                               type="button"
                               onClick={() => setIsBulkAnovaOpen(true)}
-                              className="text-[9px] text-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37]/20 px-2.5 py-1 rounded border border-[#d4af37]/25 font-bold uppercase tracking-wider cursor-pointer flex items-center gap-1"
+                              className="text-xs text-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37]/20 px-2.5 py-1 rounded border border-[#d4af37]/25 font-bold uppercase tracking-wider cursor-pointer flex items-center gap-1"
                             >
                               Launch Pricing Wizard
                             </button>
                           </div>
-                          <p className="text-[9px] text-zinc-500 leading-normal">
+                          <p className="text-xs text-zinc-500 leading-normal">
                             Not sure how to price your items? Click to run automated ANOVA regression models on active trade sets and apply high-performing strategy patterns instantly.
                           </p>
                         </div>
@@ -1414,32 +1423,32 @@ export default function MarketTab({
                 <div className="space-y-4 animate-fadeIn">
                   {/* Summary/Explanation header */}
                   <div className="space-y-2 bg-slate-950/20 border border-slate-900/60 rounded-xl p-3 text-xs text-[#c4c5cc] leading-relaxed">
-                    <div className="font-bold text-[#d4af37] uppercase flex items-center gap-1.5 tracking-wider text-[10px]">
+                    <div className="font-bold text-[#d4af37] uppercase flex items-center gap-1.5 tracking-wider text-xs">
                       <Info className="w-3.5 h-3.5 text-[#d4af37]" />
                       <span>Rate-Based Listings</span>
                     </div>
-                    <p className="text-[11px] text-zinc-400">
+                    <p className="text-xs text-zinc-400">
                       Specify constant plat exchange rates for each item rarity. Buyers can trade any items they have based on your rates, completely eliminating the need for manual warehouse inventory tracking.
                     </p>
                   </div>
 
                   {/* Rate-Based Exchange resets */}
                   <div className="flex items-center justify-between pt-1">
-                    <span className="block text-[10px] font-extrabold uppercase text-zinc-400 tracking-wider">
-                      Exchange Rates (Plat value):
+                    <span className="block text-xs font-extrabold uppercase text-zinc-400 tracking-wider">
+                      Exchange Rates (<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />):
                     </span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setBulkRarityPrices({ bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })}
-                        className="text-[9px] font-bold text-red-400/90 hover:text-red-300 transition-all uppercase bg-red-950/20 px-2.5 py-1 rounded border border-red-900/30 cursor-pointer active:scale-95"
+                        className="text-xs font-bold text-red-400/90 hover:text-red-300 transition-all uppercase bg-red-950/20 px-2.5 py-1 rounded border border-red-900/30 cursor-pointer active:scale-95"
                       >
-                        Clear to 0p
+                        Clear to 0 <img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />
                       </button>
                       <button
                         type="button"
                         onClick={() => setBulkRarityPrices({ bronze15: 1, bronze25: 2, silver45: 3, silver65: 5, gold: 8 })}
-                        className="text-[9px] font-bold text-[#d4af37] hover:text-[#f3d078] transition-all uppercase bg-[#d4af37]/10 px-2.5 py-1 rounded border border-[#d4af37]/25 cursor-pointer active:scale-95 font-extrabold"
+                        className="text-xs font-bold text-[#d4af37] hover:text-[#f3d078] transition-all uppercase bg-[#d4af37]/10 px-2.5 py-1 rounded border border-[#d4af37]/25 cursor-pointer active:scale-95"
                       >
                         Reset to Defaults
                       </button>
@@ -1450,14 +1459,14 @@ export default function MarketTab({
                     {/* Bronze 15 */}
                     <div className="bg-[#0c0d10] p-3 border border-[#cd7f32]/20 rounded-lg flex items-center justify-between gap-2">
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (15 Ducats) Rate</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">15d part exchange rate (Plat value)</span>
+                        <span className="block text-xs font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (15 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />) Rate</span>
+                        <span className="text-xs text-zinc-500 font-mono">15 <img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> part exchange rate (<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" />)</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setBulkRarityPrices(prev => ({ ...prev, bronze15: Math.max(0, (prev.bronze15 || 0) - 1) }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
                         >
                           -
                         </button>
@@ -1469,12 +1478,12 @@ export default function MarketTab({
                             const val = parseInt(e.target.value) || 0;
                             setBulkRarityPrices(prev => ({ ...prev, bronze15: val >= 0 ? val : 0 }));
                           }}
-                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                          className="w-16 text-center bg-[#14161c] border border-zinc-700 text-sm text-white font-mono h-8 focus:outline-none focus:border-[#d4af37]"
                         />
                         <button
                           type="button"
                           onClick={() => setBulkRarityPrices(prev => ({ ...prev, bronze15: (prev.bronze15 || 0) + 1 }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
                         >
                           +
                         </button>
@@ -1484,14 +1493,14 @@ export default function MarketTab({
                     {/* Bronze 25 */}
                     <div className="bg-[#0c0d10] p-3 border border-[#cd7f32]/45 rounded-lg flex items-center justify-between gap-2">
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (25 Ducats) Rate</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">25d part exchange rate (Plat value)</span>
+                        <span className="block text-xs font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (25 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />) Rate</span>
+                        <span className="text-xs text-zinc-500 font-mono">25 <img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> part exchange rate (<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /> value)</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setBulkRarityPrices(prev => ({ ...prev, bronze25: Math.max(0, (prev.bronze25 || 0) - 1) }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
                         >
                           -
                         </button>
@@ -1503,12 +1512,12 @@ export default function MarketTab({
                             const val = parseInt(e.target.value) || 0;
                             setBulkRarityPrices(prev => ({ ...prev, bronze25: val >= 0 ? val : 0 }));
                           }}
-                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                          className="w-16 text-center bg-[#14161c] border border-zinc-700 text-sm text-white font-mono h-8 focus:outline-none focus:border-[#d4af37]"
                         />
                         <button
                           type="button"
                           onClick={() => setBulkRarityPrices(prev => ({ ...prev, bronze25: (prev.bronze25 || 0) + 1 }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
                         >
                           +
                         </button>
@@ -1518,14 +1527,14 @@ export default function MarketTab({
                     {/* Silver 45 */}
                     <div className="bg-[#0c0d10] p-3 border border-[#c0c0c0]/25 rounded-lg flex items-center justify-between gap-2">
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-slate-300 tracking-wider">Silver (45 Ducats) Rate</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">45d part exchange rate (Plat value)</span>
+                        <span className="block text-xs font-extrabold uppercase text-slate-300 tracking-wider">Silver (45 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />) Rate</span>
+                        <span className="text-xs text-zinc-500 font-mono">45 <img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> part exchange rate (<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /> value)</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setBulkRarityPrices(prev => ({ ...prev, silver45: Math.max(0, (prev.silver45 || 0) - 1) }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
                         >
                           -
                         </button>
@@ -1537,12 +1546,12 @@ export default function MarketTab({
                             const val = parseInt(e.target.value) || 0;
                             setBulkRarityPrices(prev => ({ ...prev, silver45: val >= 0 ? val : 0 }));
                           }}
-                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                          className="w-16 text-center bg-[#14161c] border border-zinc-700 text-sm text-white font-mono h-8 focus:outline-none focus:border-[#d4af37]"
                         />
                         <button
                           type="button"
                           onClick={() => setBulkRarityPrices(prev => ({ ...prev, silver45: (prev.silver45 || 0) + 1 }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
                         >
                           +
                         </button>
@@ -1552,14 +1561,14 @@ export default function MarketTab({
                     {/* Silver 65 */}
                     <div className="bg-[#0c0d10] p-3 border border-[#c0c0c0]/45 rounded-lg flex items-center justify-between gap-2">
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-slate-300 tracking-wider">Silver (65 Ducats) Rate</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">65d part exchange rate (Plat value)</span>
+                        <span className="block text-xs font-extrabold uppercase text-slate-300 tracking-wider">Silver (65 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />) Rate</span>
+                        <span className="text-xs text-zinc-500 font-mono">65 <img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> part exchange rate (<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /> value)</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setBulkRarityPrices(prev => ({ ...prev, silver65: Math.max(0, (prev.silver65 || 0) - 1) }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
                         >
                           -
                         </button>
@@ -1571,12 +1580,12 @@ export default function MarketTab({
                             const val = parseInt(e.target.value) || 0;
                             setBulkRarityPrices(prev => ({ ...prev, silver65: val >= 0 ? val : 0 }));
                           }}
-                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                          className="w-16 text-center bg-[#14161c] border border-zinc-700 text-sm text-white font-mono h-8 focus:outline-none focus:border-[#d4af37]"
                         />
                         <button
                           type="button"
                           onClick={() => setBulkRarityPrices(prev => ({ ...prev, silver65: (prev.silver65 || 0) + 1 }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
                         >
                           +
                         </button>
@@ -1586,14 +1595,14 @@ export default function MarketTab({
                     {/* Gold 100 */}
                     <div className="bg-[#0c0d10] p-3 border border-[#d4af37]/30 rounded-lg flex items-center justify-between gap-2 sm:col-span-2">
                       <div>
-                        <span className="block text-[10px] font-extrabold uppercase text-[#d4af37] tracking-wider">Gold (100 Ducats) Rate</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">100d part exchange rate (Plat value)</span>
+                        <span className="block text-xs font-extrabold uppercase text-[#d4af37] tracking-wider">Gold (100 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />) Rate</span>
+                        <span className="text-xs text-zinc-500 font-mono">100 <img src={ducatIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> part exchange rate (<img src={platinumIcon} className="w-3 h-3 object-contain inline -mt-0.5" alt="Pt" /> value)</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => setBulkRarityPrices(prev => ({ ...prev, gold: Math.max(0, (prev.gold || 0) - 1) }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
                         >
                           -
                         </button>
@@ -1610,7 +1619,7 @@ export default function MarketTab({
                         <button
                           type="button"
                           onClick={() => setBulkRarityPrices(prev => ({ ...prev, gold: (prev.gold || 0) + 1 }))}
-                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
+                          className="w-8 h-8 text-base bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all cursor-pointer"
                         >
                           +
                         </button>
@@ -1623,8 +1632,8 @@ export default function MarketTab({
               {/* Manual Price Tuning */}
               {publishMode === 'count' && (
                 <div className="space-y-2 pt-3 border-t border-[#2a2c33]/30 border-dashed animate-fadeIn">
-                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
-                    Fine-Tune Part Prices (Plat):
+                  <span className="block text-xs uppercase font-bold text-zinc-400 tracking-wider">
+                    Fine-Tune Part Prices (<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />):
                   </span>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                     {/* B15 (Bronze) */}
@@ -1772,7 +1781,7 @@ export default function MarketTab({
 
               {/* Custom note */}
               <div className="space-y-1.5">
-                <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+                <label className="block text-xs font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
                   <span>Special Notes / Demands</span>
                   <span className="text-zinc-600 font-normal">Optional</span>
                 </label>
@@ -1846,20 +1855,20 @@ export default function MarketTab({
             </div>
             
             {savedEntries.filter((e: any) => e.source === 'trades').length === 0 ? (
-              <p className="text-xs text-zinc-500 text-center py-4">No saved trades available.</p>
+              <p className="text-sm text-zinc-500 text-center py-4">No saved trades available.</p>
             ) : (
               <div className="grid grid-cols-1 gap-3 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
                 {savedEntries.filter((e: any) => e.source === 'trades').map((trade: any) => (
                   <div key={trade.id} className="bg-[#0c0d10] border border-emerald-900/30 rounded-lg p-3 flex flex-col justify-between gap-3 group relative overflow-hidden">
                     <div>
-                      <h4 className="text-xs font-bold text-[#e0e1e6] truncate pr-8" title={trade.name}>{trade.name}</h4>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">{trade.timestamp}</p>
+                      <h4 className="text-sm font-bold text-[#e0e1e6] truncate pr-8" title={trade.name}>{trade.name}</h4>
+                      <p className="text-xs text-zinc-500 mt-1">{trade.timestamp}</p>
                       <div className="flex flex-wrap gap-1 mt-2">
-                        <span className="text-[10px] bg-zinc-800/50 px-1.5 py-0.5 rounded text-zinc-400 font-mono">B15: {trade.counts.bronze15}</span>
-                        <span className="text-[10px] bg-zinc-800/50 px-1.5 py-0.5 rounded text-zinc-400 font-mono">B25: {trade.counts.bronze25}</span>
-                        <span className="text-[10px] bg-zinc-800/50 px-1.5 py-0.5 rounded text-zinc-300 font-mono">S45: {trade.counts.silver45}</span>
-                        <span className="text-[10px] bg-zinc-800/50 px-1.5 py-0.5 rounded text-zinc-300 font-mono">S65: {trade.counts.silver65}</span>
-                        <span className="text-[10px] bg-emerald-950/40 border border-emerald-900/30 px-1.5 py-0.5 rounded text-emerald-400 font-mono font-bold">G: {trade.counts.gold}</span>
+                        <span className="text-xs bg-[#0c0d10] border border-[#cd7f32]/40 px-1.5 py-0.5 rounded text-[#cd7f32] font-mono flex items-center gap-0.5">15 <img src={ducatIcon} className="w-2.5 h-2.5 object-contain inline" alt="D" /> : <span className="text-white font-bold">{trade.counts.bronze15}</span></span>
+                        <span className="text-xs bg-[#0c0d10] border border-[#cd7f32]/50 px-1.5 py-0.5 rounded text-[#cd7f32] font-mono flex items-center gap-0.5">25 <img src={ducatIcon} className="w-2.5 h-2.5 object-contain inline" alt="D" /> : <span className="text-white font-bold">{trade.counts.bronze25}</span></span>
+                        <span className="text-xs bg-[#0c0d10] border border-slate-600/70 px-1.5 py-0.5 rounded text-slate-300 font-mono flex items-center gap-0.5">45 <img src={ducatIcon} className="w-2.5 h-2.5 object-contain inline" alt="D" /> : <span className="text-white font-bold">{trade.counts.silver45}</span></span>
+                        <span className="text-xs bg-[#0c0d10] border border-slate-550/80 px-1.5 py-0.5 rounded text-slate-300 font-mono flex items-center gap-0.5">65 <img src={ducatIcon} className="w-2.5 h-2.5 object-contain inline" alt="D" /> : <span className="text-white font-bold">{trade.counts.silver65}</span></span>
+                        <span className="text-xs bg-[#0c0d10] border border-[#d4af37]/45 px-1.5 py-0.5 rounded text-[#d4af37] font-mono flex items-center gap-0.5 font-bold">100 <img src={ducatIcon} className="w-2.5 h-2.5 object-contain inline" alt="D" /> : <span className="text-white font-bold">{trade.counts.gold}</span></span>
                       </div>
                     </div>
                     <button
@@ -1869,7 +1878,7 @@ export default function MarketTab({
                         setSuccessMsg(`Loaded ${trade.name} into Prime Junk Publisher!`);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className="w-full py-1.5 mt-1 bg-emerald-900/20 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/50 rounded text-[10px] font-bold uppercase transition-colors cursor-pointer"
+                      className="w-full py-2 mt-2 bg-emerald-900/20 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/50 rounded text-xs font-bold uppercase transition-colors cursor-pointer"
                     >
                       Load into Publisher
                     </button>
@@ -2221,7 +2230,7 @@ export default function MarketTab({
 
                       <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-center border-t sm:border-t-0 border-[#2a2c33]/45 pt-2 sm:pt-0 shrink-0 gap-2 font-sans font-mono whitespace-nowrap">
                         <div className="text-right">
-                          <span className="text-xs font-semibold text-[#f1f2f6]">{listing.price} <span className="text-[10px] text-[#d4af37] font-semibold uppercase">p</span></span>
+                          <span className="text-xs font-semibold text-[#f1f2f6]">{listing.price} <img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /></span>
                         </div>
 
                         <div className="flex items-center gap-1.5">
@@ -2359,7 +2368,7 @@ export default function MarketTab({
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredListings.map((listing) => {
+              {paginatedListings.map((listing) => {
                 const isPrimeJunk = !!listing.isPrimeJunk;
                 const isWTS = listing.type === 'WTS';
                 const isOwner = user && listing.sellerUid === user.uid;
@@ -2385,8 +2394,8 @@ export default function MarketTab({
                     : `/w ${listing.sellerIGN} Hi! I want to sell you a Bulk Prime Junk Bundle ${formattedParts}${tradeInfo}`;
                 } else {
                   tradeText = isWTS 
-                    ? `/w ${listing.sellerIGN} Hi! I want to buy ${listing.itemName} for ${listing.price}p [DucaPlat]`
-                    : `/w ${listing.sellerIGN} Hi! I want to sell ${listing.itemName} for ${listing.price}p [DucaPlat]`;
+                    ? `/w ${listing.sellerIGN} Hi! I want to buy ${listing.itemName} for ${listing.price}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> [DucaPlat]`
+                    : `/w ${listing.sellerIGN} Hi! I want to sell ${listing.itemName} for ${listing.price}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> [DucaPlat]`;
                 }
 
                 return (
@@ -2456,24 +2465,24 @@ export default function MarketTab({
                           {/* Rate distribution chips */}
                           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
                             <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/45 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                              <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider">Bronze (15d)</span>
-                              <span className="text-white font-black text-sm mt-1">{listPrices.bronze15}p <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
+                              <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider">Bronze (15<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                              <span className="text-white font-black text-sm mt-1">{listPrices.bronze15}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
                             </div>
                             <div className="text-xs bg-[#0c0d10] border border-[#cd7f32]/60 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                              <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider">Bronze (25d)</span>
-                              <span className="text-white font-black text-sm mt-1">{listPrices.bronze25}p <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
+                              <span className="text-[#cd7f32] font-black uppercase text-[10px] tracking-wider">Bronze (25<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                              <span className="text-white font-black text-sm mt-1">{listPrices.bronze25}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
                             </div>
                             <div className="text-xs bg-[#0c0d10] border border-slate-600/70 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                              <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider">Silver (45d)</span>
-                              <span className="text-white font-black text-sm mt-1">{listPrices.silver45}p <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
+                              <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider">Silver (45<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                              <span className="text-white font-black text-sm mt-1">{listPrices.silver45}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
                             </div>
                             <div className="text-xs bg-[#0c0d10] border border-slate-550/80 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                              <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider">Silver (65d)</span>
-                              <span className="text-white font-black text-sm mt-1">{listPrices.silver65}p <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
+                              <span className="text-zinc-200 font-black uppercase text-[10px] tracking-wider">Silver (65<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                              <span className="text-white font-black text-sm mt-1">{listPrices.silver65}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
                             </div>
                             <div className="text-xs bg-[#0c0d10] border border-[#d4af37]/45 p-2.5 rounded-lg flex flex-col justify-between font-mono">
-                              <span className="text-[#d4af37] font-black uppercase text-[10px] tracking-wider">Gold (100d)</span>
-                              <span className="text-white font-black text-sm mt-1">{listPrices.gold}p <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
+                              <span className="text-[#d4af37] font-black uppercase text-[10px] tracking-wider">Gold (100<img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" />)</span>
+                              <span className="text-white font-black text-sm mt-1">{listPrices.gold}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" /> <span className="text-[10px] text-zinc-400 font-bold">each</span></span>
                             </div>
                           </div>
 
@@ -2484,36 +2493,33 @@ export default function MarketTab({
                               <div className="flex flex-wrap gap-2 pt-0.5">
                                 {listing.counts.bronze15 > 0 && (
                                   <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/40 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
-                                    Bronze 15d Hold: <span className="text-white font-extrabold text-sm">{listing.counts.bronze15}</span>
+                                    15 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.bronze15}</span>
                                   </span>
                                 )}
                                 {listing.counts.bronze25 > 0 && (
                                   <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/50 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
-                                    Bronze 25d Hold: <span className="text-white font-extrabold text-sm">{listing.counts.bronze25}</span>
+                                    25 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.bronze25}</span>
                                   </span>
                                 )}
                                 {listing.counts.silver45 > 0 && (
                                   <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-600/70 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
-                                    Silver 45d Hold: <span className="text-white font-extrabold text-sm">{listing.counts.silver45}</span>
+                                    45 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.silver45}</span>
                                   </span>
                                 )}
                                 {listing.counts.silver65 > 0 && (
                                   <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-550/80 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
-                                    Silver 65d Hold: <span className="text-white font-extrabold text-sm">{listing.counts.silver65}</span>
+                                    65 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.silver65}</span>
                                   </span>
                                 )}
                                 {listing.counts.gold > 0 && (
                                   <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#d4af37]/45 text-[#d4af37] rounded-md flex items-center gap-1.5 font-bold">
-                                    Gold 100d Hold: <span className="text-white font-extrabold text-sm">{listing.counts.gold}</span>
+                                    100 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> Hold: <span className="text-white font-extrabold text-sm">{listing.counts.gold}</span>
                                   </span>
                                 )}
                               </div>
                               <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-zinc-300 font-mono items-center mt-2">
                                 <span>Total Stock Parts: <span className="text-white font-black text-sm">{listing.totalParts}</span></span>
                                 <span className="flex items-center gap-1">Potential Stored Ducats: <span className="text-[#d4af37] font-black text-sm">{listing.totalDucats}</span><img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline" alt="D" referrerPolicy="no-referrer" /></span>
-                                <span className="text-emerald-400 flex items-center gap-1.5 bg-[#0f1d16] px-3 py-1.5 rounded-md border border-emerald-900/50 font-bold text-xs">
-                                  Est. Potential Storage Value: {(listing.counts?.bronze15 || 0)}x{listPrices.bronze15}p + {(listing.counts?.bronze25 || 0)}x{listPrices.bronze25}p + {(listing.counts?.silver45 || 0)}x{listPrices.silver45}p + {(listing.counts?.silver65 || 0)}x{listPrices.silver65}p + {(listing.counts?.gold || 0)}x{listPrices.gold}p = <span className="text-emerald-300 font-black text-sm flex items-center gap-0.5 ml-1 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/30">{(listing.counts?.bronze15 || 0)*listPrices.bronze15 + (listing.counts?.bronze25 || 0)*listPrices.bronze25 + (listing.counts?.silver45 || 0)*listPrices.silver45 + (listing.counts?.silver65 || 0)*listPrices.silver65 + (listing.counts?.gold || 0)*listPrices.gold} <img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline" alt="Pt" /></span>
-                                </span>
                               </div>
                             </div>
                           )}
@@ -2533,27 +2539,27 @@ export default function MarketTab({
                           <div className="flex flex-wrap gap-2 pt-0.5">
                             {listing.counts && listing.counts.bronze15 > 0 && (
                               <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/40 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
-                                B15: <span className="text-white font-extrabold text-sm">{listing.counts.bronze15}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.bronze15}p)</span>
+                                15 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.bronze15}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.bronze15}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
                               </span>
                             )}
                             {listing.counts && listing.counts.bronze25 > 0 && (
                               <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#cd7f32]/50 text-[#cd7f32] rounded-md flex items-center gap-1.5 font-bold">
-                                B25: <span className="text-white font-extrabold text-sm">{listing.counts.bronze25}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.bronze25}p)</span>
+                                25 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.bronze25}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.bronze25}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
                               </span>
                             )}
                             {listing.counts && listing.counts.silver45 > 0 && (
                               <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-600/70 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
-                                S45: <span className="text-white font-extrabold text-sm">{listing.counts.silver45}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.silver45}p)</span>
+                                45 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.silver45}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.silver45}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
                               </span>
                             )}
                             {listing.counts && listing.counts.silver65 > 0 && (
                               <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-slate-550/80 text-slate-300 rounded-md flex items-center gap-1.5 font-bold">
-                                S65: <span className="text-white font-extrabold text-sm">{listing.counts.silver65}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.silver65}p)</span>
+                                65 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.silver65}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.silver65}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
                               </span>
                             )}
                             {listing.counts && listing.counts.gold > 0 && (
                               <span className="text-xs font-mono px-2.5 py-1.5 bg-[#0c0d10] border border-[#d4af37]/45 text-[#d4af37] rounded-md flex items-center gap-1.5 font-bold">
-                                G100: <span className="text-white font-extrabold text-sm">{listing.counts.gold}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.gold}p)</span>
+                                100 <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="D" referrerPolicy="no-referrer" /> : <span className="text-white font-extrabold text-sm">{listing.counts.gold}</span> <span className="text-zinc-400 font-medium">(@ {listPrices.gold}<img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline -mt-0.5" alt="Pt" />)</span>
                               </span>
                             )}
                           </div>
@@ -2563,9 +2569,6 @@ export default function MarketTab({
                             <span>Total Parts: <span className="text-white font-black text-sm">{listing.totalParts}</span></span>
                             <span className="flex items-center gap-1">Total Ducats: <span className="text-[#d4af37] font-black text-sm">{listing.totalDucats}</span><img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline" alt="D" referrerPolicy="no-referrer" /></span>
                             <span className="text-pink-400">Trades Needed: <span className="font-extrabold">{listing.tradesRequired}</span></span>
-                            <span className="text-emerald-400 flex items-center gap-1.5 bg-[#0f1d16] px-3 py-1.5 rounded-md border border-emerald-900/50 font-bold text-xs">
-                              Value: {(listing.counts?.bronze15 || 0)}x{listPrices.bronze15}p + {(listing.counts?.bronze25 || 0)}x{listPrices.bronze25}p + {(listing.counts?.silver45 || 0)}x{listPrices.silver45}p + {(listing.counts?.silver65 || 0)}x{listPrices.silver65}p + {(listing.counts?.gold || 0)}x{listPrices.gold}p = <span className="text-emerald-300 font-black text-sm flex items-center gap-0.5 ml-1 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/30">{listing.price} <img src={platinumIcon} className="w-3.5 h-3.5 object-contain inline" alt="Pt" /></span>
-                            </span>
                           </div>
                         </div>
                       ) : (
@@ -2617,17 +2620,22 @@ export default function MarketTab({
                       {/* COPY FORUM COMMAND BLOCK */}
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         {!isOwner && (
-                          <div className="flex items-center gap-1.5 bg-[#0c0d10]/60 border border-[#2a2c33]/40 rounded-lg p-1 max-w-sm shrink-0 flex-1 sm:flex-initial">
-                            <span className="text-[9px] text-[#8e9299] shrink-0 pl-1.5 font-mono uppercase tracking-wide">Command:</span>
-                            <div className="flex-1 font-mono text-[10px] text-[#22c55e] truncate select-all px-1 font-semibold">
-                              {tradeText}
-                            </div>
+                          <div className="flex items-center gap-1.5 bg-[#0c0d10]/60 border border-[#2a2c33]/40 rounded-lg p-1 shrink-0 max-w-sm sm:flex-initial">
+                            {copiedCommandIds[listing.id] && (
+                              <>
+                                <span className="text-[9px] text-[#8e9299] shrink-0 pl-1.5 font-mono uppercase tracking-wide">Command:</span>
+                                <div className="flex-1 font-mono text-[10px] text-[#22c55e] truncate select-all px-1 font-semibold">
+                                  {tradeText}
+                                </div>
+                              </>
+                            )}
                             <button
                               type="button"
                               onClick={() => copyToClipboard(tradeText, false, listing.id)}
-                              className="p-1 px-2.5 bg-zinc-900 hover:bg-zinc-800 rounded text-[9px] text-[#d4af37] border border-[#d4af37]/15 hover:border-[#d4af37]/30 transition uppercase font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                              className="p-1 px-2.5 bg-zinc-900 hover:bg-zinc-800 rounded text-[9px] text-[#22c55e] border border-[#22c55e]/15 hover:border-[#22c55e]/30 transition uppercase font-semibold inline-flex items-center gap-1 cursor-pointer shrink-0"
+                              title="Copy Command"
                             >
-                              {copiedCommandId === listing.id ? 'Copied!' : 'Copy'}
+                              {copiedCommandIds[listing.id] ? <Check className="w-3.5 h-3.5" /> : <ClipboardPaste className="w-3.5 h-3.5" />}
                             </button>
                           </div>
                         )}
@@ -2654,18 +2662,20 @@ export default function MarketTab({
                     {/* Right Price section / Own operations */}
                     <div className="flex sm:flex-col items-end gap-3.5 sm:gap-1.5 justify-between border-t sm:border-0 border-zinc-800/55 pt-3 sm:pt-0 shrink-0">
                       
-                      <div className="text-right">
-                        <span className="text-[10px] font-mono text-[#8e9299] uppercase select-none block">
-                          {isPrimeJunk ? 'Total Bundle Price' : 'Price Per Item'}
-                        </span>
-                        <div className="flex items-center gap-1 text-base font-semibold text-[#f1f2f6] justify-end">
-                          <span className="font-mono text-emerald-400 font-extrabold">{listing.price}</span>
-                          <img src={platinumIcon} className="w-4 h-4 object-contain inline" alt="Pt" referrerPolicy="no-referrer" />
+                      {!listing.isRateBased && (
+                        <div className="text-right">
+                          <span className="text-[10px] font-mono text-[#8e9299] uppercase select-none block">
+                            {isPrimeJunk ? 'Total Bundle Price' : 'Price Per Item'}
+                          </span>
+                          <div className="flex items-center gap-1 text-base font-semibold text-[#f1f2f6] justify-end">
+                            <span className="font-mono text-emerald-400 font-extrabold">{listing.price}</span>
+                            <img src={platinumIcon} className="w-4 h-4 object-contain inline" alt="Pt" referrerPolicy="no-referrer" />
+                          </div>
+                          {isPrimeJunk && (
+                            <span className="text-[9px] text-[#d4af37] font-mono block">Wholesale combo</span>
+                          )}
                         </div>
-                        {isPrimeJunk && (
-                          <span className="text-[9px] text-[#d4af37] font-mono block">Wholesale combo</span>
-                        )}
-                      </div>
+                      )}
 
                       {/* Owner Operations to manage or clear active listed rows */}
                       {isOwner ? (
@@ -2698,6 +2708,30 @@ export default function MarketTab({
                   </div>
                 );
               })}
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-zinc-800/50">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 bg-[#14161c] border border-[#2a2c33] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-800 rounded font-mono text-xs text-zinc-300 transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <div className="text-xs font-mono text-[#8e9299]">
+                    Page <span className="text-[#e0e1e6] font-bold">{currentPage}</span> of <span className="text-[#e0e1e6]">{totalPages}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 bg-[#14161c] border border-[#2a2c33] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-800 rounded font-mono text-xs text-zinc-300 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
