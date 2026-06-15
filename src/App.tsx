@@ -39,7 +39,7 @@ import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('Home');
-  const [marketSubTab, setMarketSubTab] = useState<'browse' | 'saved' | 'saved_items' | 'manage'>('browse');
+  const [marketSubTab, setMarketSubTab] = useState<'browse' | 'saved' | 'my_listings' | 'saved_items' | 'manage'>('browse');
   const [counts, setCounts] = useState<InventoryCount>({
     bronze15: 0,
     bronze25: 0,
@@ -145,8 +145,29 @@ export default function App() {
   const [savedInventories, setSavedInventories] = useState<SavedItemEntry[]>([]);
 
   // User presence state
-  const [userPresence, setUserPresence] = useState<'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE'>('OFFLINE');
+  const [userPresence, setUserPresence] = useState<'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE'>(() => {
+    return (localStorage.getItem('preferredMarketPresence') as any) || 'OFFLINE';
+  });
   const [isVerified, setIsVerified] = useState(false);
+
+  const updatePresenceCore = async (status: 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE', currentUserUid: string | undefined) => {
+    setUserPresence(status);
+    if (!currentUserUid) return;
+    try {
+      const { doc, updateDoc, writeBatch, collection, query, where, getDocs } = await import('firebase/firestore');
+      const userRef = doc(db, 'users', currentUserUid);
+      await updateDoc(userRef, { marketPresence: status });
+      const q = query(collection(db, 'listings'), where('sellerUid', '==', currentUserUid));
+      const snap = await getDocs(q);
+      const batch = writeBatch(db);
+      snap.forEach(d => {
+        batch.update(d.ref, { sellerStatus: status });
+      });
+      await batch.commit();
+    } catch (err) {
+      console.error("Failed to update market presence", err);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -175,25 +196,29 @@ export default function App() {
     };
   }, [user]);
 
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      updatePresenceCore('OFFLINE', user?.uid);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    if (user) {
+      const pref = (localStorage.getItem('preferredMarketPresence') as 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE') || 'OFFLINE';
+      updatePresenceCore(pref, user.uid);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [user]);
+
   const handlePresenceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const status = e.target.value as 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE';
-    setUserPresence(status);
-    if (!user) return;
-    try {
-      const { doc, updateDoc, writeBatch, collection, query, where, getDocs } = await import('firebase/firestore');
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, { marketPresence: status });
-      const q = query(collection(db, 'listings'), where('sellerUid', '==', user.uid));
-      const snap = await getDocs(q);
-      const batch = writeBatch(db);
-      snap.forEach(d => {
-        batch.update(d.ref, { sellerStatus: status });
-      });
-      await batch.commit();
-    } catch (err) {
-      console.error("Failed to update market presence", err);
-    }
+    localStorage.setItem('preferredMarketPresence', status);
+    await updatePresenceCore(status, user?.uid);
   };
+
 
   // Cloud/Offline Synchronization Engine (Rule 4: Snapshot cleanups dynamically managed)
   useEffect(() => {
@@ -508,8 +533,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={async () => {
-                    const e = { target: { value: 'OFFLINE' } } as React.ChangeEvent<HTMLSelectElement>;
-                    await handlePresenceChange(e);
+                    await updatePresenceCore('OFFLINE', user?.uid);
                     logout();
                   }}
                   className="px-2 py-0.5 md:py-1 text-[8px] md:text-[9px] font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded transition-all uppercase tracking-wider select-none shrink-0"
@@ -570,6 +594,19 @@ export default function App() {
             >
               <Tag className="w-3.5 h-3.5 text-[#d4af37]" />
               <span>Create listings</span>
+            </button>
+
+            {/* My Listings */}
+            <button
+              onClick={() => setMarketSubTab('my_listings')}
+              className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                marketSubTab === 'my_listings'
+                  ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5'
+                  : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+              }`}
+            >
+              <Coins className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>My Listings</span>
             </button>
 
             {/* Saved Items */}

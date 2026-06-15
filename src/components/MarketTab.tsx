@@ -177,8 +177,8 @@ interface MarketTabProps {
   narrowConfig?: any;
   broadConfig?: any;
   onAnalyzeInCalculator?: (counts: InventoryCount) => void;
-  marketSubTab: 'browse' | 'manage' | 'saved' | 'saved_items';
-  setMarketSubTab: (tab: 'browse' | 'manage' | 'saved' | 'saved_items') => void;
+  marketSubTab: 'browse' | 'manage' | 'saved' | 'saved_items' | 'my_listings';
+  setMarketSubTab: (tab: 'browse' | 'manage' | 'saved' | 'saved_items' | 'my_listings') => void;
   onNavigateToSettings?: () => void;
   savedEntries?: SavedItemEntry[];
   onUseEntry?: (counts: InventoryCount) => void;
@@ -195,9 +195,10 @@ export interface FilterState {
   maxPrice: string;
   sellingType: 'all' | 'rate-based' | 'prime-junk';
   orderScale: 'all' | 'batch' | 'bulk';
+  status: 'all' | 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE';
 }
 
-const AdvancedFilterBar = ({ filters, setFilters }: { filters: FilterState, setFilters: (f: FilterState) => void }) => {
+const AdvancedFilterBar = ({ filters, setFilters, hideStatus }: { filters: FilterState, setFilters: (f: FilterState) => void, hideStatus?: boolean }) => {
   return (
     <div className="flex flex-col gap-3 bg-[#14161c] border border-transparent lg:rounded-xl text-xs font-sans mt-0 p-3 pt-1">
       <div className="flex flex-wrap items-center gap-4 lg:gap-8">
@@ -249,6 +250,32 @@ const AdvancedFilterBar = ({ filters, setFilters }: { filters: FilterState, setF
             ))}
           </div>
         </div>
+
+        {/* Status Filter */}
+        {!hideStatus && (
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[#8e9299]">Status</label>
+            <div className="flex flex-wrap gap-1">
+              {['all', 'ONLINE IN GAME', 'ONLINE', 'OFFLINE'].map(st => {
+                let label = st;
+                if (st === 'ONLINE IN GAME') label = 'In Game';
+                else if (st === 'ONLINE') label = 'Online';
+                else if (st === 'OFFLINE') label = 'Offline';
+                else label = 'All';
+
+                let activeColor = 'bg-[#2a2c33] text-white border-zinc-500';
+                if (st === 'ONLINE IN GAME') activeColor = 'bg-[#6b21a8] text-purple-100 border-purple-500';
+                else if (st === 'ONLINE') activeColor = 'bg-[#064e3b] text-emerald-100 border-emerald-500';
+                
+                return (
+                  <button key={st} onClick={() => setFilters({...filters, status: st as any})} className={`px-2.5 py-1 text-[10px] font-bold rounded border uppercase transition ${filters.status === st ? activeColor : 'bg-[#0c0d10] text-zinc-500 border-[#2a2c33] hover:border-zinc-700 hover:text-zinc-300'}`}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
@@ -329,10 +356,10 @@ export default function MarketTab({
   const [myListingsFilter, setMyListingsFilter] = useState<boolean>(false);
   
   const [browseFilters, setBrowseFilters] = useState<FilterState>({
-    orderType: 'all', minPrice: '', maxPrice: '', sellingType: 'all', orderScale: 'all'
+    orderType: 'all', minPrice: '', maxPrice: '', sellingType: 'all', orderScale: 'all', status: 'all'
   });
   const [myFilters, setMyFilters] = useState<FilterState>({
-    orderType: 'all', minPrice: '', maxPrice: '', sellingType: 'all', orderScale: 'all'
+    orderType: 'all', minPrice: '', maxPrice: '', sellingType: 'all', orderScale: 'all', status: 'all'
   });
 
   const [copiedToken, setCopiedToken] = useState(false);
@@ -842,6 +869,13 @@ export default function MarketTab({
       return;
     }
 
+    const itemNameStr = `Prime Junk (${totalParts} parts)`;
+    const isDuplicate = listings.some(l => l.sellerUid === user.uid && l.itemName === itemNameStr && l.type === bulkListType);
+    if (isDuplicate) {
+      setErrorMsg(`You already have an active listing for "${itemNameStr}" (${bulkListType}). Manage it in "My Listings".`);
+      return;
+    }
+
     const totalDucats = 
       (bulkCounts.bronze15 || 0) * 15 + 
       (bulkCounts.bronze25 || 0) * 25 + 
@@ -931,6 +965,12 @@ export default function MarketTab({
       return;
     }
 
+    const isDuplicate = listings.some(l => l.sellerUid === user.uid && l.itemName === "Rate-Based Prime Junk" && l.type === bulkListType);
+    if (isDuplicate) {
+      setErrorMsg(`You already have an active "Rate-Based Prime Junk" (${bulkListType}) listing. Manage it in "My Listings".`);
+      return;
+    }
+
     setActionLoading(true);
 
     try {
@@ -992,6 +1032,14 @@ export default function MarketTab({
         return;
       }
 
+      const itemNameStr = `Prime Junk (${totalParts} parts)`;
+      const isDuplicate = listings.some(l => l.sellerUid === user.uid && l.itemName === itemNameStr && l.type === bulkListType);
+      if (isDuplicate) {
+        setErrorMsg(`You already have an active listing for "${itemNameStr}" (${bulkListType}). Manage it in "My Listings".`);
+        setActionLoading(false);
+        return;
+      }
+
       const totalDucats = b15 * 15 + b25 * 25 + s45 * 45 + s65 * 65 + g100 * 100;
       const pricePlat = Math.round(totalDucats / 25);
       const tradesRequired = Math.ceil(totalParts / 6);
@@ -1044,6 +1092,12 @@ export default function MarketTab({
       }
     } else {
       // rate-based mode
+      const isDuplicate = listings.some(l => l.sellerUid === user.uid && l.itemName === "Rate-Based Prime Junk" && l.type === bulkListType);
+      if (isDuplicate) {
+        setErrorMsg(`You already have an active "Rate-Based Prime Junk" (${bulkListType}) listing. Manage it in "My Listings".`);
+        setActionLoading(false);
+        return;
+      }
       try {
         await addDoc(collection(db, 'listings'), {
           sellerUid: user.uid,
@@ -1693,10 +1747,27 @@ export default function MarketTab({
             else scaleMatch = false; // Regular single items aren't bulk bundles 
         }
 
-        return itemMatch && typeMatch && priceMatch && sellingStyleMatch && scaleMatch;
+        let statusMatch = true;
+        if (filters.status !== 'all') {
+          const lStatus = l.sellerStatus || 'OFFLINE';
+          statusMatch = lStatus === filters.status;
+        }
+
+        return itemMatch && typeMatch && priceMatch && sellingStyleMatch && scaleMatch && statusMatch;
     });
 
+    const statusPriority = (status?: string) => {
+      if (status === 'ONLINE IN GAME') return 3;
+      if (status === 'ONLINE') return 2;
+      return 1; // OFFLINE or default
+    };
+
     result.sort((a, b) => {
+        if (!isMyListingsMode) {
+          const wA = statusPriority(a.sellerStatus);
+          const wB = statusPriority(b.sellerStatus);
+          if (wA !== wB) return wB - wA;
+        }
         const timeA = typeof a.createdAt?.toMillis === 'function' ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
         const timeB = typeof b.createdAt?.toMillis === 'function' ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
         return timeB - timeA;
@@ -2588,10 +2659,10 @@ export default function MarketTab({
       )}
 
       {marketSubTab === 'manage' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fadeIn">
+        <div className="max-w-3xl mx-auto w-full animate-fadeIn flex flex-col gap-6">
           
           {/* LEFT COLUMN: Verification & Listing Widgets */}
-          <div className="lg:col-span-6 space-y-6">
+          <div className="space-y-6">
             
             {/* PROFILE / VERIFICATION CONTAINER */}
             <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-4">
@@ -2865,8 +2936,12 @@ export default function MarketTab({
           </div>
         </div>
 
-        {/* MY OWN LISTINGS & OPERATIONS FEED (Col span 6 in Manage Tab) */}
-        <div className="lg:col-span-6 space-y-4">
+        {/* MY OWN LISTINGS & OPERATIONS FEED moved to my_listings tab */}
+        </div>
+      )}
+
+      {marketSubTab === 'my_listings' && (
+        <div className="max-w-5xl mx-auto w-full animate-fadeIn space-y-4">
           <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-4">
             <div className="border-b border-[#2a2c33]/40 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide font-sans">
@@ -2879,7 +2954,7 @@ export default function MarketTab({
             </div>
 
             {user && userVerification.status === 'verified' && listings.filter(l => l.sellerUid === user.uid).length > 0 && (
-               <AdvancedFilterBar filters={myFilters} setFilters={setMyFilters} />
+               <AdvancedFilterBar filters={myFilters} setFilters={setMyFilters} hideStatus />
             )}
 
             {!user ? (
@@ -2956,7 +3031,6 @@ export default function MarketTab({
                           </ul>
           </div>
         </div>
-      </div>
       )}
 
       {/* RIGHT COLUMN: Listings browse search feed (Community Feed tab) */}
