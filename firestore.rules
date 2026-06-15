@@ -42,8 +42,8 @@ service cloud.firestore {
         && data.name is string && data.name.size() <= 120
         && data.source is string && (data.source == 'manual' || data.source == 'directory' || data.source == 'ocr')
         && data.timestamp is string && data.timestamp.size() <= 100
-        && data.totalDucats is int && data.totalDucats >= 0
-        && data.totalItems is int && data.totalItems >= 0
+        && (data.totalDucats is int || data.totalDucats is float) && data.totalDucats >= 0
+        && (data.totalItems is int || data.totalItems is float) && data.totalItems >= 0
         && data.counts is map
         && (!('prices' in data) || data.prices is map);
     }
@@ -53,10 +53,10 @@ service cloud.firestore {
         && data.sellerIGN is string && data.sellerIGN.size() <= 100
         && data.normalizedSellerIGN is string && data.normalizedSellerIGN.size() <= 100
         && data.isSellerVerified == true
-        && (data.sellerVerificationMethod == null || (data.sellerVerificationMethod is string && (data.sellerVerificationMethod == 'forum' || data.sellerVerificationMethod == 'wfm_api' || data.sellerVerificationMethod == 'pasted_html')))
+        && (!('sellerVerificationMethod' in data) || data.sellerVerificationMethod == null || (data.sellerVerificationMethod is string && (data.sellerVerificationMethod == 'forum' || data.sellerVerificationMethod == 'wfm_api' || data.sellerVerificationMethod == 'pasted_html')))
         && data.itemName is string && data.itemName.size() <= 200
-        && data.price is int && data.price >= 0
-        && data.quantity is int && data.quantity > 0
+        && (data.price is int || data.price is float) && data.price >= 0
+        && (data.quantity is int || data.quantity is float) && data.quantity > 0
         && (data.type == 'WTS' || data.type == 'WTB')
         && (data.status == 'active' || data.status == 'sold' || data.status == 'cancelled');
     }
@@ -133,6 +133,7 @@ service cloud.firestore {
         && isValidListing(incoming())
         && incoming().createdAt == request.time
         // 🛡️ Guard 3: Ensure listing queries don't crash if an unverified user's profile is blank
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && 'verification' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verification.status == 'verified'
         && incoming().normalizedSellerIGN == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verification.normalizedIGN;
