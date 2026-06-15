@@ -96,3 +96,10 @@ export interface SavedItemEntry {
   totalItems: number;
 }
 
+export type PresenceStatus = 'offline' | 'online' | 'online-in-game';
+
+export interface UserPresence {
+  status: PresenceStatus;
+  lastActive: number | object; // for serverTimestamp()
+}
+

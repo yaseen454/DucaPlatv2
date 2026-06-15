@@ -5,6 +5,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getDatabase } from "firebase/database";
 import appletConfig from "../../firebase-applet-config.json";
 
 // Dynamic configuration enabling graceful environment transitions under Netlify/Vite systems
@@ -15,7 +16,8 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || appletConfig.storageBucket,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || appletConfig.messagingSenderId,
   appId: import.meta.env.VITE_FIREBASE_APP_ID || appletConfig.appId,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || appletConfig.measurementId || ""
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || appletConfig.measurementId || "",
+  databaseURL: import.meta.env.VITE_FIREBASE_RTDB_URL || (appletConfig as any).databaseURL
 };
 
 // Fail loudly in production if configuration variables are absent from target platform configurations
@@ -36,6 +38,7 @@ const databaseId = envDbId !== undefined ? envDbId : "(default)";
 export const db = (databaseId === "(default)" || !databaseId)
   ? getFirestore(app)
   : getFirestore(app, databaseId);
+export const rtdb = getDatabase(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 

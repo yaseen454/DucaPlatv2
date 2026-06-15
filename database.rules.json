@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "presence": {
+      "$userId": {
+        ".read": "true",
+        
+
+        ".write": "auth != null && auth.uid === $userId",
+        
+
+        "status": { ".validate": "newData.isString()" }
+      }
+    }
+  }
+}

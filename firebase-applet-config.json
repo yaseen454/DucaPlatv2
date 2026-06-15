@@ -6,5 +6,6 @@
   "firestoreDatabaseId": "(default)",
   "storageBucket": "ducaplat.firebasestorage.app",
   "messagingSenderId": "421303680657",
-  "measurementId": ""
+  "measurementId": "",
+  "databaseURL": "https://ducaplat-default-rtdb.europe-west1.firebasedatabase.app/"
 }

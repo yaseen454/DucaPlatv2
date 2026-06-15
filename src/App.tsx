@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useState, useMemo, useEffect } from 'react';
-import { InventoryCount, OcrResultItem, SavedItemEntry } from './types';
+import { InventoryCount, OcrResultItem, SavedItemEntry, PresenceStatus } from './types';
 import { generateCostsCustom } from './utils/mathUtils';
 import ManualInput from './components/ManualInput';
 import DataSelection from './components/DataSelection';
@@ -145,21 +145,76 @@ export default function App() {
   const [savedInventories, setSavedInventories] = useState<SavedItemEntry[]>([]);
 
   // User presence state
-  const [userPresence, setUserPresence] = useState<'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE'>(() => {
-    return (localStorage.getItem('preferredMarketPresence') as any) || 'OFFLINE';
+  const [userPresence, setUserPresence] = useState<PresenceStatus>(() => {
+    let pref = localStorage.getItem('preferredMarketPresence') as string | null;
+    if (pref === 'ONLINE IN GAME') pref = 'online-in-game';
+    if (pref === 'ONLINE') pref = 'online';
+    if (pref === 'OFFLINE') pref = 'offline';
+    return (pref as PresenceStatus) || 'offline';
   });
   const [isVerified, setIsVerified] = useState(false);
 
-  const updatePresenceCore = async (status: 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE', currentUserUid: string | undefined) => {
+  // RTDB hybrid system connection
+  useEffect(() => {
+    if (!user) return;
+    let isMounted = true;
+    let rtdbUnsubs: (() => void)[] = [];
+
+    import('firebase/database').then(({ ref, onValue, onDisconnect, serverTimestamp, set }) => {
+      import('./lib/firebase').then(({ rtdb }) => {
+        if (!isMounted) return;
+
+        const connectedRef = ref(rtdb, '.info/connected');
+        const myPresenceRef = ref(rtdb, `presence/${user.uid}`);
+
+        const unsub = onValue(connectedRef, (snap) => {
+          if (snap.val() === true) {
+            const disconnectRef = onDisconnect(myPresenceRef);
+            disconnectRef.set({
+              status: 'offline',
+              lastActive: serverTimestamp()
+            }).then(() => {
+              if (userPresence !== 'offline') {
+                set(myPresenceRef, {
+                  status: userPresence,
+                  lastActive: serverTimestamp()
+                });
+              }
+            });
+          }
+        });
+        rtdbUnsubs.push(() => unsub());
+      });
+    });
+
+    return () => {
+      isMounted = false;
+      rtdbUnsubs.forEach(u => u());
+    };
+  }, [user, userPresence]);
+
+  const updatePresenceCore = async (status: PresenceStatus, currentUserUid: string | undefined) => {
     setUserPresence(status);
     if (!currentUserUid) return;
     try {
-      const { doc, updateDoc, writeBatch, collection, query, where, getDocs } = await import('firebase/firestore');
-      const userRef = doc(db, 'users', currentUserUid);
-      await updateDoc(userRef, { marketPresence: status });
-      const q = query(collection(db, 'listings'), where('sellerUid', '==', currentUserUid));
-      const snap = await getDocs(q);
-      const batch = writeBatch(db);
+      const [rtdbMod, firestoreMod, { rtdb }] = await Promise.all([
+        import('firebase/database'),
+        import('firebase/firestore'),
+        import('./lib/firebase')
+      ]);
+
+      const myPresenceRef = rtdbMod.ref(rtdb, `presence/${currentUserUid}`);
+      
+      // Update RTDB explicitly
+      await rtdbMod.set(myPresenceRef, {
+        status,
+        lastActive: rtdbMod.serverTimestamp()
+      });
+
+      // Update all active listings with the explicit status in Firestore
+      const q = firestoreMod.query(firestoreMod.collection(db, 'listings'), firestoreMod.where('sellerUid', '==', currentUserUid));
+      const snap = await firestoreMod.getDocs(q);
+      const batch = firestoreMod.writeBatch(db);
       snap.forEach(d => {
         batch.update(d.ref, { sellerStatus: status });
       });
@@ -180,9 +235,6 @@ export default function App() {
       unsub = onSnapshot(userRef, (snap) => {
         if (snap.exists()) {
           const data = snap.data();
-          if (data.marketPresence) {
-            setUserPresence(data.marketPresence);
-          }
           if (data.verification?.status === 'verified') {
             setIsVerified(true);
           } else {
@@ -198,14 +250,31 @@ export default function App() {
 
   useEffect(() => {
     const handleBeforeUnload = () => {
-      updatePresenceCore('OFFLINE', user?.uid);
+      // The onDisconnect hook in RTDB will handle this reliable queueing!
+      // But we can do a best-effort update on the client anyways
+      const uid = user?.uid;
+      if (uid) {
+        // Quick update without waiting
+        import('firebase/database').then(({ ref, set, serverTimestamp }) => {
+           import('./lib/firebase').then(({ rtdb }) => {
+             set(ref(rtdb, `presence/${uid}`), {
+               status: 'offline',
+               lastActive: serverTimestamp()
+             });
+           });
+        });
+      }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     if (user) {
-      const pref = (localStorage.getItem('preferredMarketPresence') as 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE') || 'OFFLINE';
-      updatePresenceCore(pref, user.uid);
+      let pref = localStorage.getItem('preferredMarketPresence') as string | null;
+      if (pref === 'ONLINE IN GAME') pref = 'online-in-game';
+      if (pref === 'ONLINE') pref = 'online';
+      if (pref === 'OFFLINE') pref = 'offline';
+      
+      updatePresenceCore((pref as PresenceStatus) || 'offline', user.uid);
     }
 
     return () => {
@@ -214,7 +283,7 @@ export default function App() {
   }, [user]);
 
   const handlePresenceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const status = e.target.value as 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE';
+    const status = e.target.value as PresenceStatus;
     localStorage.setItem('preferredMarketPresence', status);
     await updatePresenceCore(status, user?.uid);
   };
@@ -503,12 +572,12 @@ export default function App() {
                 <select 
                   value={userPresence}
                   onChange={handlePresenceChange}
-                  className={`bg-transparent text-[10px] md:text-xs uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer ${userPresence === 'ONLINE IN GAME' ? 'text-purple-400' : userPresence === 'ONLINE' ? 'text-emerald-400' : 'text-zinc-500'}`}
+                  className={`bg-transparent text-[10px] md:text-xs uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer ${userPresence === 'online-in-game' ? 'text-purple-400' : userPresence === 'online' ? 'text-emerald-400' : 'text-zinc-500'}`}
                   title="Market Presence Status"
                 >
-                  <option value="OFFLINE" className="text-zinc-500 bg-[#0c0d10]">OFFLINE</option>
-                  <option value="ONLINE" className="text-emerald-400 bg-[#0c0d10]">ONLINE</option>
-                  <option value="ONLINE IN GAME" className="text-purple-400 bg-[#0c0d10]">ONLINE IN GAME</option>
+                  <option value="offline" className="text-zinc-500 bg-[#0c0d10]">OFFLINE</option>
+                  <option value="online" className="text-emerald-400 bg-[#0c0d10]">ONLINE</option>
+                  <option value="online-in-game" className="text-purple-400 bg-[#0c0d10]">ONLINE IN GAME</option>
                 </select>
               </div>
             )}
@@ -533,7 +602,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={async () => {
-                    await updatePresenceCore('OFFLINE', user?.uid);
+                    await updatePresenceCore('offline', user?.uid);
                     logout();
                   }}
                   className="px-2 py-0.5 md:py-1 text-[8px] md:text-[9px] font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded transition-all uppercase tracking-wider select-none shrink-0"

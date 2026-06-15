@@ -34,7 +34,10 @@ service cloud.firestore {
 
     // Validation Validators (Rule-Side Enforcers with Type & Size Checks)
     function isValidUserProfile(data) {
-      return true; 
+      return (!('marketPresence' in data) || data.marketPresence == null || (data.marketPresence is map 
+        && data.marketPresence.status is string
+        && (data.marketPresence.status == 'online-in-game' || data.marketPresence.status == 'online' || data.marketPresence.status == 'offline')
+        && data.marketPresence.lastActive is timestamp)); 
     }
 
     function isValidSavedItem(data) {
@@ -58,12 +61,14 @@ service cloud.firestore {
         && (data.price is int || data.price is float) && data.price >= 0
         && (data.quantity is int || data.quantity is float) && data.quantity > 0
         && (data.type == 'WTS' || data.type == 'WTB')
+        && (!('sellerStatus' in data) || data.sellerStatus == null || (data.sellerStatus == 'online-in-game' || data.sellerStatus == 'online' || data.sellerStatus == 'offline' || data.sellerStatus == 'ONLINE IN GAME' || data.sellerStatus == 'ONLINE' || data.sellerStatus == 'OFFLINE'))
         && (data.status == 'active' || data.status == 'sold' || data.status == 'cancelled');
     }
 
     // Rules for collections
     match /users/{userId} {
-      allow get: if isOwner(userId);
+      // NOTE: Buyers need to fetch presence for Ghost Filtering
+      allow get: if true;
       allow list: if false;
 
       allow create: if isOwner(userId) 

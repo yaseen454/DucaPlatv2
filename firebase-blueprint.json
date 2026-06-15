@@ -31,6 +31,20 @@
           "format": "date-time",
           "description": "Timestamp of user document creation."
         },
+        "marketPresence": {
+          "type": "object",
+          "description": "The presence status of the user.",
+          "properties": {
+             "status": {
+                "type": "string",
+                "enum": ["online-in-game", "online", "offline"]
+             },
+             "lastActive": {
+                "type": "string",
+                "format": "date-time"
+             }
+          }
+        },
         "verification": {
           "type": "object",
           "description": "In-Game Name verification status information.",

@@ -44,8 +44,7 @@ import {
   ClipboardPaste
 } from 'lucide-react';
 import { PRIME_ITEMS } from '../data/primeData';
-import { InventoryCount } from '../types';
-import { SavedItemEntry } from '../types';
+import { InventoryCount, PresenceStatus, SavedItemEntry } from '../types';
 import { getProfitStats, generateCostsCustom } from '../utils/mathUtils';
 import platinumIcon from '../data/platinum.png';
 import ducatIcon from '../data/480px-OrokinDucats.png';
@@ -68,7 +67,7 @@ interface MarketListing {
   sellerIGN: string;
   normalizedSellerIGN: string;
   isSellerVerified: boolean;
-  sellerStatus?: 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE';
+  sellerStatus?: PresenceStatus | string;
   itemName: string;
   price: number;
   quantity: number;
@@ -186,7 +185,7 @@ interface MarketTabProps {
   onDeleteEntry?: (id: string) => void;
   onClearAll?: () => void;
   onUpdateEntryPrices?: (id: string, prices: InventoryCount) => void;
-  userPresence?: 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE';
+  userPresence?: PresenceStatus | string;
 }
 
 export interface FilterState {
@@ -195,7 +194,7 @@ export interface FilterState {
   maxPrice: string;
   sellingType: 'all' | 'rate-based' | 'prime-junk';
   orderScale: 'all' | 'batch' | 'bulk';
-  status: 'all' | 'ONLINE IN GAME' | 'ONLINE' | 'OFFLINE';
+  status: 'all' | PresenceStatus;
 }
 
 const AdvancedFilterBar = ({ filters, setFilters, hideStatus }: { filters: FilterState, setFilters: (f: FilterState) => void, hideStatus?: boolean }) => {
@@ -256,16 +255,16 @@ const AdvancedFilterBar = ({ filters, setFilters, hideStatus }: { filters: Filte
           <div className="flex items-center gap-2">
             <label className="text-[10px] font-bold uppercase tracking-widest text-[#8e9299]">Status</label>
             <div className="flex flex-wrap gap-1">
-              {['all', 'ONLINE IN GAME', 'ONLINE', 'OFFLINE'].map(st => {
+              {['all', 'online-in-game', 'online', 'offline'].map(st => {
                 let label = st;
-                if (st === 'ONLINE IN GAME') label = 'In Game';
-                else if (st === 'ONLINE') label = 'Online';
-                else if (st === 'OFFLINE') label = 'Offline';
+                if (st === 'online-in-game') label = 'In Game';
+                else if (st === 'online') label = 'Online';
+                else if (st === 'offline') label = 'Offline';
                 else label = 'All';
 
                 let activeColor = 'bg-[#2a2c33] text-white border-zinc-500';
-                if (st === 'ONLINE IN GAME') activeColor = 'bg-[#6b21a8] text-purple-100 border-purple-500';
-                else if (st === 'ONLINE') activeColor = 'bg-[#064e3b] text-emerald-100 border-emerald-500';
+                if (st === 'online-in-game') activeColor = 'bg-[#6b21a8] text-purple-100 border-purple-500';
+                else if (st === 'online') activeColor = 'bg-[#064e3b] text-emerald-100 border-emerald-500';
                 
                 return (
                   <button key={st} onClick={() => setFilters({...filters, status: st as any})} className={`px-2.5 py-1 text-[10px] font-bold rounded border uppercase transition ${filters.status === st ? activeColor : 'bg-[#0c0d10] text-zinc-500 border-[#2a2c33] hover:border-zinc-700 hover:text-zinc-300'}`}>
@@ -499,6 +498,68 @@ export default function MarketTab({
 
   // Track previous verification status to detect transitions
   const prevVerificationStatusRef = useRef<string>('unverified');
+
+  // 1a. Listen to live seller presences for ghost filtering
+  const [liveSellerPresences, setLiveSellerPresences] = useState<Record<string, { status: string, lastActive: number }>>({});
+  
+  // Hook to force re-render every 10 seconds to catch expired ghosts
+  const [ticker, setTicker] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTicker(t => t + 1), 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getEffectiveSellerStatus = (listing: MarketListing) => {
+    const presence = liveSellerPresences[listing.sellerUid];
+    let status = listing.sellerStatus || 'OFFLINE';
+
+    if (presence) {
+      status = presence.status;
+      const now = Date.now();
+      // 75 seconds threshold for ghost filtering
+      if ((status === 'online' || status === 'online-in-game' || status === 'ONLINE' || status === 'ONLINE IN GAME') && (now - presence.lastActive > 75000)) {
+        status = 'offline';
+      }
+    }
+    return status;
+  };
+
+  useEffect(() => {
+    const uniqueUids = Array.from(new Set(listings.map(l => l.sellerUid)));
+    if (uniqueUids.length === 0) return;
+
+    let isMounted = true;
+    let rtdbUnsubs: (() => void)[] = [];
+
+    import('firebase/database').then(({ ref, onValue }) => {
+      import('../lib/firebase').then(({ rtdb }) => {
+        if (!isMounted) return;
+
+        uniqueUids.forEach((uid: string) => {
+           const presenceRef = ref(rtdb, `presence/${uid}`);
+           const unsub = onValue(presenceRef, (snap) => {
+             if (!isMounted) return;
+             if (snap.exists()) {
+               const data = snap.val();
+               setLiveSellerPresences(prev => ({
+                 ...prev,
+                 [uid]: {
+                   status: data.status || 'offline',
+                   lastActive: typeof data.lastActive === 'number' ? data.lastActive : Date.now()
+                 }
+               }));
+             }
+           });
+           rtdbUnsubs.push(() => unsub());
+        });
+      });
+    });
+
+    return () => {
+      isMounted = false;
+      rtdbUnsubs.forEach(u => u());
+    };
+  }, [listings]);
 
   // 1. Listen to global active listings
   useEffect(() => {
@@ -1354,12 +1415,12 @@ export default function MarketTab({
                           </div>
                         )}
 
-                        {listing.sellerStatus === 'ONLINE IN GAME' ? (
+                        {getEffectiveSellerStatus(listing) === 'online-in-game' || getEffectiveSellerStatus(listing) === 'ONLINE IN GAME' ? (
                           <div className="flex items-center text-[9px] font-semibold text-purple-400 gap-1 bg-purple-950/20 px-1.5 py-0.5 border border-purple-900/30 rounded" title="Online In-Game">
                             <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_4px_#c084fc]" />
                             <span>IN GAME</span>
                           </div>
-                        ) : listing.sellerStatus === 'ONLINE' ? (
+                        ) : getEffectiveSellerStatus(listing) === 'online' || getEffectiveSellerStatus(listing) === 'ONLINE' ? (
                           <div className="flex items-center text-[9px] font-semibold text-emerald-400 gap-1 bg-emerald-950/20 px-1.5 py-0.5 border border-emerald-900/30 rounded" title="Online">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_#34d399]" />
                             <span>ONLINE</span>
@@ -1749,7 +1810,7 @@ export default function MarketTab({
 
         let statusMatch = true;
         if (filters.status !== 'all') {
-          const lStatus = l.sellerStatus || 'OFFLINE';
+          const lStatus = getEffectiveSellerStatus(l);
           statusMatch = lStatus === filters.status;
         }
 
@@ -1757,15 +1818,15 @@ export default function MarketTab({
     });
 
     const statusPriority = (status?: string) => {
-      if (status === 'ONLINE IN GAME') return 3;
-      if (status === 'ONLINE') return 2;
-      return 1; // OFFLINE or default
+      if (status === 'online-in-game' || status === 'ONLINE IN GAME') return 3;
+      if (status === 'online' || status === 'ONLINE') return 2;
+      return 1; // offline or default
     };
 
     result.sort((a, b) => {
         if (!isMyListingsMode) {
-          const wA = statusPriority(a.sellerStatus);
-          const wB = statusPriority(b.sellerStatus);
+          const wA = statusPriority(getEffectiveSellerStatus(a));
+          const wB = statusPriority(getEffectiveSellerStatus(b));
           if (wA !== wB) return wB - wA;
         }
         const timeA = typeof a.createdAt?.toMillis === 'function' ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
