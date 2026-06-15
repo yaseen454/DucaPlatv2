@@ -39,7 +39,8 @@ import {
   TrendingUp,
   Bookmark,
   Clock,
-  ArrowLeft
+  ArrowLeft,
+  Info
 } from 'lucide-react';
 import { PRIME_ITEMS } from '../data/primeData';
 import { InventoryCount } from '../types';
@@ -305,6 +306,9 @@ export default function MarketTab({
     gold: 8
   });
   const [isBulkAnovaOpen, setIsBulkAnovaOpen] = useState(false);
+  const [publishMode, setPublishMode] = useState<'count' | 'rate'>('count');
+  const [simResult, setSimResult] = useState<any | null>(null);
+  const [simPartsQty, setSimPartsQty] = useState<number>(6);
   
   // Statuses
   const [verifying, setVerifying] = useState(false);
@@ -669,55 +673,10 @@ export default function MarketTab({
     }
   };
 
-  // Submit live listing
+  // Submit live listing (deprecated - individual parts removed)
   const handleCreateListing = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || userVerification.status !== 'verified') {
-      setErrorMsg('Only fully verified traders can post live listings.');
-      return;
-    }
-
-    const item = itemName.trim();
-    if (!item) {
-      setErrorMsg('Enter an item name.');
-      return;
-    }
-    if (price < 0 || quantity <= 0) {
-      setErrorMsg('Invalid price or quantity amounts.');
-      return;
-    }
-
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    setActionLoading(true);
-
-    try {
-      await addDoc(collection(db, 'listings'), {
-        sellerUid: user.uid,
-        sellerIGN: userVerification.verifiedIGN,
-        normalizedSellerIGN: userVerification.normalizedIGN,
-        isSellerVerified: true,
-        itemName: item,
-        price: Math.floor(price),
-        quantity: Math.floor(quantity),
-        type: listType,
-        status: 'active',
-        note: standardNote.trim(),
-        createdAt: serverTimestamp()
-      });
-
-      // Reset form on success
-      setItemName('');
-      setPrice(10);
-      setQuantity(1);
-      setStandardNote('');
-      setSuccessMsg(`Listed "${item}" successfully!`);
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, 'listings');
-      setErrorMsg('Firestore rejected the listing. Verify rule settings.');
-    } finally {
-      setActionLoading(false);
-    }
+    setErrorMsg('Individual part listings are disabled. Please use "Prime Junk" or "Rate-Based Listings" instead.');
   };
 
   const handlePublishPrimeJunk = async (e?: React.FormEvent) => {
@@ -776,7 +735,7 @@ export default function MarketTab({
         sellerIGN: userVerification.verifiedIGN,
         normalizedSellerIGN: userVerification.normalizedIGN,
         isSellerVerified: true,
-        itemName: `Bulk Prime Junk (${totalParts} parts)`,
+        itemName: `Prime Junk (${totalParts} parts)`,
         price: finalPrice,
         quantity: 1,
         type: bulkListType,
@@ -792,7 +751,7 @@ export default function MarketTab({
         createdAt: serverTimestamp()
       });
 
-      setSuccessMsg(`✓ Bulk Prime Junk Bundle successfully listed as ${bulkListType}! ${totalParts} parts for ${finalPrice} Plat. (${totalDucats} Ducats).`);
+      setSuccessMsg(`✓ Prime Junk successfully listed as ${bulkListType}! ${totalParts} parts for ${finalPrice} Plat. (${totalDucats} Ducats).`);
       setBulkCounts({
         bronze15: 0,
         bronze25: 0,
@@ -811,13 +770,14 @@ export default function MarketTab({
       });
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'listings');
-      setErrorMsg('Failed to publish bulk junk listing.');
+      setErrorMsg('Failed to publish Prime Junk listing.');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handlePublishPresetDirectly = async (presetCounts: any, presetName: string) => {
+  const handlePublishRateBased = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
 
@@ -831,39 +791,7 @@ export default function MarketTab({
       return;
     }
 
-    const b15 = parseInt(presetCounts?.bronze15) || 0;
-    const b25 = parseInt(presetCounts?.bronze25) || 0;
-    const s45 = parseInt(presetCounts?.silver45) || 0;
-    const s65 = parseInt(presetCounts?.silver65) || 0;
-    const g100 = parseInt(presetCounts?.gold) || 0;
-
-    const totalParts = b15 + b25 + s45 + s65 + g100;
-    if (totalParts === 0) {
-      setErrorMsg('Cannot publish empty bundle.');
-      return;
-    }
-
-    const totalDucats = b15 * 15 + b25 * 25 + s45 * 45 + s65 * 65 + g100 * 100;
-    const pricePlat = Math.round(totalDucats / 25);
-    const tradesRequired = Math.ceil(totalParts / 6);
-
-    const distList = [];
-    if (b15 > 0) distList.push(`15d x ${b15}`);
-    if (b25 > 0) distList.push(`25d x ${b25}`);
-    if (s45 > 0) distList.push(`45d x ${s45}`);
-    if (s65 > 0) distList.push(`65d x ${s65}`);
-    if (g100 > 0) distList.push(`100d x ${g100}`);
-    const partDistribution = distList.join(', ');
-
     setActionLoading(true);
-
-    const cleanCounts = {
-      bronze15: b15,
-      bronze25: b25,
-      silver45: s45,
-      silver65: s65,
-      gold: g100
-    };
 
     try {
       await addDoc(collection(db, 'listings'), {
@@ -871,35 +799,183 @@ export default function MarketTab({
         sellerIGN: userVerification.verifiedIGN,
         normalizedSellerIGN: userVerification.normalizedIGN,
         isSellerVerified: true,
-        itemName: `Bulk Prime Junk (${totalParts} parts)`,
-        price: pricePlat,
+        itemName: `Rate-Based Prime Junk`,
+        price: 0,
         quantity: 1,
         type: bulkListType,
         status: 'active',
-        note: '',
+        note: bulkNote.trim(),
         isPrimeJunk: true,
-        counts: cleanCounts,
-        rarityPrices: {
-          bronze15: 1,
-          bronze25: 2,
-          silver45: 3,
-          silver65: 5,
-          gold: 8
-        },
-        totalDucats,
-        totalParts,
-        partDistribution,
-        tradesRequired,
+        isRateBased: true,
+        rarityPrices: { ...bulkRarityPrices },
         createdAt: serverTimestamp()
       });
 
-      setSuccessMsg(`✓ Published preset "${presetName}" directly as ${bulkListType}! Listed ${totalParts} parts for ${pricePlat} Plat.`);
+      setSuccessMsg(`✓ Rate-Based Listing successfully listed as ${bulkListType}!`);
+      setBulkNote('');
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'listings');
-      setErrorMsg('Failed to publish bulk junk listing.');
+      setErrorMsg('Failed to publish Rate-Based Listing.');
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handlePublishPresetDirectly = async (presetCounts: any, presetName: string, mode: 'count' | 'rate' = 'count') => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (!user) {
+      setErrorMsg('Log in using Google first to publish trades.');
+      return;
+    }
+
+    if (userVerification.status !== 'verified') {
+      setErrorMsg('Identity verification is required. Complete verification under "My Trade Panel & Verification" first.');
+      return;
+    }
+
+    setActionLoading(true);
+
+    if (mode === 'count') {
+      const b15 = parseInt(presetCounts?.bronze15) || 0;
+      const b25 = parseInt(presetCounts?.bronze25) || 0;
+      const s45 = parseInt(presetCounts?.silver45) || 0;
+      const s65 = parseInt(presetCounts?.silver65) || 0;
+      const g100 = parseInt(presetCounts?.gold) || 0;
+
+      const totalParts = b15 + b25 + s45 + s65 + g100;
+      if (totalParts === 0) {
+        setErrorMsg('Cannot publish empty bundle.');
+        setActionLoading(false);
+        return;
+      }
+
+      const totalDucats = b15 * 15 + b25 * 25 + s45 * 45 + s65 * 65 + g100 * 100;
+      const pricePlat = Math.round(totalDucats / 25);
+      const tradesRequired = Math.ceil(totalParts / 6);
+
+      const distList = [];
+      if (b15 > 0) distList.push(`15d x ${b15}`);
+      if (b25 > 0) distList.push(`25d x ${b25}`);
+      if (s45 > 0) distList.push(`45d x ${s45}`);
+      if (s65 > 0) distList.push(`65d x ${s65}`);
+      if (g100 > 0) distList.push(`100d x ${g100}`);
+      const partDistribution = distList.join(', ');
+
+      const cleanCounts = {
+        bronze15: b15,
+        bronze25: b25,
+        silver45: s45,
+        silver65: s65,
+        gold: g100
+      };
+
+      try {
+        await addDoc(collection(db, 'listings'), {
+          sellerUid: user.uid,
+          sellerIGN: userVerification.verifiedIGN,
+          normalizedSellerIGN: userVerification.normalizedIGN,
+          isSellerVerified: true,
+          itemName: `Prime Junk (${totalParts} parts)`,
+          price: pricePlat,
+          quantity: 1,
+          type: bulkListType,
+          status: 'active',
+          note: `Preset: ${presetName}`,
+          isPrimeJunk: true,
+          counts: cleanCounts,
+          rarityPrices: { ...bulkRarityPrices },
+          totalDucats,
+          totalParts,
+          partDistribution,
+          tradesRequired,
+          createdAt: serverTimestamp()
+        });
+
+        setSuccessMsg(`✓ Published preset "${presetName}" directly as Prime Junk (${bulkListType})! Listed ${totalParts} parts for ${pricePlat} Plat.`);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, 'listings');
+        setErrorMsg('Failed to publish Prime Junk listing.');
+      } finally {
+        setActionLoading(false);
+      }
+    } else {
+      // rate-based mode
+      try {
+        await addDoc(collection(db, 'listings'), {
+          sellerUid: user.uid,
+          sellerIGN: userVerification.verifiedIGN,
+          normalizedSellerIGN: userVerification.normalizedIGN,
+          isSellerVerified: true,
+          itemName: `Rate-Based Prime Junk`,
+          price: 0,
+          quantity: 1,
+          type: bulkListType,
+          status: 'active',
+          note: `Preset: ${presetName}`,
+          isPrimeJunk: true,
+          isRateBased: true,
+          rarityPrices: { ...bulkRarityPrices },
+          createdAt: serverTimestamp()
+        });
+
+        setSuccessMsg(`✓ Published preset "${presetName}" directly as a Rate-Based Listing (${bulkListType})!`);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, 'listings');
+        setErrorMsg('Failed to publish Rate-Based Preset.');
+      } finally {
+        setActionLoading(false);
+      }
+    }
+  };
+
+  const runSimulator = () => {
+    let b15 = 0;
+    let b25 = 0;
+    let s45 = 0;
+    let s65 = 0;
+    let gd = 0;
+
+    for (let i = 0; i < simPartsQty; i++) {
+      const rand = Math.random();
+      if (rand < 0.60) {
+        b15++;
+      } else if (rand < 0.78) {
+        b25++;
+      } else if (rand < 0.92) {
+        s45++;
+      } else if (rand < 0.98) {
+        s65++;
+      } else {
+        gd++;
+      }
+    }
+
+    const ducs = b15 * 15 + b25 * 25 + s45 * 45 + s65 * 65 + gd * 100;
+    const plats = b15 * (bulkRarityPrices.bronze15 || 1) + 
+                  b25 * (bulkRarityPrices.bronze25 || 2) + 
+                  s45 * (bulkRarityPrices.silver45 || 3) + 
+                  s65 * (bulkRarityPrices.silver65 || 5) + 
+                  gd * (bulkRarityPrices.gold || 8);
+
+    const breakdownItems = [];
+    if (b15 > 0) breakdownItems.push(`${b15}x Bronze (15d)`);
+    if (b25 > 0) breakdownItems.push(`${b25}x Bronze (25d)`);
+    if (s45 > 0) breakdownItems.push(`${s45}x Silver (45d)`);
+    if (s65 > 0) breakdownItems.push(`${s65}x Silver (65d)`);
+    if (gd > 0) breakdownItems.push(`${gd}x Gold (100d)`);
+
+    const rareParts = ["Wukong Prime Blueprint", "Saryn Prime Chassis", "Volt Prime Neuroptics", "Chroma Prime Systems"];
+    const luckyPart = gd > 0 ? rareParts[Math.floor(Math.random() * rareParts.length)] : null;
+
+    setSimResult({
+      b15, b25, s45, s65, gd,
+      totalDucats: ducs,
+      totalPlat: plats,
+      breakdown: breakdownItems.join(', '),
+      luckyPart,
+    });
   };
 
   // Complete / delete user listed items
@@ -927,6 +1003,26 @@ export default function MarketTab({
     } catch (err) {
       handleFirestoreError(err, OperationType.DELETE, `listings/${id}`);
       setErrorMsg('Could not drop listing from database.');
+    }
+  };
+
+  const handleToggleListingType = async (id: string, isRateBased: boolean, totalParts?: number, price?: number) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setActionLoading(true);
+    try {
+      const listingRef = doc(db, 'listings', id);
+      await updateDoc(listingRef, {
+        isRateBased: !isRateBased,
+        itemName: !isRateBased ? `Rate-Based Prime Junk` : `Prime Junk (${totalParts || 6} parts)`,
+        price: !isRateBased ? 0 : (price || 15),
+      });
+      setSuccessMsg(`✓ Listing transformed successfully to ${!isRateBased ? 'Rate-Based' : 'Count-Based Junk'}!`);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `listings/${id}`);
+      setErrorMsg('Failed to transform listing.');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -1046,11 +1142,31 @@ export default function MarketTab({
               <div className="border-b border-[#2a2c33]/40 pb-3">
                 <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide">
                   <Coins className="w-4 h-4 text-[#d4af37]" />
-                  Bulk Junk Bundle Builder & Seller
+                  Live Listing Publisher
                 </h3>
                 <p className="text-[11px] text-[#8e9299] mt-0.5">
-                  Build your bundle manually or click a saved preset from the right-hand panel. Prices automatically compute at <strong className="text-[#d4af37]">25 Ducats : 1 Platinum</strong>.
+                  Publish count-based bundles (Prime Junk) or general exchange rates (Rate-Based Listings) directly to the feed.
                 </p>
+              </div>
+
+              {/* Two types of listings categories choice */}
+              <div className="grid grid-cols-2 gap-2 bg-[#0c0d10] p-1 border border-[#2a2c33] rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setPublishMode('count')}
+                  className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer flex items-center justify-center gap-1.5 ${publishMode === 'count' ? 'bg-[#d4af37] text-black font-extrabold' : 'text-[#8e9299] hover:text-white font-medium'}`}
+                >
+                  <Coins className="w-3.5 h-3.5" />
+                  <span>Prime Junk</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPublishMode('rate')}
+                  className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer flex items-center justify-center gap-1.5 ${publishMode === 'rate' ? 'bg-[#d4af37] text-black font-extrabold' : 'text-[#8e9299] hover:text-white font-medium'}`}
+                >
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>Rate-Based</span>
+                </button>
               </div>
 
               {/* WTS or WTB Operation Toggle */}
@@ -1058,521 +1174,483 @@ export default function MarketTab({
                 <button
                   type="button"
                   onClick={() => setBulkListType('WTS')}
-                  className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer ${bulkListType === 'WTS' ? 'bg-[#d4af37] text-black' : 'text-[#8e9299] hover:text-white'}`}
+                  className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer ${bulkListType === 'WTS' ? 'bg-emerald-500 text-black font-bold' : 'text-[#8e9299] hover:text-white'}`}
                 >
-                  WTS (Sell)
+                  WTS (Sell Junk)
                 </button>
                 <button
                   type="button"
                   onClick={() => setBulkListType('WTB')}
-                  className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer ${bulkListType === 'WTB' ? 'bg-[#d4af37] text-black' : 'text-[#8e9299] hover:text-white'}`}
+                  className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer ${bulkListType === 'WTB' ? 'bg-blue-500 text-black font-bold' : 'text-[#8e9299] hover:text-white'}`}
                 >
-                  WTB (Buy)
+                  WTB (Buy Junk)
                 </button>
               </div>
 
-              {/* Input grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Bronze 15 */}
-                <div className="bg-[#0c0d10] p-3 border border-[#cd7f32]/20 rounded-lg flex items-center justify-between gap-2">
-                  <div>
-                    <span className="block text-[10px] font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (15 Ducats)</span>
-                    <span className="text-[10px] text-zinc-500 font-mono">15d parts count</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setBulkCounts(prev => ({ ...prev, bronze15: Math.max(0, prev.bronze15 - 1) }))}
-                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min="0"
-                      value={bulkCounts.bronze15 || ''}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        setBulkCounts(prev => ({ ...prev, bronze15: val >= 0 ? val : 0 }));
-                      }}
-                      className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setBulkCounts(prev => ({ ...prev, bronze15: prev.bronze15 + 1 }))}
-                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                {/* Bronze 25 */}
-                <div className="bg-[#0c0d10] p-3 border border-[#cd7f32]/45 rounded-lg flex items-center justify-between gap-2">
-                  <div>
-                    <span className="block text-[10px] font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (25 Ducats)</span>
-                    <span className="text-[10px] text-zinc-500 font-mono">25d parts count</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setBulkCounts(prev => ({ ...prev, bronze25: Math.max(0, prev.bronze25 - 1) }))}
-                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min="0"
-                      value={bulkCounts.bronze25 || ''}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        setBulkCounts(prev => ({ ...prev, bronze25: val >= 0 ? val : 0 }));
-                      }}
-                      className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setBulkCounts(prev => ({ ...prev, bronze25: prev.bronze25 + 1 }))}
-                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                {/* Silver 45 */}
-                <div className="bg-[#0c0d10] p-3 border border-[#c0c0c0]/25 rounded-lg flex items-center justify-between gap-2">
-                  <div>
-                    <span className="block text-[10px] font-extrabold uppercase text-slate-300 tracking-wider">Silver (45 Ducats)</span>
-                    <span className="text-[10px] text-zinc-500 font-mono">45d parts count</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setBulkCounts(prev => ({ ...prev, silver45: Math.max(0, prev.silver45 - 1) }))}
-                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min="0"
-                      value={bulkCounts.silver45 || ''}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        setBulkCounts(prev => ({ ...prev, silver45: val >= 0 ? val : 0 }));
-                      }}
-                      className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setBulkCounts(prev => ({ ...prev, silver45: prev.silver45 + 1 }))}
-                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                {/* Silver 65 */}
-                <div className="bg-[#0c0d10] p-3 border border-[#c0c0c0]/45 rounded-lg flex items-center justify-between gap-2">
-                  <div>
-                    <span className="block text-[10px] font-extrabold uppercase text-slate-300 tracking-wider">Silver (65 Ducats)</span>
-                    <span className="text-[10px] text-zinc-500 font-mono">65d parts count</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setBulkCounts(prev => ({ ...prev, silver65: Math.max(0, prev.silver65 - 1) }))}
-                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min="0"
-                      value={bulkCounts.silver65 || ''}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        setBulkCounts(prev => ({ ...prev, silver65: val >= 0 ? val : 0 }));
-                      }}
-                      className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setBulkCounts(prev => ({ ...prev, silver65: prev.silver65 + 1 }))}
-                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                {/* Gold 100 */}
-                <div className="bg-[#0c0d10] p-3 border border-[#d4af37]/30 rounded-lg flex items-center justify-between gap-2 sm:col-span-2">
-                  <div>
-                    <span className="block text-[10px] font-extrabold uppercase text-[#d4af37] tracking-wider">Gold (100 Ducats)</span>
-                    <span className="text-[10px] text-zinc-500 font-mono">100d parts count</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setBulkCounts(prev => ({ ...prev, gold: Math.max(0, prev.gold - 1) }))}
-                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min="0"
-                      value={bulkCounts.gold || ''}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        setBulkCounts(prev => ({ ...prev, gold: val >= 0 ? val : 0 }));
-                      }}
-                      className="w-12 text-center bg-[#14161c] border border-[#d4af37]/30 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setBulkCounts(prev => ({ ...prev, gold: prev.gold + 1 }))}
-                      className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Computed margins info */}
-              {(() => {
-                const totalParts = (bulkCounts.bronze15 || 0) + 
-                  (bulkCounts.bronze25 || 0) + 
-                  (bulkCounts.silver45 || 0) + 
-                  (bulkCounts.silver65 || 0) + 
-                  (bulkCounts.gold || 0);
-                const totalDucats = 
-                  (bulkCounts.bronze15 || 0) * 15 + 
-                  (bulkCounts.bronze25 || 0) * 25 + 
-                  (bulkCounts.silver45 || 0) * 45 + 
-                  (bulkCounts.silver65 || 0) * 65 + 
-                  (bulkCounts.gold || 0) * 100;
-                
-                const sumPricePlat = 
-                  (bulkCounts.bronze15 || 0) * (bulkRarityPrices.bronze15 || 0) +
-                  (bulkCounts.bronze25 || 0) * (bulkRarityPrices.bronze25 || 0) +
-                  (bulkCounts.silver45 || 0) * (bulkRarityPrices.silver45 || 0) +
-                  (bulkCounts.silver65 || 0) * (bulkRarityPrices.silver65 || 0) +
-                  (bulkCounts.gold || 0) * (bulkRarityPrices.gold || 0);
-
-                const tradesRequired = Math.ceil(totalParts / 6);
-
-                return (
-                  <div className="bg-[#0c0d10] p-4 rounded-xl border border-[#2a2c33]/80 space-y-4">
-                    <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Dynamic Bundle Appraisal</h4>
-                    <div className="grid grid-cols-2 gap-3.5 pt-1">
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] text-[#8e9299] uppercase">Total Parts Selected</span>
-                        <div className="text-white text-base font-mono font-extrabold">{totalParts} <span className="text-[10px] text-zinc-500 font-normal font-sans">pieces</span></div>
+              {publishMode === 'count' ? (
+                <>
+                  {/* Input grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Bronze 15 */}
+                    <div className="bg-[#0c0d10] p-3 border border-[#cd7f32]/20 rounded-lg flex items-center justify-between gap-2">
+                      <div>
+                        <span className="block text-[10px] font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (15 Ducats)</span>
+                        <span className="text-[10px] text-zinc-500 font-mono">15d parts count</span>
                       </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] text-[#8e9299] uppercase">Total Ducat Pool</span>
-                        <div className="text-[#d4af37] text-base font-mono font-extrabold flex items-center gap-0.5">
-                          <span>{totalDucats}</span>
-                          <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline" alt="D" referrerPolicy="no-referrer" />
-                        </div>
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] text-[#8e9299] uppercase">Trades Needed</span>
-                        <div className="text-pink-400 text-base font-mono font-extrabold">{tradesRequired} <span className="text-[10px] text-zinc-500 font-normal font-sans">trades (max 6/trade)</span></div>
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] text-[#d4af37] uppercase">Summed Total Bundle Price</span>
-                        <div className="text-emerald-400 text-base font-mono font-extrabold flex items-center gap-0.5">
-                          <span>{sumPricePlat}</span>
-                          <img src={platinumIcon} className="w-4 h-4 object-contain inline" alt="Pt" referrerPolicy="no-referrer" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-[10px] text-[#8e9299] leading-normal p-2.5 bg-zinc-950/40 border border-zinc-900 rounded-md">
-                      Formula: <strong className="text-zinc-300 font-mono">({bulkCounts.bronze15 || 0}x{bulkRarityPrices.bronze15}p + {bulkCounts.bronze25 || 0}x{bulkRarityPrices.bronze25}p + {bulkCounts.silver45 || 0}x{bulkRarityPrices.silver45}p + {bulkCounts.silver65 || 0}x{bulkRarityPrices.silver65}p + {bulkCounts.gold || 0}x{bulkRarityPrices.gold}p) = {sumPricePlat}p</strong>
-                    </div>
-
-                    {/* Integrated ANOVA modal triggers */}
-                    <div className="bg-[#14161c]/50 p-3 rounded-lg border border-[#2a2c33] text-xs text-zinc-400 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-[#d4af37] font-semibold text-[10px] uppercase tracking-wider">
-                          <TrendingUp className="w-3.5 h-3.5" />
-                          <span>ANOVA STRATEGIC PRICING</span>
-                        </div>
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => setIsBulkAnovaOpen(true)}
-                          className="text-[9px] text-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37]/20 px-2.5 py-1 rounded border border-[#d4af37]/25 font-bold uppercase tracking-wider cursor-pointer flex items-center gap-1"
+                          onClick={() => setBulkCounts(prev => ({ ...prev, bronze15: Math.max(0, prev.bronze15 - 1) }))}
+                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
-                          Launch Pricing Wizard
+                          -
                         </button>
-                      </div>
-                      <p className="text-[9px] text-zinc-500 leading-normal">
-                        Not sure how to price your items? Click to run automated ANOVA regression models on active trade sets and apply high-performing strategy patterns instantly.
-                      </p>
-                    </div>
-
-                    {/* Manual fine-tuning inputs */}
-                    <div className="space-y-2 pt-2 border-t border-zinc-900">
-                      <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Fine-Tune Individual Part Prices (Plat):</span>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                        <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
-                          <span className="block text-[8px] uppercase tracking-wider text-[#cd7f32]">B15 (Bronze)</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={bulkRarityPrices.bronze15}
-                            onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, bronze15: Math.max(0, parseInt(e.target.value) || 0) }))}
-                            className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
-                          />
-                        </div>
-                        <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
-                          <span className="block text-[8px] uppercase tracking-wider text-[#cd7f32]">B25 (Bronze)</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={bulkRarityPrices.bronze25}
-                            onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, bronze25: Math.max(0, parseInt(e.target.value) || 0) }))}
-                            className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
-                          />
-                        </div>
-                        <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
-                          <span className="block text-[8px] uppercase tracking-wider text-zinc-300">S45 (Silver)</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={bulkRarityPrices.silver45}
-                            onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, silver45: Math.max(0, parseInt(e.target.value) || 0) }))}
-                            className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
-                          />
-                        </div>
-                        <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
-                          <span className="block text-[8px] uppercase tracking-wider text-zinc-300">S65 (Silver)</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={bulkRarityPrices.silver65}
-                            onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, silver65: Math.max(0, parseInt(e.target.value) || 0) }))}
-                            className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
-                          />
-                        </div>
-                        <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1 col-span-2 sm:col-span-1">
-                          <span className="block text-[8px] uppercase tracking-wider text-[#d4af37]">G100 (Gold)</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={bulkRarityPrices.gold}
-                            onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, gold: Math.max(0, parseInt(e.target.value) || 0) }))}
-                            className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-                    {/* Custom note */}
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
-                        <span>Bundle Special Notes</span>
-                        <span className="text-zinc-600 font-normal">Optional</span>
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={120}
-                        placeholder="e.g. Bulk seller, online now! No split orders."
-                        value={bulkNote}
-                        onChange={(e) => setBulkNote(e.target.value)}
-                        className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder-zinc-500"
-                      />
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="pt-2">
-                       {!user ? (
-                        <div className="text-xs text-zinc-500 text-center py-2 border border-dashed border-zinc-800 rounded">
-                           Please Log In via Google to publish trades on the Live Board.
-                        </div>
-                      ) : userVerification.status !== 'verified' ? (
-                        <div className="space-y-2">
-                          <p className="text-[11px] text-red-400 text-center">
-                            You must complete identity verification to post listed trades.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => setMarketSubTab('manage')}
-                            className="w-full py-2.5 bg-[#2a2c33] hover:bg-[#3f414a] text-[#d4af37] rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer"
-                          >
-                            Go To Verification Panel &rarr;
-                          </button>
-                        </div>
-                      ) : (
+                        <input
+                          type="number"
+                          min="0"
+                          value={bulkCounts.bronze15 || ''}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            setBulkCounts(prev => ({ ...prev, bronze15: val >= 0 ? val : 0 }));
+                          }}
+                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                        />
                         <button
                           type="button"
-                          onClick={() => handlePublishPrimeJunk()}
-                          disabled={totalParts === 0 || actionLoading}
-                          className={`w-full py-2.5 disabled:opacity-40 text-black font-extrabold text-xs uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer select-none ${bulkListType === 'WTS' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+                          onClick={() => setBulkCounts(prev => ({ ...prev, bronze15: prev.bronze15 + 1 }))}
+                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
                         >
-                          {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />}
-                          {bulkListType === 'WTS' ? 'Publish Bulk Bundle (WTS - Sell)' : 'Publish Bulk Bundle (WTB - Buy)'}
+                          +
                         </button>
-                      )}
-                    </div>
-                  </div>
-
-            {/* Standard Post Trade Request card for verified players inside the Bulk Junk subtab */}
-            {user && userVerification.status === 'verified' && (
-              <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-5 space-y-4 animate-fadeIn">
-                <div className="border-b border-[#2a2c33]/40 pb-3">
-                  <h3 className="font-semibold text-sm text-[#e0e1e6] flex items-center gap-2 uppercase tracking-wide">
-                    <Tag className="w-4 h-4 text-[#d4af37]" />
-                    Post Standard Trade Request
-                  </h3>
-                  <p className="text-[10px] text-[#8e9299] mt-0.5">
-                    Post standard individual parts or prime junk trades immediately on the live board.
-                  </p>
-                </div>
-
-                <form onSubmit={handleCreateListing} className="space-y-4">
-                  {/* WTS or WTB */}
-                  <div className="grid grid-cols-2 gap-2 bg-[#0c0d10] p-1 border border-[#2a2c33] rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => setListType('WTS')}
-                      className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer ${listType === 'WTS' ? 'bg-[#d4af37] text-black' : 'text-[#8e9299] hover:text-white'}`}
-                    >
-                      WTS (Sell)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setListType('WTB')}
-                      className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition cursor-pointer ${listType === 'WTB' ? 'bg-[#d4af37] text-black' : 'text-[#8e9299] hover:text-white'}`}
-                    >
-                      WTB (Buy)
-                    </button>
-                  </div>
-
-                  {/* Item Name & Autocomplete suggestions */}
-                  <div className="space-y-2 relative">
-                    <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">Item or Junk part name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Bronze Prime Junk (15d) or Paris Prime Grip"
-                      value={itemName}
-                      onChange={(e) => setItemName(e.target.value)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
-                      required
-                    />
-
-                    {itemSuggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 top-[60px] bg-[#0c0d10] border border-[#2f313a] rounded-lg shadow-2xl z-30 overflow-hidden divide-y divide-[#2a2c33]/40 font-mono text-xs">
-                        {itemSuggestions.map((sug, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              setItemName(sug);
-                              setItemSuggestions([]);
-                            }}
-                            className="w-full text-left px-3.5 py-2 hover:bg-[#14161c] text-slate-300 hover:text-white transition block"
-                          >
-                            {sug}
-                          </button>
-                        ))}
                       </div>
-                    )}
-                  </div>
-
-                  {/* Price and Quantity */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-1">
-                        Price <span className="text-[#d4af37]">Plat</span>
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={price}
-                        onChange={(e) => setPrice(Math.max(0, parseInt(e.target.value) || 0))}
-                        className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none font-mono"
-                        required
-                      />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-sans">Qty available</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={quantity}
-                        onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none font-mono"
-                        required
-                      />
+                    {/* Bronze 25 */}
+                    <div className="bg-[#0c0d10] p-3 border border-[#cd7f32]/45 rounded-lg flex items-center justify-between gap-2">
+                      <div>
+                        <span className="block text-[10px] font-extrabold uppercase text-[#cd7f32] tracking-wider">Bronze (25 Ducats)</span>
+                        <span className="text-[10px] text-zinc-500 font-mono">25d parts count</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setBulkCounts(prev => ({ ...prev, bronze25: Math.max(0, prev.bronze25 - 1) }))}
+                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          value={bulkCounts.bronze25 || ''}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            setBulkCounts(prev => ({ ...prev, bronze25: val >= 0 ? val : 0 }));
+                          }}
+                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setBulkCounts(prev => ({ ...prev, bronze25: prev.bronze25 + 1 }))}
+                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Silver 45 */}
+                    <div className="bg-[#0c0d10] p-3 border border-[#c0c0c0]/25 rounded-lg flex items-center justify-between gap-2">
+                      <div>
+                        <span className="block text-[10px] font-extrabold uppercase text-slate-300 tracking-wider">Silver (45 Ducats)</span>
+                        <span className="text-[10px] text-zinc-500 font-mono">45d parts count</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setBulkCounts(prev => ({ ...prev, silver45: Math.max(0, prev.silver45 - 1) }))}
+                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          value={bulkCounts.silver45 || ''}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            setBulkCounts(prev => ({ ...prev, silver45: val >= 0 ? val : 0 }));
+                          }}
+                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setBulkCounts(prev => ({ ...prev, silver45: prev.silver45 + 1 }))}
+                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Silver 65 */}
+                    <div className="bg-[#0c0d10] p-3 border border-[#c0c0c0]/45 rounded-lg flex items-center justify-between gap-2">
+                      <div>
+                        <span className="block text-[10px] font-extrabold uppercase text-slate-300 tracking-wider">Silver (65 Ducats)</span>
+                        <span className="text-[10px] text-zinc-500 font-mono">65d parts count</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setBulkCounts(prev => ({ ...prev, silver65: Math.max(0, prev.silver65 - 1) }))}
+                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          value={bulkCounts.silver65 || ''}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            setBulkCounts(prev => ({ ...prev, silver65: val >= 0 ? val : 0 }));
+                          }}
+                          className="w-12 text-center bg-[#14161c] border border-zinc-700 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setBulkCounts(prev => ({ ...prev, silver65: prev.silver65 + 1 }))}
+                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Gold 100 */}
+                    <div className="bg-[#0c0d10] p-3 border border-[#d4af37]/30 rounded-lg flex items-center justify-between gap-2 sm:col-span-2">
+                      <div>
+                        <span className="block text-[10px] font-extrabold uppercase text-[#d4af37] tracking-wider">Gold (100 Ducats)</span>
+                        <span className="text-[10px] text-zinc-500 font-mono">100d parts count</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setBulkCounts(prev => ({ ...prev, gold: Math.max(0, prev.gold - 1) }))}
+                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          value={bulkCounts.gold || ''}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            setBulkCounts(prev => ({ ...prev, gold: val >= 0 ? val : 0 }));
+                          }}
+                          className="w-12 text-center bg-[#14161c] border border-[#d4af37]/30 text-xs text-white font-mono h-7 focus:outline-none focus:border-[#d4af37]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setBulkCounts(prev => ({ ...prev, gold: prev.gold + 1 }))}
+                          className="w-7 h-7 bg-[#14161c] hover:bg-zinc-800 border border-zinc-700/50 rounded flex items-center justify-center text-zinc-400 font-bold text-sm cursor-pointer select-none active:scale-90 transition-all"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Pricing Suggestion */}
+                  {/* Computed margins info */}
                   {(() => {
-                    const currentStandardCounts = guessCountsFromItem(itemName, quantity);
-                    const standardPriceSuggestion = getListingPriceSuggestion(currentStandardCounts);
-                    if (!standardPriceSuggestion) return null;
+                    const totalParts = (bulkCounts.bronze15 || 0) + 
+                      (bulkCounts.bronze25 || 0) + 
+                      (bulkCounts.silver45 || 0) + 
+                      (bulkCounts.silver65 || 0) + 
+                      (bulkCounts.gold || 0);
+                    const totalDucats = 
+                      (bulkCounts.bronze15 || 0) * 15 + 
+                      (bulkCounts.bronze25 || 0) * 25 + 
+                      (bulkCounts.silver45 || 0) * 45 + 
+                      (bulkCounts.silver65 || 0) * 65 + 
+                      (bulkCounts.gold || 0) * 100;
+                    
+                    const sumPricePlat = 
+                      (bulkCounts.bronze15 || 0) * (bulkRarityPrices.bronze15 || 0) +
+                      (bulkCounts.bronze25 || 0) * (bulkRarityPrices.bronze25 || 0) +
+                      (bulkCounts.silver45 || 0) * (bulkRarityPrices.silver45 || 0) +
+                      (bulkCounts.silver65 || 0) * (bulkRarityPrices.silver65 || 0) +
+                      (bulkCounts.gold || 0) * (bulkRarityPrices.gold || 0);
+
+                    const tradesRequired = Math.ceil(totalParts / 6);
+
                     return (
-                      <div className="text-[11px] bg-[#0c0d10] p-2.5 rounded border border-[#2a2c33] text-zinc-400 space-y-1">
-                        <div className="flex justify-between items-center text-[10px]">
-                          <span>📊 Statistical expected value:</span>
-                          <span className="font-semibold text-[#d4af37] font-mono">{standardPriceSuggestion.average}p</span>
+                      <div className="bg-[#0c0d10] p-4 rounded-xl border border-[#2a2c33]/80 space-y-4">
+                        <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Dynamic Bundle Appraisal</h4>
+                        <div className="grid grid-cols-2 gap-3.5 pt-1">
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-[#8e9299] uppercase">Total Parts Selected</span>
+                            <div className="text-white text-base font-mono font-extrabold">{totalParts} <span className="text-[10px] text-zinc-500 font-normal font-sans">pieces</span></div>
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-[#8e9299] uppercase">Total Ducat Pool</span>
+                            <div className="text-[#d4af37] text-base font-mono font-extrabold flex items-center gap-0.5">
+                              <span>{totalDucats}</span>
+                              <img src={ducatIcon} className="w-3.5 h-3.5 object-contain inline" alt="D" referrerPolicy="no-referrer" />
+                            </div>
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-[#8e9299] uppercase">Trades Needed</span>
+                            <div className="text-pink-400 text-base font-mono font-extrabold">{tradesRequired} <span className="text-[10px] text-zinc-500 font-normal font-sans">trades (max 6/trade)</span></div>
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-[#d4af37] uppercase">Summed Total Bundle Price</span>
+                            <div className="text-emerald-400 text-base font-mono font-extrabold flex items-center gap-0.5">
+                              <span>{sumPricePlat}</span>
+                              <img src={platinumIcon} className="w-4 h-4 object-contain inline" alt="Pt" referrerPolicy="no-referrer" />
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center text-[9px] text-zinc-500">
-                          <span>Market Price Range:</span>
-                          <span className="font-mono text-zinc-300 font-semibold">{standardPriceSuggestion.min}p - {standardPriceSuggestion.max}p</span>
+
+                        <div className="text-[10px] text-[#8e9299] leading-normal p-2.5 bg-zinc-950/40 border border-zinc-900 rounded-md">
+                          Formula: <strong className="text-zinc-300 font-mono">({bulkCounts.bronze15 || 0}x{bulkRarityPrices.bronze15}p + {bulkCounts.bronze25 || 0}x{bulkRarityPrices.bronze25}p + {bulkCounts.silver45 || 0}x{bulkRarityPrices.silver45}p + {bulkCounts.silver65 || 0}x{bulkRarityPrices.silver65}p + {bulkCounts.gold || 0}x{bulkRarityPrices.gold}p) = {sumPricePlat}p</strong>
                         </div>
-                        <button 
-                          type="button"
-                          onClick={() => setPrice(standardPriceSuggestion.average)}
-                          className="text-[9px] text-[#d4af37] uppercase font-bold tracking-wider hover:underline block pt-0.5"
-                        >
-                          Use Statistical Average ({standardPriceSuggestion.average}p)
-                        </button>
+
+                        {/* Integrated ANOVA modal triggers */}
+                        <div className="bg-[#14161c]/50 p-3 rounded-lg border border-[#2a2c33] text-xs text-zinc-400 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 text-[#d4af37] font-semibold text-[10px] uppercase tracking-wider">
+                              <TrendingUp className="w-3.5 h-3.5" />
+                              <span>ANOVA STRATEGIC PRICING</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setIsBulkAnovaOpen(true)}
+                              className="text-[9px] text-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37]/20 px-2.5 py-1 rounded border border-[#d4af37]/25 font-bold uppercase tracking-wider cursor-pointer flex items-center gap-1"
+                            >
+                              Launch Pricing Wizard
+                            </button>
+                          </div>
+                          <p className="text-[9px] text-zinc-500 leading-normal">
+                            Not sure how to price your items? Click to run automated ANOVA regression models on active trade sets and apply high-performing strategy patterns instantly.
+                          </p>
+                        </div>
                       </div>
                     );
                   })()}
-
-                  {/* Note input field */}
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
-                      <span>Listing Note</span>
-                      <span className="text-zinc-600 font-normal">Optional</span>
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={120}
-                      placeholder="e.g., Fast trade, online now! No negotiations."
-                      value={standardNote}
-                      onChange={(e) => setStandardNote(e.target.value)}
-                      className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder-zinc-500"
-                    />
+                </>
+              ) : (
+                /* Rate-Based Listing Subt-layout */
+                <div className="space-y-4 animate-fadeIn">
+                  <div className="bg-slate-950/40 border border-slate-900 rounded-xl p-3.5 text-xs text-[#c4c5cc] space-y-2 leading-relaxed">
+                    <div className="font-bold text-[#d4af37] uppercase flex items-center gap-1 tracking-wider text-[10px]">
+                      <Info className="w-3.5 h-3.5 text-[#d4af37]" />
+                      <span>About Rate-Based Listings</span>
+                    </div>
+                    <p>
+                      Instead of locking in exact parts and inventory counts, you list your constant exchange rates. Other players contact you to execute live trades directly. Your total Platinum earned scales instantly with the amount and luck of junk parts traded:
+                    </p>
+                    <div className="border border-slate-800/40 bg-slate-900/45 rounded p-2.5 space-y-1.5 font-mono text-[10px] text-slate-300">
+                      <div>💰 <span className="font-bold">Quantity Based:</span> Payout goes up with every part traded.</div>
+                      <div>🎲 <span className="font-bold">Luck Based:</span> Silver and gold parts draw premium value multipliers automatically.</div>
+                    </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={actionLoading}
-                    className="w-full py-2.5 bg-[#d4af37] hover:bg-[#b08d26] disabled:opacity-50 text-black font-semibold text-xs uppercase tracking-wider rounded-lg transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-lg font-sans"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Publish Standard Listing
-                  </button>
-                </form>
+                  {/* Dynamic Copypasta Realtime Command Preview */}
+                  <div className="bg-[#0c0d10] p-3 rounded-lg border border-[#2a2c33] space-y-1.5">
+                    <span className="block text-[10px] text-[#8e9299] uppercase font-mono tracking-wider">Copy-Paste Command Preview</span>
+                    <div className="bg-[#14161c] p-2.5 border border-[#2a2c33]/50 rounded text-[10px] font-mono text-emerald-400 font-extrabold select-all select-none break-all leading-relaxed">
+                      /w [YourName] Hi! I want to {bulkListType === 'WTS' ? 'buy' : 'sell you'} Prime Junk: 
+                      15 :ducats: / {bulkRarityPrices.bronze15} :platinum: — 
+                      25 :ducats: / {bulkRarityPrices.bronze25} :platinum: — 
+                      45 :ducats: / {bulkRarityPrices.silver45} :platinum: — 
+                      65 :ducats: / {bulkRarityPrices.silver65} :platinum: — 
+                      100 :ducats: / {bulkRarityPrices.gold} :platinum:
+                    </div>
+                    <p className="text-[9px] text-[#8e9299] italic">This live command is generated instantly on the public boards. Buyers can execute it directly.</p>
+                  </div>
+
+                  {/* Interactive Luck Simulator */}
+                  <div className="bg-[#0c0d10] p-3.5 rounded-lg border border-[#2a2c33] space-y-3.5">
+                    <div className="flex items-center justify-between border-b border-[#2a2c33]/30 pb-2">
+                      <span className="text-[10px] text-white font-bold uppercase tracking-wider flex items-center gap-1">
+                        <TrendingUp className="w-3.5 h-3.5 text-[#d4af37]" />
+                        Exchange Luck Simulator
+                      </span>
+                      <span className="text-[9px] px-2 py-0.5 bg-[#d4af37]/10 text-[#d4af37] font-mono border border-[#d4af37]/20 rounded-full font-bold">
+                        Interactive
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">Simulate Parts Amount for Trade</label>
+                      <select
+                        value={simPartsQty}
+                        onChange={(e) => setSimPartsQty(parseInt(e.target.value) || 6)}
+                        className="w-full bg-[#14161c] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none font-mono"
+                      >
+                        <option value="6">6 pieces (1 Standard Trade)</option>
+                        <option value="12">12 pieces (2 Standard Trades)</option>
+                        <option value="24">24 pieces (4 Standard Trades)</option>
+                        <option value="36">36 pieces (6 Standard Trades)</option>
+                        <option value="48">48 pieces (8 Standard Trades)</option>
+                      </select>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={runSimulator}
+                      className="w-full py-1.5 bg-indigo-950/35 hover:bg-indigo-900/25 border border-indigo-700/35 hover:border-indigo-600 text-indigo-300 rounded font-bold text-[10px] uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      🎲 Run Luck Trade Simulation
+                    </button>
+
+                    {simResult && (
+                      <div className="bg-[#14161c] border border-indigo-900/20 p-3 rounded-lg space-y-2 animate-fadeIn font-mono text-[10px]">
+                        <div className="flex justify-between border-b border-zinc-800 pb-1.5 text-zinc-400 text-[9px]">
+                          <span>SIMULATED RESULTS:</span>
+                          <span className="text-[#d4af37]">ROLL SUCCESS!</span>
+                        </div>
+                        <div className="space-y-1 text-zinc-300">
+                          <div>📦 Traded Parts: <span className="text-white font-extrabold">{simResult.breakdown}</span></div>
+                          {simResult.luckyPart && (
+                            <div className="text-amber-400 font-semibold animate-pulse">🔥 Jackpot drew: "{simResult.luckyPart}" (Gold Item)</div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-zinc-800 text-[11px]">
+                          <div>Ducats Earned: <span className="text-[#d4af37] font-extrabold">{simResult.totalDucats}</span></div>
+                          <div>Platinum Payout: <span className="text-emerald-400 font-extrabold flex items-center gap-0.5">{simResult.totalPlat} <img src={platinumIcon} className="w-2.5 h-2.5 object-contain inline" alt="Pt" /></span></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Manual Price Tuning */}
+              <div className="space-y-2 pt-3 border-t border-[#2a2c33]/30">
+                <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
+                  {publishMode === 'count' ? 'Fine-Tune Part Prices (Plat):' : 'Configure Exchange Rates (Plat value per part):'}
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
+                    <span className="block text-[8px] uppercase tracking-wider text-[#cd7f32]">B15 (Bronze)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bulkRarityPrices.bronze15}
+                      onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, bronze15: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
+                    />
+                  </div>
+                  <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
+                    <span className="block text-[8px] uppercase tracking-wider text-[#cd7f32]">B25 (Bronze)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bulkRarityPrices.bronze25}
+                      onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, bronze25: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
+                    />
+                  </div>
+                  <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
+                    <span className="block text-[8px] uppercase tracking-wider text-zinc-300">S45 (Silver)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bulkRarityPrices.silver45}
+                      onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, silver45: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
+                    />
+                  </div>
+                  <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
+                    <span className="block text-[8px] uppercase tracking-wider text-zinc-300">S65 (Silver)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bulkRarityPrices.silver65}
+                      onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, silver65: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
+                    />
+                  </div>
+                  <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1 col-span-2 sm:col-span-1">
+                    <span className="block text-[8px] uppercase tracking-wider text-[#d4af37]">G100 (Gold)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={bulkRarityPrices.gold}
+                      onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, gold: Math.max(0, parseInt(e.target.value) || 0) }))}
+                      className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
+                    />
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Custom note */}
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+                  <span>Special Notes / Demands</span>
+                  <span className="text-zinc-600 font-normal">Optional</span>
+                </label>
+                <input
+                  type="text"
+                  maxLength={120}
+                  placeholder="e.g. Fast seller, online now! No split orders."
+                  value={bulkNote}
+                  onChange={(e) => setBulkNote(e.target.value)}
+                  className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder-zinc-500"
+                />
+              </div>
+
+              {/* Action buttons */}
+              <div className="pt-2">
+                {!user ? (
+                  <div className="text-xs text-zinc-500 text-center py-2 border border-dashed border-zinc-800 rounded">
+                    Please Log In via Google to publish trades on the Live Board.
+                  </div>
+                ) : userVerification.status !== 'verified' ? (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-red-400 text-center">
+                      You must complete identity verification to post listed trades.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setMarketSubTab('manage')}
+                      className="w-full py-2.5 bg-[#2a2c33] hover:bg-[#3f414a] text-[#d4af37] rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer"
+                    >
+                      Go To Verification Panel &rarr;
+                    </button>
+                  </div>
+                ) : publishMode === 'count' ? (
+                  <button
+                    type="button"
+                    onClick={() => handlePublishPrimeJunk()}
+                    disabled={
+                      ((bulkCounts.bronze15 || 0) + 
+                       (bulkCounts.bronze25 || 0) + 
+                       (bulkCounts.silver45 || 0) + 
+                       (bulkCounts.silver65 || 0) + 
+                       (bulkCounts.gold || 0)) === 0 || actionLoading
+                    }
+                    className={`w-full py-2.5 disabled:opacity-40 text-black font-extrabold text-xs uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer select-none ${bulkListType === 'WTS' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+                  >
+                    {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />}
+                    {bulkListType === 'WTS' ? 'Publish Prime Junk (Count-Based WTS)' : 'Publish Prime Junk (Count-Based WTB)'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handlePublishRateBased()}
+                    disabled={actionLoading}
+                    className={`w-full py-2.5 text-black font-extrabold text-xs uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer select-none ${bulkListType === 'WTS' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+                  >
+                    {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />}
+                    {bulkListType === 'WTS' ? 'Publish Rate-Based Listing (WTS)' : 'Publish Rate-Based Listing (WTB)'}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Right Column: Saved Drafts Presets */}
@@ -1672,14 +1750,24 @@ export default function MarketTab({
                           </button>
                           
                           {userVerification.status === 'verified' && (
-                            <button
-                              type="button"
-                              onClick={() => handlePublishPresetDirectly(trade.counts, trade.name)}
-                              className="py-1 px-3 bg-emerald-950/30 hover:bg-emerald-950/60 border border-emerald-500/20 hover:border-emerald-500 text-emerald-400 hover:text-emerald-300 rounded text-[10px] uppercase font-bold transition cursor-pointer select-none"
-                              title="Publish this specific set directly to public live board"
-                            >
-                              Publish Preset
-                            </button>
+                            <div className="flex gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handlePublishPresetDirectly(trade.counts, trade.name, 'count')}
+                                className="py-1 px-2.5 bg-emerald-950/20 hover:bg-emerald-950/45 border border-emerald-900/30 text-emerald-400 hover:text-emerald-300 rounded text-[9px] uppercase font-bold transition cursor-pointer select-none"
+                                title="Publish as Count-based Prime Junk"
+                              >
+                                Pub Count
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handlePublishPresetDirectly(trade.counts, trade.name, 'rate')}
+                                className="py-1 px-2.5 bg-amber-950/20 hover:bg-amber-950/45 border border-amber-900/30 text-amber-400 hover:text-amber-300 rounded text-[9px] uppercase font-bold transition cursor-pointer select-none"
+                                title="Publish as Rate-based Listing"
+                              >
+                                Pub Rate
+                              </button>
+                            </div>
                           )}
 
                           <button
@@ -2343,7 +2431,11 @@ export default function MarketTab({
                 
                 // Copy-paste trade command for Warframe Chat
                 let tradeText = "";
-                if (isPrimeJunk) {
+                if (listing.isRateBased) {
+                  tradeText = isWTS
+                    ? `/w ${listing.sellerIGN} Hi! I want to buy Prime Junk: 15 :ducats: / ${listPrices.bronze15} :platinum: — 25 :ducats: / ${listPrices.bronze25} :platinum: — 45 :ducats: / ${listPrices.silver45} :platinum: — 65 :ducats: / ${listPrices.silver65} :platinum: — 100 :ducats: / ${listPrices.gold} :platinum:`
+                    : `/w ${listing.sellerIGN} Hi! I want to sell Prime Junk: 15 :ducats: / ${listPrices.bronze15} :platinum: — 25 :ducats: / ${listPrices.bronze25} :platinum: — 45 :ducats: / ${listPrices.silver45} :platinum: — 65 :ducats: / ${listPrices.silver65} :platinum: — 100 :ducats: / ${listPrices.gold} :platinum:`;
+                } else if (isPrimeJunk) {
                   const partDetails = listing.partDistribution ? ` [${listing.partDistribution}]` : '';
                   tradeText = isWTS
                     ? `/w ${listing.sellerIGN} Hi! I want to buy your Bulk Prime Junk Bundle${partDetails} (${listing.totalParts} parts for ${listing.price}p)`
@@ -2368,7 +2460,11 @@ export default function MarketTab({
                       {/* Top seller tag & verification */}
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded ${
-                          isPrimeJunk 
+                          listing.isRateBased
+                            ? (isWTS 
+                                ? 'bg-amber-950/35 text-amber-400 border border-amber-900/40' 
+                                : 'bg-teal-950/35 text-teal-400 border border-teal-900/40')
+                            : isPrimeJunk 
                             ? (isWTS 
                                 ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/30 font-semibold' 
                                 : 'bg-blue-950/20 text-blue-400 border border-blue-900/40')
@@ -2376,7 +2472,7 @@ export default function MarketTab({
                                 ? 'bg-rose-950/20 text-[#e06d6d] border border-rose-900/30' 
                                 : 'bg-blue-950/20 text-blue-400 border border-blue-900/35')
                         }`}>
-                          {isPrimeJunk ? `PRIME JUNK (${listing.type})` : listing.type}
+                          {listing.isRateBased ? `RATE-BASED JUNK (${listing.type})` : isPrimeJunk ? `PRIME JUNK (${listing.type})` : listing.type}
                         </span>
 
                         <span className="font-mono text-xs font-semibold text-[#e0e1e6] flex items-center gap-1 uppercase select-all">
@@ -2403,7 +2499,42 @@ export default function MarketTab({
                       </div>
 
                       {/* Item and Quantity details */}
-                      {isPrimeJunk ? (
+                      {listing.isRateBased ? (
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-baseline gap-2.5">
+                            <h4 className={`text-[13px] font-extrabold tracking-wide uppercase font-sans text-amber-500`}>
+                              {listing.itemName}
+                            </h4>
+                            <span className="text-xs text-zinc-500 font-sans">
+                              Trade based on rarity rates below — Whisper to initiate deal!
+                            </span>
+                          </div>
+
+                          {/* Rate distribution chips */}
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-0.5">
+                            <div className="text-[10px] bg-[#0c0d10] border border-[#cd7f32]/25 p-2 rounded flex flex-col justify-between font-mono">
+                              <span className="text-[#cd7f32] font-semibold">Bronze (15d)</span>
+                              <span className="text-white font-extrabold text-xs mt-1">{listPrices.bronze15}p <span className="text-[9px] text-zinc-500 font-normal">each</span></span>
+                            </div>
+                            <div className="text-[10px] bg-[#0c0d10] border border-[#cd7f32]/45 p-2 rounded flex flex-col justify-between font-mono">
+                              <span className="text-[#cd7f32] font-semibold">Bronze (25d)</span>
+                              <span className="text-white font-extrabold text-xs mt-1">{listPrices.bronze25}p <span className="text-[9px] text-zinc-500 font-normal">each</span></span>
+                            </div>
+                            <div className="text-[10px] bg-[#0c0d10] border border-slate-700/50 p-2 rounded flex flex-col justify-between font-mono">
+                              <span className="text-slate-300 font-semibold">Silver (45d)</span>
+                              <span className="text-white font-extrabold text-xs mt-1">{listPrices.silver45}p <span className="text-[9px] text-zinc-500 font-normal">each</span></span>
+                            </div>
+                            <div className="text-[10px] bg-[#0c0d10] border border-slate-600/60 p-2 rounded flex flex-col justify-between font-mono">
+                              <span className="text-slate-300 font-semibold">Silver (65d)</span>
+                              <span className="text-white font-extrabold text-xs mt-1">{listPrices.silver65}p <span className="text-[9px] text-zinc-500 font-normal">each</span></span>
+                            </div>
+                            <div className="text-[10px] bg-[#0c0d10] border border-[#d4af37]/25 p-2 rounded flex flex-col justify-between font-mono">
+                              <span className="text-[#d4af37] font-semibold">Gold (100d)</span>
+                              <span className="text-white font-extrabold text-xs mt-1">{listPrices.gold}p <span className="text-[9px] text-zinc-500 font-normal">each</span></span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : isPrimeJunk ? (
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-baseline gap-2.5">
                             <h4 className={`text-[13px] font-extrabold tracking-wide uppercase font-sans ${isWTS ? 'text-[#e06d6d]' : 'text-blue-400'}`}>
@@ -2552,7 +2683,18 @@ export default function MarketTab({
 
                       {/* Owner Operations to manage or clear active listed rows */}
                       {isOwner ? (
-                        <div className="flex items-center gap-1 mt-1.5">
+                        <div className="flex items-center gap-1 mt-1.5 flex-wrap justify-end">
+                          {isPrimeJunk && (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleListingType(listing.id, !!listing.isRateBased, listing.totalParts, listing.price)}
+                              disabled={actionLoading}
+                              className="px-2.5 py-1 bg-amber-950/25 hover:bg-amber-950/45 border border-amber-900/30 text-amber-400 rounded text-[9px] font-bold uppercase transition select-none cursor-pointer flex items-center gap-1"
+                              title="Transform this listing type dynamically"
+                            >
+                              <span>{listing.isRateBased ? '🔄 Count-Based' : '🔄 Rate-Based'}</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleMarkListingStatus(listing.id, 'sold')}
