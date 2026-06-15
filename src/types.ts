@@ -90,6 +90,7 @@ export interface SavedItemEntry {
   name: string;
   source: 'manual' | 'directory' | 'ocr';
   counts: InventoryCount;
+  prices?: InventoryCount; // optional individual part pricing [b15, b25, s45, s65, g]
   timestamp: string;
   totalDucats: number;
   totalItems: number;

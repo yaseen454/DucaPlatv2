@@ -266,6 +266,25 @@ export default function App() {
     }
   };
 
+  const handleUpdateEntryPrices = async (id: string, prices: InventoryCount) => {
+    const currentAuthUser = auth.currentUser;
+    if (currentAuthUser) {
+      try {
+        const { doc, updateDoc } = await import("firebase/firestore");
+        const docRef = doc(db, "users", currentAuthUser.uid, "savedItems", id);
+        await updateDoc(docRef, { prices });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${currentAuthUser.uid}/savedItems/${id}`);
+      }
+    } else {
+       const updated = savedInventories.map(item => item.id === id ? { ...item, prices } : item);
+       setSavedInventories(updated);
+       try {
+         localStorage.setItem('ducaplat_saved_inventories', JSON.stringify(updated));
+       } catch (e) {}
+    }
+  };
+
   const handleDeleteSavedInventory = async (id: string) => {
     const currentAuthUser = auth.currentUser;
     if (currentAuthUser) {
@@ -886,6 +905,7 @@ export default function App() {
                 onDeleteEntry={handleDeleteSavedInventory}
                 onClearAll={handleClearAllSavedInventories}
                 onNavigateToCalculator={() => setActiveTab('Calculator')}
+                onUpdateEntryPrices={handleUpdateEntryPrices}
               />
             )}
 

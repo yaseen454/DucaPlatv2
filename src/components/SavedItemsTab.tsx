@@ -16,10 +16,12 @@ import {
   Database,
   RefreshCw,
   SlidersHorizontal,
-  BookmarkX
+  BookmarkX,
+  TrendingUp
 } from 'lucide-react';
 import platinumIcon from '../data/platinum.png';
 import ducatIcon from '../data/480px-OrokinDucats.png';
+import AnovaPricingModal from './AnovaPricingModal';
 
 function PlatValue({ val, size = "w-3 h-3", className = "" }: { val: string | number; size?: string; className?: string }) {
   return (
@@ -56,6 +58,7 @@ interface SavedItemsTabProps {
   onDeleteEntry: (id: string) => void;
   onClearAll: () => void;
   onNavigateToCalculator?: () => void;
+  onUpdateEntryPrices?: (id: string, prices: InventoryCount) => void;
 }
 
 export default function SavedItemsTab({
@@ -64,7 +67,8 @@ export default function SavedItemsTab({
   onRenameEntry,
   onDeleteEntry,
   onClearAll,
-  onNavigateToCalculator
+  onNavigateToCalculator,
+  onUpdateEntryPrices
 }: SavedItemsTabProps) {
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'directory' | 'ocr'>('all');
@@ -75,6 +79,9 @@ export default function SavedItemsTab({
   const [editingText, setEditingText] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Pricing configuration modal state
+  const [selectedEntryForPricing, setSelectedEntryForPricing] = useState<SavedItemEntry | null>(null);
 
   const startRename = (id: string, currentName: string) => {
     setEditingId(id);
@@ -321,28 +328,49 @@ export default function SavedItemsTab({
                     )}
 
                     {/* Breakdown distribution display */}
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 max-w-2xl pt-2.5">
-                      <div className="bg-[#14161c]/40 border border-[#cd7f32]/25 rounded p-1.5 px-2 text-center">
-                        <span className="block text-[8px] uppercase tracking-wider text-[#cd7f32]">B15</span>
-                        <strong className="text-zinc-200 font-mono text-xs">{entry.counts.bronze15}</strong>
-                      </div>
-                      <div className="bg-[#14161c]/40 border border-[#cd7f32]/45 rounded p-1.5 px-2 text-center">
-                        <span className="block text-[8px] uppercase tracking-wider text-[#cd7f32]">B25</span>
-                        <strong className="text-zinc-200 font-mono text-xs">{entry.counts.bronze25}</strong>
-                      </div>
-                      <div className="bg-[#14161c]/40 border border-[#c0c0c0]/25 rounded p-1.5 px-2 text-center">
-                        <span className="block text-[8px] uppercase tracking-wider text-[#c0c0c0]">S45</span>
-                        <strong className="text-zinc-200 font-mono text-xs">{entry.counts.silver45}</strong>
-                      </div>
-                      <div className="bg-[#14161c]/40 border border-[#c0c0c0]/45 rounded p-1.5 px-2 text-center">
-                        <span className="block text-[8px] uppercase tracking-wider text-[#c0c0c0]">S65</span>
-                        <strong className="text-zinc-200 font-mono text-xs">{entry.counts.silver65}</strong>
-                      </div>
-                      <div className="bg-[#14161c]/40 border border-[#d4af37]/35 rounded p-1.5 px-2 text-center col-span-2 sm:col-span-1">
-                        <span className="block text-[8px] uppercase tracking-wider text-[#d4af37]">G100</span>
-                        <strong className="text-zinc-200 font-mono text-xs">{entry.counts.gold}</strong>
-                      </div>
-                    </div>
+                    {(() => {
+                      const entryPrices = entry.prices || { bronze15: 1, bronze25: 2, silver45: 3, silver65: 5, gold: 8 };
+                      const totalPlatValue = entry.counts.bronze15 * entryPrices.bronze15 +
+                                             entry.counts.bronze25 * entryPrices.bronze25 +
+                                             entry.counts.silver45 * entryPrices.silver45 +
+                                             entry.counts.silver65 * entryPrices.silver65 +
+                                             entry.counts.gold * entryPrices.gold;
+
+                      return (
+                        <div className="space-y-2 pt-1">
+                          <div className="text-[10px] text-zinc-500 font-mono">
+                            Assigned Rarity Pricing Distribution:
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 max-w-2xl">
+                            <div className="bg-[#14161c]/40 border border-[#cd7f32]/25 rounded p-1.5 px-2 text-center">
+                              <span className="block text-[8px] uppercase tracking-wider text-[#cd7f32]">B15</span>
+                              <strong className="text-zinc-200 font-mono text-xs">{entry.counts.bronze15}</strong>
+                              <span className="block text-[8px] text-zinc-500 font-mono mt-0.5">@{entryPrices.bronze15}p</span>
+                            </div>
+                            <div className="bg-[#14161c]/40 border border-[#cd7f32]/45 rounded p-1.5 px-2 text-center">
+                              <span className="block text-[8px] uppercase tracking-wider text-[#cd7f32]">B25</span>
+                              <strong className="text-zinc-200 font-mono text-xs">{entry.counts.bronze25}</strong>
+                              <span className="block text-[8px] text-zinc-500 font-mono mt-0.5">@{entryPrices.bronze25}p</span>
+                            </div>
+                            <div className="bg-[#14161c]/40 border border-[#c0c0c0]/25 rounded p-1.5 px-2 text-center">
+                              <span className="block text-[8px] uppercase tracking-wider text-[#c0c0c0]">S45</span>
+                              <strong className="text-zinc-200 font-mono text-xs">{entry.counts.silver45}</strong>
+                              <span className="block text-[8px] text-zinc-500 font-mono mt-0.5">@{entryPrices.silver45}p</span>
+                            </div>
+                            <div className="bg-[#14161c]/40 border border-[#c0c0c0]/45 rounded p-1.5 px-2 text-center">
+                              <span className="block text-[8px] uppercase tracking-wider text-[#c0c0c0]">S65</span>
+                              <strong className="text-zinc-200 font-mono text-xs">{entry.counts.silver65}</strong>
+                              <span className="block text-[8px] text-zinc-500 font-mono mt-0.5">@{entryPrices.silver65}p</span>
+                            </div>
+                            <div className="bg-[#14161c]/40 border border-[#d4af37]/35 rounded p-1.5 px-2 text-center col-span-2 sm:col-span-1">
+                              <span className="block text-[8px] uppercase tracking-wider text-[#d4af37]">G100</span>
+                              <strong className="text-zinc-200 font-mono text-xs">{entry.counts.gold}</strong>
+                              <span className="block text-[8px] text-zinc-500 font-mono mt-0.5">@{entryPrices.gold}p</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Quantitative aggregates & buttons right segment */}
@@ -354,6 +382,19 @@ export default function SavedItemsTab({
                       <div className="text-xs text-[#8e9299] flex items-center gap-1.5 md:justify-end">
                         Ducats: <strong className="text-[#d4af37] flex items-center"><DucatValue val={entry.totalDucats} size="w-3.5 h-3.5" className="text-[#d4af37]" /></strong>
                       </div>
+                      {(() => {
+                        const entryPrices = entry.prices || { bronze15: 1, bronze25: 2, silver45: 3, silver65: 5, gold: 8 };
+                        const totalPlatValue = entry.counts.bronze15 * entryPrices.bronze15 +
+                                               entry.counts.bronze25 * entryPrices.bronze25 +
+                                               entry.counts.silver45 * entryPrices.silver45 +
+                                               entry.counts.silver65 * entryPrices.silver65 +
+                                               entry.counts.gold * entryPrices.gold;
+                        return (
+                          <div className="text-xs text-[#8e9299] flex items-center gap-1.5 md:justify-end">
+                            Est. Plat Yield: <strong className="text-emerald-400 flex items-center"><PlatValue val={totalPlatValue} size="w-3.5 h-3.5" className="text-emerald-400 font-bold" /></strong>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -388,6 +429,13 @@ export default function SavedItemsTab({
                             <Trash2 className="w-4 h-4" />
                           </button>
                           <button
+                            onClick={() => setSelectedEntryForPricing(entry)}
+                            className="p-2 text-[#d4af37] bg-[#d4af37]/5 hover:bg-[#d4af37]/15 border border-[#d4af37]/25 hover:border-[#d4af37]/45 rounded-lg transition duration-150 cursor-pointer"
+                            title="Set individual rarity prices or run ANOVA patterns"
+                          >
+                            <SlidersHorizontal className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => onUseEntry(entry.counts)}
                             className="px-4 py-2 bg-[#d4af37] hover:bg-[#b08d26] text-black font-semibold text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
                           >
@@ -405,6 +453,21 @@ export default function SavedItemsTab({
           </div>
 
         </div>
+      )}
+
+      {selectedEntryForPricing && (
+        <AnovaPricingModal
+          isOpen={true}
+          onClose={() => setSelectedEntryForPricing(null)}
+          title={selectedEntryForPricing.name}
+          counts={selectedEntryForPricing.counts}
+          initialPrices={selectedEntryForPricing.prices}
+          onApplyPrices={(prices) => {
+            if (onUpdateEntryPrices) {
+              onUpdateEntryPrices(selectedEntryForPricing.id, prices);
+            }
+          }}
+        />
       )}
 
     </div>

@@ -46,6 +46,7 @@ import { InventoryCount } from '../types';
 import { getProfitStats, generateCostsCustom } from '../utils/mathUtils';
 import platinumIcon from '../data/platinum.png';
 import ducatIcon from '../data/480px-OrokinDucats.png';
+import AnovaPricingModal from './AnovaPricingModal';
 
 // Generate WF-VERIFY-[8 alphanumeric] token
 function generateVerifyToken(): string {
@@ -243,6 +244,19 @@ export default function MarketTab({
     gold: 0
   });
 
+  const totalParts = (bulkCounts.bronze15 || 0) + 
+    (bulkCounts.bronze25 || 0) + 
+    (bulkCounts.silver45 || 0) + 
+    (bulkCounts.silver65 || 0) + 
+    (bulkCounts.gold || 0);
+
+  const totalDucats = 
+    (bulkCounts.bronze15 || 0) * 15 + 
+    (bulkCounts.bronze25 || 0) * 25 + 
+    (bulkCounts.silver45 || 0) * 45 + 
+    (bulkCounts.silver65 || 0) * 65 + 
+    (bulkCounts.gold || 0) * 100;
+
   const loadSavedTrades = () => {
     try {
       const existing = localStorage.getItem('saved_trades_for_market');
@@ -283,6 +297,14 @@ export default function MarketTab({
   const [standardNote, setStandardNote] = useState('');
   const [bulkNote, setBulkNote] = useState('');
   const [bulkPriceCustom, setBulkPriceCustom] = useState<number | null>(null);
+  const [bulkRarityPrices, setBulkRarityPrices] = useState<InventoryCount>({
+    bronze15: 1,
+    bronze25: 2,
+    silver45: 3,
+    silver65: 5,
+    gold: 8
+  });
+  const [isBulkAnovaOpen, setIsBulkAnovaOpen] = useState(false);
   
   // Statuses
   const [verifying, setVerifying] = useState(false);
@@ -730,7 +752,12 @@ export default function MarketTab({
       (bulkCounts.silver65 || 0) * 65 + 
       (bulkCounts.gold || 0) * 100;
 
-    const finalPrice = bulkPriceCustom !== null ? bulkPriceCustom : Math.round(totalDucats / 25);
+    const finalPrice = (bulkCounts.bronze15 || 0) * (bulkRarityPrices.bronze15 || 0) +
+                       (bulkCounts.bronze25 || 0) * (bulkRarityPrices.bronze25 || 0) +
+                       (bulkCounts.silver45 || 0) * (bulkRarityPrices.silver45 || 0) +
+                       (bulkCounts.silver65 || 0) * (bulkRarityPrices.silver65 || 0) +
+                       (bulkCounts.gold || 0) * (bulkRarityPrices.gold || 0);
+
     const tradesRequired = Math.ceil(totalParts / 6);
 
     const distList = [];
@@ -757,6 +784,7 @@ export default function MarketTab({
         note: bulkNote.trim(),
         isPrimeJunk: true,
         counts: { ...bulkCounts },
+        rarityPrices: { ...bulkRarityPrices },
         totalDucats,
         totalParts,
         partDistribution,
@@ -764,7 +792,7 @@ export default function MarketTab({
         createdAt: serverTimestamp()
       });
 
-      setSuccessMsg(`✓ Bulk Prime Junk Bundle successfully listed as ${bulkListType}! ${totalParts} parts for ${finalPrice} Plat (${totalDucats} Ducats).`);
+      setSuccessMsg(`✓ Bulk Prime Junk Bundle successfully listed as ${bulkListType}! ${totalParts} parts for ${finalPrice} Plat. (${totalDucats} Ducats).`);
       setBulkCounts({
         bronze15: 0,
         bronze25: 0,
@@ -774,6 +802,13 @@ export default function MarketTab({
       });
       setBulkNote('');
       setBulkPriceCustom(null);
+      setBulkRarityPrices({
+        bronze15: 1,
+        bronze25: 2,
+        silver45: 3,
+        silver65: 5,
+        gold: 8
+      });
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'listings');
       setErrorMsg('Failed to publish bulk junk listing.');
@@ -1207,12 +1242,19 @@ export default function MarketTab({
                   (bulkCounts.silver45 || 0) * 45 + 
                   (bulkCounts.silver65 || 0) * 65 + 
                   (bulkCounts.gold || 0) * 100;
-                const pricePlat = Math.round(totalDucats / 25);
+                
+                const sumPricePlat = 
+                  (bulkCounts.bronze15 || 0) * (bulkRarityPrices.bronze15 || 0) +
+                  (bulkCounts.bronze25 || 0) * (bulkRarityPrices.bronze25 || 0) +
+                  (bulkCounts.silver45 || 0) * (bulkRarityPrices.silver45 || 0) +
+                  (bulkCounts.silver65 || 0) * (bulkRarityPrices.silver65 || 0) +
+                  (bulkCounts.gold || 0) * (bulkRarityPrices.gold || 0);
+
                 const tradesRequired = Math.ceil(totalParts / 6);
 
                 return (
-                  <div className="bg-[#0c0d10] p-4 rounded-xl border border-[#2a2c33]/80 space-y-3">
-                    <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Computed Bundle Stats</h4>
+                  <div className="bg-[#0c0d10] p-4 rounded-xl border border-[#2a2c33]/80 space-y-4">
+                    <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Dynamic Bundle Appraisal</h4>
                     <div className="grid grid-cols-2 gap-3.5 pt-1">
                       <div className="space-y-0.5">
                         <span className="text-[10px] text-[#8e9299] uppercase">Total Parts Selected</span>
@@ -1230,94 +1272,97 @@ export default function MarketTab({
                         <div className="text-pink-400 text-base font-mono font-extrabold">{tradesRequired} <span className="text-[10px] text-zinc-500 font-normal font-sans">trades (max 6/trade)</span></div>
                       </div>
                       <div className="space-y-0.5">
-                        <span className="text-[10px] text-[#d4af37] uppercase">Final Price (25:1 Gold Ratio)</span>
+                        <span className="text-[10px] text-[#d4af37] uppercase">Summed Total Bundle Price</span>
                         <div className="text-emerald-400 text-base font-mono font-extrabold flex items-center gap-0.5">
-                          <span>{pricePlat}</span>
+                          <span>{sumPricePlat}</span>
                           <img src={platinumIcon} className="w-4 h-4 object-contain inline" alt="Pt" referrerPolicy="no-referrer" />
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-[10px] text-amber-500 leading-normal p-2.5 bg-amber-950/10 border border-amber-900/20 rounded-md">
-                      ⚠️ Note: Players do not buy components individually. Buyers will purchase the entire bulk bundle.
+                    <div className="text-[10px] text-[#8e9299] leading-normal p-2.5 bg-zinc-950/40 border border-zinc-900 rounded-md">
+                      Formula: <strong className="text-zinc-300 font-mono">({bulkCounts.bronze15 || 0}x{bulkRarityPrices.bronze15}p + {bulkCounts.bronze25 || 0}x{bulkRarityPrices.bronze25}p + {bulkCounts.silver45 || 0}x{bulkRarityPrices.silver45}p + {bulkCounts.silver65 || 0}x{bulkRarityPrices.silver65}p + {bulkCounts.gold || 0}x{bulkRarityPrices.gold}p) = {sumPricePlat}p</strong>
                     </div>
 
-                    {/* Statistical suggestions & overrides */}
-                    {(() => {
-                      const suggestion = getListingPriceSuggestion(bulkCounts);
-                      if (!suggestion) return null;
-                      return (
-                        <div className="bg-[#14161c]/30 p-3.5 rounded-lg border border-[#2a2c33] text-xs text-zinc-400 space-y-2">
-                          <div className="flex items-center gap-1.5 text-[#d4af37] font-semibold text-[11px] uppercase tracking-wider">
-                            <TrendingUp className="w-3.5 h-3.5" />
-                            <span>ANOVA Pricing Insights</span>
-                          </div>
-                          <p className="text-[10px] text-zinc-500 leading-normal">
-                            Statistical ANOVA analysis recommends these platinum prices based on active market configurations:
-                          </p>
-                          <div className="grid grid-cols-3 gap-2 text-center pt-0.5">
-                            <div className="p-1.5 bg-[#0c0d10] rounded border border-zinc-950">
-                              <span className="block text-[8px] text-[#8e9299] uppercase font-mono">Statistical Min</span>
-                              <span className="text-xs font-mono font-bold text-zinc-300">{suggestion.min}p</span>
-                            </div>
-                            <div className="p-1.5 bg-[#0c0d10] rounded border border-[#d4af37]/25">
-                              <span className="block text-[8px] text-[#d4af37] uppercase font-mono font-extrabold">Expected Avg</span>
-                              <span className="text-xs font-mono font-extrabold text-[#d4af37]">{suggestion.average}p</span>
-                            </div>
-                            <div className="p-1.5 bg-[#0c0d10] rounded border border-zinc-950">
-                              <span className="block text-[8px] text-[#8e9299] uppercase font-mono">Max Strategy</span>
-                              <span className="text-xs font-mono font-bold text-zinc-300">{suggestion.max}p</span>
-                            </div>
-                          </div>
-                          <div className="flex gap-2 justify-end pt-1">
-                            <button
-                              type="button"
-                              onClick={() => setBulkPriceCustom(suggestion.average)}
-                              className="text-[9px] text-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37]/20 px-2.5 py-1 rounded border border-[#d4af37]/25 font-bold uppercase tracking-wider cursor-pointer"
-                            >
-                              Apply Expected ({suggestion.average}p)
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setBulkPriceCustom(suggestion.min)}
-                              className="text-[9px] text-zinc-400 bg-zinc-950 hover:bg-zinc-900 px-2.5 py-1 rounded border border-zinc-900 font-bold uppercase tracking-wider cursor-pointer"
-                            >
-                              Apply Min ({suggestion.min}p)
-                            </button>
-                          </div>
+                    {/* Integrated ANOVA modal triggers */}
+                    <div className="bg-[#14161c]/50 p-3 rounded-lg border border-[#2a2c33] text-xs text-zinc-400 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-[#d4af37] font-semibold text-[10px] uppercase tracking-wider">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          <span>ANOVA STRATEGIC PRICING</span>
                         </div>
-                      );
-                    })()}
+                        <button
+                          type="button"
+                          onClick={() => setIsBulkAnovaOpen(true)}
+                          className="text-[9px] text-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37]/20 px-2.5 py-1 rounded border border-[#d4af37]/25 font-bold uppercase tracking-wider cursor-pointer flex items-center gap-1"
+                        >
+                          Launch Pricing Wizard
+                        </button>
+                      </div>
+                      <p className="text-[9px] text-zinc-500 leading-normal">
+                        Not sure how to price your items? Click to run automated ANOVA regression models on active trade sets and apply high-performing strategy patterns instantly.
+                      </p>
+                    </div>
 
-                    {/* Custom override price */}
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between">
-                        <span>Custom Bundle Price (Plat)</span>
-                        {bulkPriceCustom !== null && (
-                          <button 
-                            type="button" 
-                            onClick={() => setBulkPriceCustom(null)}
-                            className="text-[9px] text-zinc-400 hover:text-white underline cursor-pointer"
-                          >
-                            Reset to Default
-                          </button>
-                        )}
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          min="0"
-                          placeholder={`Default: ${pricePlat}p (Gold Ratio 25:1)`}
-                          value={bulkPriceCustom !== null ? bulkPriceCustom : ''}
-                          onChange={(e) => {
-                            const valStr = e.target.value;
-                            setBulkPriceCustom(valStr === '' ? null : Math.max(0, parseInt(valStr) || 0));
-                          }}
-                          className="w-full bg-[#0c0d10] border border-[#2a2c33] focus:border-[#d4af37]/50 rounded-lg px-3 py-2 text-xs text-white focus:outline-none placeholder-zinc-650 font-mono"
-                        />
-                        <img src={platinumIcon} className="absolute right-3 top-2.5 w-4 h-4 object-contain" alt="Pt" />
+                    {/* Manual fine-tuning inputs */}
+                    <div className="space-y-2 pt-2 border-t border-zinc-900">
+                      <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Fine-Tune Individual Part Prices (Plat):</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
+                          <span className="block text-[8px] uppercase tracking-wider text-[#cd7f32]">B15 (Bronze)</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={bulkRarityPrices.bronze15}
+                            onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, bronze15: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
+                          />
+                        </div>
+                        <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
+                          <span className="block text-[8px] uppercase tracking-wider text-[#cd7f32]">B25 (Bronze)</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={bulkRarityPrices.bronze25}
+                            onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, bronze25: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
+                          />
+                        </div>
+                        <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
+                          <span className="block text-[8px] uppercase tracking-wider text-zinc-300">S45 (Silver)</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={bulkRarityPrices.silver45}
+                            onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, silver45: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
+                          />
+                        </div>
+                        <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1">
+                          <span className="block text-[8px] uppercase tracking-wider text-zinc-300">S65 (Silver)</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={bulkRarityPrices.silver65}
+                            onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, silver65: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
+                          />
+                        </div>
+                        <div className="p-2 bg-[#0c0d10] border border-zinc-800 rounded text-center space-y-1 col-span-2 sm:col-span-1">
+                          <span className="block text-[8px] uppercase tracking-wider text-[#d4af37]">G100 (Gold)</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={bulkRarityPrices.gold}
+                            onChange={(e) => setBulkRarityPrices(prev => ({ ...prev, gold: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-full bg-[#14161c] border border-zinc-800 text-center font-mono text-xs rounded py-0.5 focus:outline-none focus:border-[#d4af37] text-white"
+                          />
+                        </div>
                       </div>
                     </div>
+                  </div>
+                );
+              })()}
 
                     {/* Custom note */}
                     <div className="space-y-1.5">
@@ -1367,9 +1412,6 @@ export default function MarketTab({
                       )}
                     </div>
                   </div>
-                );
-              })()}
-            </div>
 
             {/* Standard Post Trade Request card for verified players inside the Bulk Junk subtab */}
             {user && userVerification.status === 'verified' && (
@@ -2276,6 +2318,13 @@ export default function MarketTab({
                 const isPrimeJunk = !!listing.isPrimeJunk;
                 const isWTS = listing.type === 'WTS';
                 const isOwner = user && listing.sellerUid === user.uid;
+                const listPrices = listing.rarityPrices || {
+                  bronze15: 1,
+                  bronze25: 2,
+                  silver45: 3,
+                  silver65: 5,
+                  gold: 8
+                };
                 
                 // Copy-paste trade command for Warframe Chat
                 let tradeText = "";
@@ -2353,37 +2402,40 @@ export default function MarketTab({
                           {/* Part distribution chips */}
                           <div className="flex flex-wrap gap-1.5 pt-0.5">
                             {listing.counts && listing.counts.bronze15 > 0 && (
-                              <span className="text-[9px] font-mono px-2 py-0.5 bg-[#0c0d10] border border-[#cd7f32]/15 text-[#cd7f32] rounded">
-                                B15: <span className="text-[#e0e1e6] font-bold">{listing.counts.bronze15}</span>
+                              <span className="text-[9px] font-mono px-2 py-1 bg-[#0c0d10] border border-[#cd7f32]/25 text-[#cd7f32] rounded flex items-center gap-1">
+                                B15: <span className="text-[#e0e1e6] font-bold">{listing.counts.bronze15}</span> <span className="text-zinc-500 font-normal">(@ {listPrices.bronze15}p)</span>
                               </span>
                             )}
                             {listing.counts && listing.counts.bronze25 > 0 && (
-                              <span className="text-[9px] font-mono px-2 py-0.5 bg-[#0c0d10] border border-[#cd7f32]/25 text-[#cd7f32] rounded">
-                                B25: <span className="text-[#e0e1e6] font-bold">{listing.counts.bronze25}</span>
+                              <span className="text-[9px] font-mono px-2 py-1 bg-[#0c0d10] border border-[#cd7f32]/35 text-[#cd7f32] rounded flex items-center gap-1">
+                                B25: <span className="text-[#e0e1e6] font-bold">{listing.counts.bronze25}</span> <span className="text-zinc-500 font-normal">(@ {listPrices.bronze25}p)</span>
                               </span>
                             )}
                             {listing.counts && listing.counts.silver45 > 0 && (
-                              <span className="text-[9px] font-mono px-2 py-0.5 bg-[#0c0d10] border border-slate-700/50 text-slate-300 rounded">
-                                S45: <span className="text-[#e0e1e6] font-bold">{listing.counts.silver45}</span>
+                              <span className="text-[9px] font-mono px-2 py-1 bg-[#0c0d10] border border-slate-700/50 text-slate-300 rounded flex items-center gap-1">
+                                S45: <span className="text-[#e0e1e6] font-bold">{listing.counts.silver45}</span> <span className="text-zinc-500 font-normal">(@ {listPrices.silver45}p)</span>
                               </span>
                             )}
                             {listing.counts && listing.counts.silver65 > 0 && (
-                              <span className="text-[9px] font-mono px-2 py-0.5 bg-[#0c0d10] border border-slate-600/60 text-slate-300 rounded">
-                                S65: <span className="text-[#e0e1e6] font-bold">{listing.counts.silver65}</span>
+                              <span className="text-[9px] font-mono px-2 py-1 bg-[#0c0d10] border border-slate-600/60 text-slate-300 rounded flex items-center gap-1">
+                                S65: <span className="text-[#e0e1e6] font-bold">{listing.counts.silver65}</span> <span className="text-zinc-500 font-normal">(@ {listPrices.silver65}p)</span>
                               </span>
                             )}
                             {listing.counts && listing.counts.gold > 0 && (
-                              <span className="text-[9px] font-mono px-2 py-0.5 bg-[#0c0d10] border border-[#d4af37]/15 text-[#d4af37] rounded">
-                                G100: <span className="text-[#e0e1e6] font-bold">{listing.counts.gold}</span>
+                              <span className="text-[9px] font-mono px-2 py-1 bg-[#0c0d10] border border-[#d4af37]/25 text-[#d4af37] rounded flex items-center gap-1">
+                                G100: <span className="text-[#e0e1e6] font-bold">{listing.counts.gold}</span> <span className="text-zinc-500 font-normal">(@ {listPrices.gold}p)</span>
                               </span>
                             )}
                           </div>
 
                           {/* Extra info metrics */}
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-zinc-400 font-mono">
+                          <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-zinc-400 font-mono items-center">
                             <span>Total Parts: <span className="text-white font-extrabold">{listing.totalParts}</span></span>
                             <span className="flex items-center gap-0.5">Total Ducats: <span className="text-[#d4af37] font-extrabold">{listing.totalDucats}</span><img src={ducatIcon} className="w-3 h-3 object-contain inline" alt="D" referrerPolicy="no-referrer" /></span>
                             <span className="text-pink-400">Trades Needed: <span className="font-extrabold">{listing.tradesRequired}</span></span>
+                            <span className="text-emerald-400 flex items-center gap-1 bg-[#101915] px-2 py-0.5 rounded border border-emerald-900/30 font-semibold text-[9px]">
+                              Value: {(listing.counts?.bronze15 || 0)}x{listPrices.bronze15}p + {(listing.counts?.bronze25 || 0)}x{listPrices.bronze25}p + {(listing.counts?.silver45 || 0)}x{listPrices.silver45}p + {(listing.counts?.silver65 || 0)}x{listPrices.silver65}p + {(listing.counts?.gold || 0)}x{listPrices.gold}p = <span className="text-emerald-300 font-extrabold flex items-center gap-0.5">{listing.price} <img src={platinumIcon} className="w-2.5 h-2.5 object-contain inline" alt="Pt" /></span>
+                            </span>
                           </div>
                         </div>
                       ) : (
@@ -2556,6 +2608,19 @@ export default function MarketTab({
             </div>
           </div>
         </div>
+      )}
+      {isBulkAnovaOpen && (
+        <AnovaPricingModal
+          isOpen={true}
+          onClose={() => setIsBulkAnovaOpen(false)}
+          title="Bulk Bundle ANOVA Wizard"
+          counts={bulkCounts}
+          initialPrices={bulkRarityPrices}
+          onApplyPrices={(prices) => {
+            setBulkRarityPrices(prices);
+            setIsBulkAnovaOpen(false);
+          }}
+        />
       )}
     </div>
   );

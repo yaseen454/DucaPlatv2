@@ -44,7 +44,8 @@ service cloud.firestore {
         && data.timestamp is string && data.timestamp.size() <= 100
         && data.totalDucats is int && data.totalDucats >= 0
         && data.totalItems is int && data.totalItems >= 0
-        && data.counts is map;
+        && data.counts is map
+        && (!('prices' in data) || data.prices is map);
     }
 
     function isValidListing(data) {

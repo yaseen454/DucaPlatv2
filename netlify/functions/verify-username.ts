@@ -259,7 +259,7 @@ export const handler: Handler = async (event) => {
       wfmUserData = wfmData.data; // Extract the nested user profile directly
 
       if (!wfmUserData || !wfmUserData.id) {
-        console.warn(`[Verifier] Invalid WFM response structure for: ${normalizedIGN}`);
+        console.warn(`[Verifier] Invalid WFM response structure for: ${normalizedSlug}`);
         return {
           statusCode: 500,
           headers: { "Content-Type": "application/json" },
