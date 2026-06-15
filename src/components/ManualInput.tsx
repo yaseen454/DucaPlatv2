@@ -42,7 +42,7 @@ interface ManualInputProps {
   onChange: (counts: InventoryCount) => void;
   onCalculate: () => void;
   activeConfig: PriceRangesConfig;
-  onSaveToItems?: (counts: InventoryCount, name?: string) => void;
+  onSaveToItems?: (counts: InventoryCount, name?: string, source?: 'manual' | 'directory' | 'ocr' | 'trades') => void;
   onNavigateToSettings?: () => void;
   calcType: 1 | 2;
   onChangeCalcType: (type: 1 | 2) => void;
@@ -64,17 +64,10 @@ export default function ManualInput({
 
   const handleSaveToTrades = () => {
     try {
-      const existing = localStorage.getItem('saved_trades_for_market');
-      const trades = existing ? JSON.parse(existing) : [];
-      const title = saveName.trim() || `Manual Junker Grid (${new Date().toLocaleDateString()})`;
-      const newTrade = {
-        id: 'trade_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        name: title,
-        counts: { ...counts },
-        timestamp: new Date().toLocaleString()
-      };
-      trades.unshift(newTrade);
-      localStorage.setItem('saved_trades_for_market', JSON.stringify(trades));
+      if (onSaveToItems) {
+        onSaveToItems({ ...counts }, saveName.trim() || undefined, 'trades');
+        setSaveName('');
+      }
       setTradeSuccess(true);
       setTimeout(() => setTradeSuccess(false), 2200);
     } catch (e) {

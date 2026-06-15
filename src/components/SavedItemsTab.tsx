@@ -58,7 +58,10 @@ interface SavedItemsTabProps {
   onDeleteEntry: (id: string) => void;
   onClearAll: () => void;
   onNavigateToCalculator?: () => void;
+  onNavigateToSettings?: () => void;
   onUpdateEntryPrices?: (id: string, prices: InventoryCount) => void;
+  narrowConfig?: any;
+  broadConfig?: any;
 }
 
 export default function SavedItemsTab({
@@ -68,10 +71,13 @@ export default function SavedItemsTab({
   onDeleteEntry,
   onClearAll,
   onNavigateToCalculator,
-  onUpdateEntryPrices
+  onNavigateToSettings,
+  onUpdateEntryPrices,
+  narrowConfig,
+  broadConfig
 }: SavedItemsTabProps) {
   const [search, setSearch] = useState('');
-  const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'directory' | 'ocr'>('all');
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'directory' | 'ocr' | 'trades'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'parts' | 'ducats'>('newest');
   
   // Inline editing state
@@ -133,7 +139,8 @@ export default function SavedItemsTab({
   const sourceLabels = {
     manual: { text: "Manual Entry", style: "border-[#cd7f32]/30 bg-[#cd7f32]/10 text-orange-400" },
     directory: { text: "Directory Selection", style: "border-sky-500/30 bg-sky-950/20 text-sky-400" },
-    ocr: { text: "Image Scan", style: "border-[#d4af37]/30 bg-[#d4af37]/10 text-[#d4af37]" }
+    ocr: { text: "Image Scan", style: "border-[#d4af37]/30 bg-[#d4af37]/10 text-[#d4af37]" },
+    trades: { text: "Trade Preset", style: "border-emerald-600/30 bg-emerald-950/20 text-emerald-400 font-extrabold" }
   };
 
   return (
@@ -235,12 +242,13 @@ export default function SavedItemsTab({
               <select
                 value={sourceFilter}
                 onChange={(e: any) => setSourceFilter(e.target.value)}
-                className="bg-[#14161c] border border-[#2a2c33] rounded px-2.5 py-1 text-xs text-[#c4c5cc] focus:outline-none focus:border-[#d4af37]/60"
+                className="bg-[#14161c] border border-[#2a2c33] rounded px-2.5 py-1 text-xs text-[#c4c5cc] focus:outline-none focus:border-[#d4af37]/60 cursor-pointer"
               >
                 <option value="all">All Sources</option>
                 <option value="manual">Manual inputs only</option>
                 <option value="directory">Directory selections only</option>
                 <option value="ocr">Image scans only</option>
+                <option value="trades">Trade presets only</option>
               </select>
 
               <select
@@ -462,6 +470,9 @@ export default function SavedItemsTab({
           title={selectedEntryForPricing.name}
           counts={selectedEntryForPricing.counts}
           initialPrices={selectedEntryForPricing.prices}
+          narrowConfig={narrowConfig}
+          broadConfig={broadConfig}
+          onNavigateToSettings={onNavigateToSettings}
           onApplyPrices={(prices) => {
             if (onUpdateEntryPrices) {
               onUpdateEntryPrices(selectedEntryForPricing.id, prices);

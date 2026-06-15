@@ -32,7 +32,7 @@ interface DataSelectionProps {
   setSelectedRarity: (val: string) => void;
   selectedStatus: string;
   setSelectedStatus: (val: string) => void;
-  onSaveToItems?: (counts: InventoryCount, name?: string) => void;
+  onSaveToItems?: (counts: InventoryCount, name?: string, source?: 'manual' | 'directory' | 'ocr' | 'trades') => void;
 }
 
 export default function DataSelection({
@@ -54,17 +54,10 @@ export default function DataSelection({
 
   const handleDirectorySaveToTrades = () => {
     try {
-      const existing = localStorage.getItem('saved_trades_for_market');
-      const trades = existing ? JSON.parse(existing) : [];
-      const title = saveName.trim() || `Directory Preset (${new Date().toLocaleDateString()})`;
-      const newTrade = {
-        id: 'trade_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        name: title,
-        counts: { ...calculatedCounts },
-        timestamp: new Date().toLocaleString()
-      };
-      trades.unshift(newTrade);
-      localStorage.setItem('saved_trades_for_market', JSON.stringify(trades));
+      if (onSaveToItems) {
+        onSaveToItems({ ...calculatedCounts }, saveName.trim() || undefined, 'trades');
+        setSaveName('');
+      }
       setTradeSuccess(true);
       setTimeout(() => setTradeSuccess(false), 2200);
     } catch (e) {

@@ -28,7 +28,10 @@ import {
   ShieldAlert,
   Bookmark,
   Coffee,
-  ShoppingBag
+  ShoppingBag,
+  ArrowLeft,
+  Tag,
+  UserCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from './context/AuthContext';
@@ -36,6 +39,7 @@ import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('Home');
+  const [marketSubTab, setMarketSubTab] = useState<'browse' | 'saved' | 'saved_items' | 'manage'>('browse');
   const [counts, setCounts] = useState<InventoryCount>({
     bronze15: 0,
     bronze25: 0,
@@ -194,7 +198,7 @@ export default function App() {
   }, [user, initializing]);
 
   // Synchronous State race safe write operations (Rule 1: auth.currentUser direct lookups)
-  const handleSaveToItems = async (countsToSave: InventoryCount, customName?: string, source: 'manual' | 'directory' | 'ocr' = 'manual') => {
+  const handleSaveToItems = async (countsToSave: InventoryCount, customName?: string, source: 'manual' | 'directory' | 'ocr' | 'trades' = 'manual') => {
     const totalItems = countsToSave.bronze15 + countsToSave.bronze25 + countsToSave.silver45 + countsToSave.silver65 + countsToSave.gold;
     if (totalItems === 0) return;
 
@@ -208,7 +212,7 @@ export default function App() {
       second: '2-digit'
     });
 
-    const defaultName = `${source === 'manual' ? 'Manual Input' : source === 'directory' ? 'Directory Select' : 'Image Scan'} (${totalItems} items) — ${dateStr}`;
+    const defaultName = `${source === 'manual' ? 'Manual Input' : source === 'directory' ? 'Directory Select' : source === 'ocr' ? 'Image Scan' : 'Trade Preset'} (${totalItems} items) — ${dateStr}`;
 
     const newId = Date.now().toString();
     const newEntry: SavedItemEntry = {
@@ -456,37 +460,128 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main navigation ribbon */}
+      {/* Main navigation ribbon or New Live Market navigation bar */}
       <div className="flex justify-center border-b border-[#2a2c33] bg-[#0c0d10] px-2 sm:px-4 py-1">
-        <nav className="flex flex-wrap sm:flex-nowrap max-w-7xl w-full justify-center gap-1 sm:gap-1.5 md:gap-2">
-          {[
-            { id: 'Home', label: 'Welcome', icon: Compass },
-            { id: 'Calculator', label: 'Calculator', icon: Coins },
-            { id: 'DataSelection', label: 'Directory', icon: Search },
-            { id: 'OCR', label: 'Image Scan', icon: Clipboard },
-            { id: 'SavedItems', label: 'Saved Items', icon: Bookmark },
-            { id: 'Market', label: 'Live Market', icon: ShoppingBag },
-            { id: 'Settings', label: 'Settings', icon: Settings },
-            { id: 'Help', label: 'Guide', icon: HelpCircle }
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider ${
-                  active 
-                    ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5' 
-                    : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 md:w-3.5 md:h-3.5 ${active ? 'text-[#d4af37]' : 'text-[#8e9299]'}`} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
+        {activeTab === 'Market' ? (
+          <nav className="flex flex-wrap sm:flex-nowrap max-w-7xl w-full justify-center gap-1.5 sm:gap-2">
+            {/* Back to App button */}
+            <button
+              onClick={() => setActiveTab('Home')}
+              className="relative px-3 sm:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-bold flex items-center gap-1.5 border-b-2 border-transparent transition duration-200 select-none flex-shrink-0 uppercase tracking-wider text-[#d4af37] hover:text-white bg-[#d4af37]/5 hover:bg-[#d4af37]/10 rounded-md cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>Back to App</span>
+            </button>
+
+            {/* Custom separator on desktop/tablet */}
+            <div className="hidden sm:block h-6 w-px bg-[#2a2c33] my-auto mx-1" />
+
+            {/* Browse Listings */}
+            <button
+              onClick={() => setMarketSubTab('browse')}
+              className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                marketSubTab === 'browse'
+                  ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5'
+                  : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+              }`}
+            >
+              <ShoppingBag className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>Browse listings</span>
+            </button>
+
+            {/* Create listings */}
+            <button
+              onClick={() => setMarketSubTab('saved')}
+              className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                marketSubTab === 'saved'
+                  ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5'
+                  : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+              }`}
+            >
+              <Tag className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>Create listings</span>
+            </button>
+
+            {/* Saved Items */}
+            <button
+              onClick={() => setMarketSubTab('saved_items')}
+              className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                marketSubTab === 'saved_items'
+                  ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5'
+                  : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+              }`}
+            >
+              <Bookmark className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>Saved Items</span>
+            </button>
+
+            {/* My Trade Panel */}
+            <button
+              onClick={() => setMarketSubTab('manage')}
+              className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                marketSubTab === 'manage'
+                  ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5'
+                  : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+              }`}
+            >
+              <UserCheck className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>My Trade Panel & Verification</span>
+            </button>
+          </nav>
+        ) : (
+          <nav className="flex flex-wrap sm:flex-nowrap max-w-7xl w-full justify-center gap-1 sm:gap-1.5 md:gap-2">
+            {[
+              { id: 'Market', label: 'Live Market', icon: ShoppingBag },
+              { id: 'Home', label: 'Welcome', icon: Compass },
+              { id: 'Calculator', label: 'Calculator', icon: Coins },
+              { id: 'DataSelection', label: 'Directory', icon: Search },
+              { id: 'OCR', label: 'Image Scan', icon: Clipboard },
+              { id: 'SavedItems', label: 'Saved Items', icon: Bookmark },
+              { id: 'Settings', label: 'Settings', icon: Settings },
+              { id: 'Help', label: 'Guide', icon: HelpCircle }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const active = activeTab === tab.id;
+              const isLiveMarket = tab.id === 'Market';
+              
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (isLiveMarket) {
+                      setMarketSubTab('browse');
+                    }
+                  }}
+                  className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                    active 
+                      ? isLiveMarket
+                        ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/10 font-bold shadow-[0_0_15px_rgba(212,175,55,0.12)]'
+                        : 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5' 
+                      : isLiveMarket
+                        ? 'border-dashed border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-950/5 font-semibold shadow-[0_0_8px_rgba(239,68,68,0.03)]'
+                        : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 md:w-3.5 md:h-3.5 ${
+                    active 
+                      ? 'text-[#d4af37]' 
+                      : isLiveMarket
+                        ? 'text-red-400'
+                        : 'text-[#8e9299]'
+                  }`} />
+                  {tab.label}
+                  {isLiveMarket && (
+                    <span className="relative flex h-2 w-2 ml-0.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        )}
       </div>
 
       {/* Active Tab Workspace Container */}
@@ -913,6 +1008,15 @@ export default function App() {
               <MarketTab 
                 narrowConfig={narrowConfig}
                 broadConfig={broadConfig}
+                marketSubTab={marketSubTab}
+                setMarketSubTab={setMarketSubTab}
+                onNavigateToSettings={() => setActiveTab('Settings')}
+                savedEntries={savedInventories}
+                onUseEntry={handleUseSavedInventory}
+                onRenameEntry={handleRenameSavedInventory}
+                onDeleteEntry={handleDeleteSavedInventory}
+                onClearAll={handleClearAllSavedInventories}
+                onUpdateEntryPrices={handleUpdateEntryPrices}
                 onAnalyzeInCalculator={(selectedCounts: InventoryCount) => {
                   setCounts(selectedCounts);
                   setDisplayAnova(true);

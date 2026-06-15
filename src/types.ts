@@ -88,7 +88,7 @@ export interface OcrResultItem {
 export interface SavedItemEntry {
   id: string;
   name: string;
-  source: 'manual' | 'directory' | 'ocr';
+  source: 'manual' | 'directory' | 'ocr' | 'trades';
   counts: InventoryCount;
   prices?: InventoryCount; // optional individual part pricing [b15, b25, s45, s65, g]
   timestamp: string;

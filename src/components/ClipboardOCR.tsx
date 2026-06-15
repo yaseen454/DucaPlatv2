@@ -43,7 +43,7 @@ interface ClipboardOCRProps {
   setOcrItems: React.Dispatch<React.SetStateAction<OcrResultItem[]>>;
   feedback: string | null;
   setFeedback: (f: string | null) => void;
-  onSaveToItems?: (counts: InventoryCount, name?: string) => void;
+  onSaveToItems?: (counts: InventoryCount, name?: string, source?: 'manual' | 'directory' | 'ocr' | 'trades') => void;
 }
 
 export default function ClipboardOCR({
@@ -75,9 +75,6 @@ export default function ClipboardOCR({
 
   const handleOcrSaveToTrades = () => {
     try {
-      const existing = localStorage.getItem('saved_trades_for_market');
-      const trades = existing ? JSON.parse(existing) : [];
-      
       const counts: InventoryCount = {
         bronze15: 0,
         bronze25: 0,
@@ -96,15 +93,10 @@ export default function ClipboardOCR({
         else if (v === 100) counts.gold += item.count;
       });
 
-      const title = saveName.trim() || `OCR Scan Preset (${new Date().toLocaleDateString()})`;
-      const newTrade = {
-        id: 'trade_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        name: title,
-        counts: counts,
-        timestamp: new Date().toLocaleString()
-      };
-      trades.unshift(newTrade);
-      localStorage.setItem('saved_trades_for_market', JSON.stringify(trades));
+      if (onSaveToItems) {
+        onSaveToItems(counts, saveName.trim() || undefined, 'trades');
+        setSaveName('');
+      }
       
       setTradeSuccess(true);
       setTimeout(() => setTradeSuccess(false), 2200);
