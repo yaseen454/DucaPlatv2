@@ -159,8 +159,9 @@ export default function App() {
     if (!user) return;
     let isMounted = true;
     let rtdbUnsubs: (() => void)[] = [];
+    let currentSessionRef: any = null;
 
-    import('firebase/database').then(({ ref, onValue, onDisconnect, serverTimestamp, set }) => {
+    import('firebase/database').then(({ ref, onValue, onDisconnect, serverTimestamp, set, push, remove }) => {
       import('./lib/firebase').then(({ rtdb }) => {
         if (!isMounted) return;
 
@@ -169,13 +170,11 @@ export default function App() {
 
         const unsub = onValue(connectedRef, (snap) => {
           if (snap.val() === true) {
-            const disconnectRef = onDisconnect(myPresenceRef);
-            disconnectRef.set({
-              status: 'offline',
-              lastActive: serverTimestamp()
-            }).then(() => {
+            currentSessionRef = push(myPresenceRef);
+            const disconnectRef = onDisconnect(currentSessionRef);
+            disconnectRef.remove().then(() => {
               if (userPresence !== 'offline') {
-                set(myPresenceRef, {
+                set(currentSessionRef, {
                   status: userPresence,
                   lastActive: serverTimestamp()
                 });
@@ -190,6 +189,11 @@ export default function App() {
     return () => {
       isMounted = false;
       rtdbUnsubs.forEach(u => u());
+      if (currentSessionRef) {
+        import('firebase/database').then(({ remove }) => {
+          remove(currentSessionRef).catch(() => {});
+        });
+      }
     };
   }, [user, userPresence]);
 
@@ -206,10 +210,9 @@ export default function App() {
       const myPresenceRef = rtdbMod.ref(rtdb, `presence/${currentUserUid}`);
       
       // Update RTDB explicitly
-      await rtdbMod.set(myPresenceRef, {
-        status,
-        lastActive: rtdbMod.serverTimestamp()
-      });
+      if (status === 'offline') {
+        await rtdbMod.remove(myPresenceRef);
+      }
 
       // Update all active listings with the explicit status in Firestore
       const q = firestoreMod.query(firestoreMod.collection(db, 'listings'), firestoreMod.where('sellerUid', '==', currentUserUid));
@@ -249,25 +252,8 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      // The onDisconnect hook in RTDB will handle this reliable queueing!
-      // But we can do a best-effort update on the client anyways
-      const uid = user?.uid;
-      if (uid) {
-        // Quick update without waiting
-        import('firebase/database').then(({ ref, set, serverTimestamp }) => {
-           import('./lib/firebase').then(({ rtdb }) => {
-             set(ref(rtdb, `presence/${uid}`), {
-               status: 'offline',
-               lastActive: serverTimestamp()
-             });
-           });
-        });
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
+    // Passive disconnect is perfectly handled by RTDB onDisconnect hook.
+    // No need to execute a global wipe on beforeunload as it was aggressively disconnecting other tabs.
     if (user) {
       let pref = localStorage.getItem('preferredMarketPresence') as string | null;
       if (pref === 'ONLINE IN GAME') pref = 'online-in-game';
@@ -276,10 +262,6 @@ export default function App() {
       
       updatePresenceCore((pref as PresenceStatus) || 'offline', user.uid);
     }
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
   }, [user]);
 
   const handlePresenceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {

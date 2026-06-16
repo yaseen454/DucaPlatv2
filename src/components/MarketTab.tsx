@@ -540,12 +540,42 @@ export default function MarketTab({
            const unsub = onValue(presenceRef, (snap) => {
              if (!isMounted) return;
              if (snap.exists()) {
-               const data = snap.val();
+               const data = snap.val() || {};
+               let finalStatus: PresenceStatus = 'offline';
+               let latestActive = 0;
+
+               // Data might be a dictionary of sessions, iterate over them safely
+               const sessions = typeof data === 'object' ? Object.values(data) : [];
+               for (const session of sessions) {
+                  if (!session || typeof session !== 'object') continue;
+                  const s = (session as any).status;
+                  const lat = typeof (session as any).lastActive === 'number' ? (session as any).lastActive : Date.now();
+                  
+                  if (lat > latestActive) {
+                    latestActive = lat;
+                  }
+
+                  if (s === 'online-in-game') {
+                    finalStatus = 'online-in-game';
+                  } else if (s === 'online' && finalStatus !== 'online-in-game') {
+                    finalStatus = 'online';
+                  }
+               }
+               
                setLiveSellerPresences(prev => ({
                  ...prev,
                  [uid]: {
-                   status: data.status || 'offline',
-                   lastActive: typeof data.lastActive === 'number' ? data.lastActive : Date.now()
+                   status: finalStatus,
+                   lastActive: latestActive
+                 }
+               }));
+             } else {
+               // Node is entirely null (offline or wiped by global sign-out)
+               setLiveSellerPresences(prev => ({
+                 ...prev,
+                 [uid]: {
+                   status: 'offline',
+                   lastActive: 0
                  }
                }));
              }
