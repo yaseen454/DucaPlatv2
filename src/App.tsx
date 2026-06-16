@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { InventoryCount, OcrResultItem, SavedItemEntry, PresenceStatus } from './types';
 import { generateCostsCustom } from './utils/mathUtils';
 import ManualInput from './components/ManualInput';
@@ -155,13 +155,14 @@ export default function App() {
   const [isVerified, setIsVerified] = useState(false);
 
   // RTDB hybrid system connection
+  const activeSessionRef = useRef<any>(null);
+
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid) return;
     let isMounted = true;
     let rtdbUnsubs: (() => void)[] = [];
-    let currentSessionRef: any = null;
 
-    import('firebase/database').then(({ ref, onValue, onDisconnect, serverTimestamp, set, push, remove }) => {
+    import('firebase/database').then(({ ref, onValue, onDisconnect, serverTimestamp, set, push }) => {
       import('./lib/firebase').then(({ rtdb }) => {
         if (!isMounted) return;
 
@@ -170,12 +171,13 @@ export default function App() {
 
         const unsub = onValue(connectedRef, (snap) => {
           if (snap.val() === true) {
-            currentSessionRef = push(myPresenceRef);
-            const disconnectRef = onDisconnect(currentSessionRef);
+            activeSessionRef.current = push(myPresenceRef);
+            const disconnectRef = onDisconnect(activeSessionRef.current);
             disconnectRef.remove().then(() => {
-              if (userPresence !== 'offline') {
-                set(currentSessionRef, {
-                  status: userPresence,
+              const currentPref = localStorage.getItem('preferredMarketPresence') || 'offline';
+              if (currentPref !== 'offline') {
+                set(activeSessionRef.current, {
+                  status: currentPref,
                   lastActive: serverTimestamp()
                 });
               }
@@ -189,13 +191,14 @@ export default function App() {
     return () => {
       isMounted = false;
       rtdbUnsubs.forEach(u => u());
-      if (currentSessionRef) {
+      if (activeSessionRef.current) {
         import('firebase/database').then(({ remove }) => {
-          remove(currentSessionRef).catch(() => {});
+          remove(activeSessionRef.current).catch(() => {});
+          activeSessionRef.current = null;
         });
       }
     };
-  }, [user, userPresence]);
+  }, [user?.uid]);
 
   const updatePresenceCore = async (status: PresenceStatus, currentUserUid: string | undefined) => {
     setUserPresence(status);
@@ -212,6 +215,13 @@ export default function App() {
       // Update RTDB explicitly
       if (status === 'offline') {
         await rtdbMod.remove(myPresenceRef);
+      } else {
+        if (activeSessionRef.current) {
+          await rtdbMod.set(activeSessionRef.current, {
+            status,
+            lastActive: rtdbMod.serverTimestamp()
+          });
+        }
       }
 
       // Update all active listings with the explicit status in Firestore
