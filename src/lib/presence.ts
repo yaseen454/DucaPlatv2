@@ -172,6 +172,13 @@ async function _handleAuthChange(user: User | null): Promise<void> {
     // The Sign Out button in UI already sets presence to 'offline' before logging out.
     _desiredStatus = "offline";
   } else {
+    if (typeof window !== "undefined") {
+      let pref = localStorage.getItem("preferredMarketPresence");
+      if (pref === "ONLINE IN GAME") pref = "online-in-game";
+      if (pref === "ONLINE") pref = "online";
+      if (pref === "OFFLINE") pref = "offline";
+      _desiredStatus = (pref as PresenceStatus) || "offline";
+    }
     _attachConnectedListener(user);
     // Upon logging in, if we have a non-offline desired status, immediately sync it to Firestore.
     if (_desiredStatus !== "offline") {

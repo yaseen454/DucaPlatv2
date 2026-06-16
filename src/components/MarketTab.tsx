@@ -361,6 +361,37 @@ export default function MarketTab({
     orderType: 'all', minPrice: '', maxPrice: '', sellingType: 'all', orderScale: 'all', status: 'all'
   });
 
+  // Custom multi-sorting state
+  const [activeSorts, setActiveSorts] = useState<{
+    key: 'totalParts' | 'totalDucats' | 'totalTrades';
+    direction: 'asc' | 'desc';
+  }[]>([]);
+
+  // Find By Price Search state (Rate pricing scanner for prime junk and rate-based)
+  const [rateSearchEnabled, setRateSearchEnabled] = useState<boolean>(false);
+  const [rateSearchMatchAll, setRateSearchMatchAll] = useState<boolean>(false);
+  const [selectedRateTiers, setSelectedRateTiers] = useState<Record<string, boolean>>({
+    bronze15: false,
+    bronze25: false,
+    silver45: false,
+    silver65: false,
+    gold: false,
+  });
+  const [rateMinPrices, setRateMinPrices] = useState<Record<string, string>>({
+    bronze15: '',
+    bronze25: '',
+    silver45: '',
+    silver65: '',
+    gold: '',
+  });
+  const [rateMaxPrices, setRateMaxPrices] = useState<Record<string, string>>({
+    bronze15: '',
+    bronze25: '',
+    silver45: '',
+    silver65: '',
+    gold: '',
+  });
+
   const [copiedToken, setCopiedToken] = useState(false);
   const [copiedCommandIds, setCopiedCommandIds] = useState<Record<string, boolean>>({});
 
@@ -960,10 +991,28 @@ export default function MarketTab({
       return;
     }
 
-    const itemNameStr = `Prime Junk (${totalParts} parts)`;
-    const isDuplicate = listings.some(l => l.sellerUid === user.uid && l.itemName === itemNameStr && l.type === bulkListType);
+    const finalPrice = (bulkCounts.bronze15 || 0) * (bulkRarityPrices.bronze15 || 0) +
+                       (bulkCounts.bronze25 || 0) * (bulkRarityPrices.bronze25 || 0) +
+                       (bulkCounts.silver45 || 0) * (bulkRarityPrices.silver45 || 0) +
+                       (bulkCounts.silver65 || 0) * (bulkRarityPrices.silver65 || 0) +
+                       (bulkCounts.gold || 0) * (bulkRarityPrices.gold || 0);
+
+    const isDuplicate = listings.some(l => {
+      if (l.sellerUid !== user.uid || l.type !== bulkListType || l.isRateBased || !l.isPrimeJunk) {
+        return false;
+      }
+      const samePrice = l.price === finalPrice;
+      const sameCounts = l.counts &&
+        (l.counts.bronze15 || 0) === (bulkCounts.bronze15 || 0) &&
+        (l.counts.bronze25 || 0) === (bulkCounts.bronze25 || 0) &&
+        (l.counts.silver45 || 0) === (bulkCounts.silver45 || 0) &&
+        (l.counts.silver65 || 0) === (bulkCounts.silver65 || 0) &&
+        (l.counts.gold || 0) === (bulkCounts.gold || 0);
+      return samePrice && sameCounts;
+    });
+
     if (isDuplicate) {
-      setErrorMsg(`You already have an active listing for "${itemNameStr}" (${bulkListType}). Manage it in "My Listings".`);
+      setErrorMsg(`DUPLICATE WARNING: You already have an active "${bulkListType}" listing with the exact duplicate tier counts and final price of ${finalPrice} Plat. (Counts -> 15d: ${bulkCounts.bronze15 || 0}, 25d: ${bulkCounts.bronze25 || 0}, 45d: ${bulkCounts.silver45 || 0}, 65d: ${bulkCounts.silver65 || 0}, 100d: ${bulkCounts.gold || 0}). Avoid listing duplicates to keep the marketplace clean.`);
       return;
     }
 
@@ -973,12 +1022,6 @@ export default function MarketTab({
       (bulkCounts.silver45 || 0) * 45 + 
       (bulkCounts.silver65 || 0) * 65 + 
       (bulkCounts.gold || 0) * 100;
-
-    const finalPrice = (bulkCounts.bronze15 || 0) * (bulkRarityPrices.bronze15 || 0) +
-                       (bulkCounts.bronze25 || 0) * (bulkRarityPrices.bronze25 || 0) +
-                       (bulkCounts.silver45 || 0) * (bulkRarityPrices.silver45 || 0) +
-                       (bulkCounts.silver65 || 0) * (bulkRarityPrices.silver65 || 0) +
-                       (bulkCounts.gold || 0) * (bulkRarityPrices.gold || 0);
 
     const tradesRequired = Math.ceil(totalParts / 6);
 
@@ -1056,9 +1099,20 @@ export default function MarketTab({
       return;
     }
 
-    const isDuplicate = listings.some(l => l.sellerUid === user.uid && l.itemName === "Rate-Based Prime Junk" && l.type === bulkListType);
+    const isDuplicate = listings.some(l => {
+      if (l.sellerUid !== user.uid || l.type !== bulkListType || !l.isRateBased || !l.isPrimeJunk) {
+        return false;
+      }
+      return l.rarityPrices &&
+        (l.rarityPrices.bronze15 || 0) === (bulkRarityPrices.bronze15 || 0) &&
+        (l.rarityPrices.bronze25 || 0) === (bulkRarityPrices.bronze25 || 0) &&
+        (l.rarityPrices.silver45 || 0) === (bulkRarityPrices.silver45 || 0) &&
+        (l.rarityPrices.silver65 || 0) === (bulkRarityPrices.silver65 || 0) &&
+        (l.rarityPrices.gold || 0) === (bulkRarityPrices.gold || 0);
+    });
+
     if (isDuplicate) {
-      setErrorMsg(`You already have an active "Rate-Based Prime Junk" (${bulkListType}) listing. Manage it in "My Listings".`);
+      setErrorMsg(`DUPLICATE WARNING: You already have an active "Rate-Based Prime Junk" (${bulkListType}) listing with the exact matching rate configuration (Bronze-15: ${bulkRarityPrices.bronze15}p, Bronze-25: ${bulkRarityPrices.bronze25}p, Silver-45: ${bulkRarityPrices.silver45}p, Silver-65: ${bulkRarityPrices.silver65}p, Gold: ${bulkRarityPrices.gold}p).`);
       return;
     }
 
@@ -1123,16 +1177,29 @@ export default function MarketTab({
         return;
       }
 
-      const itemNameStr = `Prime Junk (${totalParts} parts)`;
-      const isDuplicate = listings.some(l => l.sellerUid === user.uid && l.itemName === itemNameStr && l.type === bulkListType);
+      const totalDucats = b15 * 15 + b25 * 25 + s45 * 45 + s65 * 65 + g100 * 100;
+      const pricePlat = Math.round(totalDucats / 25);
+
+      const isDuplicate = listings.some(l => {
+        if (l.sellerUid !== user.uid || l.type !== bulkListType || l.isRateBased || !l.isPrimeJunk) {
+          return false;
+        }
+        const samePrice = l.price === pricePlat;
+        const sameCounts = l.counts &&
+          (l.counts.bronze15 || 0) === b15 &&
+          (l.counts.bronze25 || 0) === b25 &&
+          (l.counts.silver45 || 0) === s45 &&
+          (l.counts.silver65 || 0) === s65 &&
+          (l.counts.gold || 0) === g100;
+        return samePrice && sameCounts;
+      });
+
       if (isDuplicate) {
-        setErrorMsg(`You already have an active listing for "${itemNameStr}" (${bulkListType}). Manage it in "My Listings".`);
+        setErrorMsg(`DUPLICATE WARNING: You already have an active "${bulkListType}" listing with the exact duplicate part count configuration of preset "${presetName}" at ${pricePlat} Plat. (Counts -> 15d: ${b15}, 25d: ${b25}, 45d: ${s45}, 65d: ${s65}, 100d: ${g100}). Avoid duplicates to keep the marketplace clean.`);
         setActionLoading(false);
         return;
       }
 
-      const totalDucats = b15 * 15 + b25 * 25 + s45 * 45 + s65 * 65 + g100 * 100;
-      const pricePlat = Math.round(totalDucats / 25);
       const tradesRequired = Math.ceil(totalParts / 6);
 
       const distList = [];
@@ -1183,9 +1250,20 @@ export default function MarketTab({
       }
     } else {
       // rate-based mode
-      const isDuplicate = listings.some(l => l.sellerUid === user.uid && l.itemName === "Rate-Based Prime Junk" && l.type === bulkListType);
+      const isDuplicate = listings.some(l => {
+        if (l.sellerUid !== user.uid || l.type !== bulkListType || !l.isRateBased || !l.isPrimeJunk) {
+          return false;
+        }
+        return l.rarityPrices &&
+          (l.rarityPrices.bronze15 || 0) === (bulkRarityPrices.bronze15 || 0) &&
+          (l.rarityPrices.bronze25 || 0) === (bulkRarityPrices.bronze25 || 0) &&
+          (l.rarityPrices.silver45 || 0) === (bulkRarityPrices.silver45 || 0) &&
+          (l.rarityPrices.silver65 || 0) === (bulkRarityPrices.silver65 || 0) &&
+          (l.rarityPrices.gold || 0) === (bulkRarityPrices.gold || 0);
+      });
+
       if (isDuplicate) {
-        setErrorMsg(`You already have an active "Rate-Based Prime Junk" (${bulkListType}) listing. Manage it in "My Listings".`);
+        setErrorMsg(`DUPLICATE WARNING: You already have an active "Rate-Based Prime Junk" (${bulkListType}) listing with exact matching rates (Bronze-15: ${bulkRarityPrices.bronze15}p, Bronze-25: ${bulkRarityPrices.bronze25}p, Silver-45: ${bulkRarityPrices.silver45}p, Silver-65: ${bulkRarityPrices.silver65}p, Gold: ${bulkRarityPrices.gold}p).`);
         setActionLoading(false);
         return;
       }
@@ -1363,10 +1441,247 @@ export default function MarketTab({
     }
   };
 
+  const handleToggleSort = (key: 'totalParts' | 'totalDucats' | 'totalTrades') => {
+    setActiveSorts(prev => {
+      const existingIdx = prev.findIndex(item => item.key === key);
+      if (existingIdx === -1) {
+        // Add to the end, default descending
+        return [...prev, { key, direction: 'desc' }];
+      } else {
+        const item = prev[existingIdx];
+        if (item.direction === 'desc') {
+          // Toggle to ascending
+          const updated = [...prev];
+          updated[existingIdx] = { ...item, direction: 'asc' };
+          return updated;
+        } else {
+          // Remove from active sorts
+          return prev.filter(item => item.key !== key);
+        }
+      }
+    });
+  };
+
+  const getSortDetails = (key: 'totalParts' | 'totalDucats' | 'totalTrades') => {
+    const idx = activeSorts.findIndex(item => item.key === key);
+    if (idx === -1) return null;
+    return {
+      priority: idx + 1,
+      direction: activeSorts[idx].direction
+    };
+  };
+
+  const renderSortingAndPriceSearchControls = () => {
+    return (
+      <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-4 space-y-4 shadow-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2a2c33]/40 pb-3">
+          <div className="space-y-1">
+            <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-1.5 font-sans">
+              <Filter className="w-3.5 h-3.5 text-[#d4af37]" />
+              Marketplace Sorting & Price Scanner
+            </h4>
+            <p className="text-[10px] text-zinc-500">
+              Apply sequential multi-sort priorities, or filter listings by specific rarity tier price ranges.
+            </p>
+          </div>
+
+          <div className="flex bg-[#0c0d10] border border-[#2a2c33]/80 rounded p-0.5">
+            <button
+              type="button"
+              onClick={() => setRateSearchEnabled(false)}
+              className={`px-3 py-1 text-[10px] uppercase font-bold rounded transition cursor-pointer ${!rateSearchEnabled ? 'bg-[#2a2c33] text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              Sort Engine
+            </button>
+            <button
+              type="button"
+              onClick={() => setRateSearchEnabled(true)}
+              className={`px-3 py-1 text-[10px] uppercase font-bold rounded transition cursor-pointer ${rateSearchEnabled ? 'bg-amber-950/40 text-amber-400 border border-amber-900/40' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              Scan By Tier Price
+            </button>
+          </div>
+        </div>
+
+        {/* Custom Multi-Sort Engine segment */}
+        <div className="space-y-2.5">
+          <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block font-mono">
+            Active Sort Queue (Sequential Priorities)
+          </label>
+          <div className="flex flex-wrap gap-2 items-center">
+            {(['totalParts', 'totalDucats', 'totalTrades'] as const).map(key => {
+              const detail = getSortDetails(key);
+              const active = detail !== null;
+              
+              let keyLabel = 'Total Parts';
+              if (key === 'totalDucats') keyLabel = 'Total Ducats';
+              if (key === 'totalTrades') keyLabel = 'Total Trades';
+
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleToggleSort(key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition select-none cursor-pointer ${
+                    active 
+                      ? 'bg-[#d4af37]/10 border-[#d4af37]/50 text-[#d4af37]' 
+                      : 'bg-[#0c0d10] border-[#2a2c33] text-zinc-400 hover:text-white hover:border-zinc-750'
+                  }`}
+                >
+                  <span className="font-mono">{keyLabel}</span>
+                  {active ? (
+                    <>
+                      <span className="text-[10px] font-black bg-[#d4af37]/20 text-[#d4af37] px-1.5 py-0.5 rounded-md">
+                        {detail.priority}
+                      </span>
+                      <span className="text-[#d4af37] font-bold">{detail.direction === 'desc' ? '▼ Desc' : '▲ Asc'}</span>
+                    </>
+                  ) : (
+                    <span className="text-zinc-650 text-[10px]">○ Off</span>
+                  )}
+                </button>
+              );
+            })}
+
+            {activeSorts.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveSorts([])}
+                className="text-[10px] text-zinc-500 hover:text-red-400 font-bold uppercase tracking-wider ml-auto flex items-center gap-1 cursor-pointer transition"
+              >
+                <RotateCcw className="w-3 h-3" /> Clear Sort Queue
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Find by Price Category Scanner segment */}
+        {rateSearchEnabled && (
+          <div className="bg-[#0c0d10]/60 border border-[#2a2c33]/40 rounded-lg p-3.5 space-y-4 animate-fadeIn">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2a2c33]/20 pb-2.5">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#d4af37] font-mono">
+                Tier Price Scanner Ranges (Plat limiters)
+              </span>
+
+              {/* Toggle Switch */}
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider font-sans">Scope Requirement:</span>
+                <div className="bg-[#0c0d10] border border-[#2a2c33] p-0.5 rounded flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setRateSearchMatchAll(false)}
+                    className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded transition cursor-pointer ${!rateSearchMatchAll ? 'bg-[#2a2c33] text-[#e0e1e6]' : 'text-zinc-500'}`}
+                    title="Matches any selected tier range"
+                  >
+                    Specific Tiers
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRateSearchMatchAll(true)}
+                    className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded transition cursor-pointer ${rateSearchMatchAll ? 'bg-purple-950 text-purple-300 border border-purple-900/30' : 'text-zinc-500'}`}
+                    title="Matches all specified tier ranges"
+                  >
+                    All Tiers
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+              {(['bronze15', 'bronze25', 'silver45', 'silver65', 'gold'] as const).map(tierKey => {
+                const isSelected = selectedRateTiers[tierKey];
+                let label = '15 Ducats';
+                if (tierKey === 'bronze25') { label = '25 Ducats'; }
+                else if (tierKey === 'silver45') { label = '45 Ducats'; }
+                else if (tierKey === 'silver65') { label = '65 Ducats'; }
+                else if (tierKey === 'gold') { label = '100 Ducats'; }
+
+                return (
+                  <div 
+                    key={tierKey} 
+                    className={`bg-[#0c0d10] border rounded-lg p-2.5 transition flex flex-col justify-between ${
+                      isSelected ? 'border-[#d4af37]/45 shadow-sm' : 'border-[#2a2c33]/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <input
+                        type="checkbox"
+                        id={`chk-${tierKey}`}
+                        checked={isSelected}
+                        onChange={e => setSelectedRateTiers(prev => ({ ...prev, [tierKey]: e.target.checked }))}
+                        className="rounded border-[#2a2c33] text-[#d4af37] focus:ring-[#d4af37] bg-black accent-[#d4af37] cursor-pointer"
+                      />
+                      <label htmlFor={`chk-${tierKey}`} className="text-[10px] font-black uppercase text-zinc-350 cursor-pointer select-none font-mono">
+                        {label}
+                      </label>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-1 text-[9px] text-zinc-500">
+                        <span className="font-mono">Min Plat</span>
+                        <input
+                          type="number"
+                          min="0"
+                          disabled={!isSelected}
+                          placeholder="0"
+                          value={rateMinPrices[tierKey]}
+                          onChange={e => setRateMinPrices(prev => ({ ...prev, [tierKey]: e.target.value }))}
+                          className="w-12 bg-black border border-[#2a2c33]/60 focus:border-[#d4af37] text-white text-[10px] px-1 py-0.5 rounded outline-none text-center disabled:opacity-45"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-1 text-[9px] text-zinc-500">
+                        <span className="font-mono">Max Plat</span>
+                        <input
+                          type="number"
+                          min="0"
+                          disabled={!isSelected}
+                          placeholder="Max"
+                          value={rateMaxPrices[tierKey]}
+                          onChange={e => setRateMaxPrices(prev => ({ ...prev, [tierKey]: e.target.value }))}
+                          className="w-12 bg-black border border-[#2a2c33]/60 focus:border-[#d4af37] text-white text-[10px] px-1 py-0.5 rounded outline-none text-center disabled:opacity-45"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#2a2c33]/15 pt-2 text-[9px] text-zinc-500">
+              <span>💡 Configure custom price ranges per ducat category to discover matching listings.</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedRateTiers({
+                    bronze15: false, bronze25: false, silver45: false, silver65: false, gold: false
+                  });
+                  setRateMinPrices({
+                    bronze15: '', bronze25: '', silver45: '', silver65: '', gold: ''
+                  });
+                  setRateMaxPrices({
+                    bronze15: '', bronze25: '', silver45: '', silver65: '', gold: ''
+                  });
+                }}
+                className="text-zinc-500 hover:text-zinc-300 font-bold uppercase tracking-wider flex items-center gap-0.5 cursor-pointer"
+              >
+                Reset Scanner
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Perform client filters on listing sets
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, typeFilter, verifiedFilter, myListingsFilter]);
+    setMyListingsPage(1);
+  }, [
+    searchQuery, typeFilter, verifiedFilter, myListingsFilter, 
+    activeSorts, rateSearchEnabled, selectedRateTiers, 
+    rateMinPrices, rateMaxPrices, rateSearchMatchAll
+  ]);
 
 
   const renderListing = (listing: MarketListing, isCompact: boolean = false) => {
@@ -1844,7 +2159,42 @@ export default function MarketTab({
           statusMatch = lStatus === filters.status;
         }
 
-        return itemMatch && typeMatch && priceMatch && sellingStyleMatch && scaleMatch && statusMatch;
+        // Find by Price filter integration
+        let ratePriceSearchMatch = true;
+        if (rateSearchEnabled) {
+          // Find by price only matches prime junk or rate based
+          if (!l.isPrimeJunk && !l.isRateBased) return false;
+          
+          const listPrices = l.rarityPrices || {
+            bronze15: 1,
+            bronze25: 2,
+            silver45: 3,
+            silver65: 5,
+            gold: 8
+          };
+
+          const activeTiers = Object.keys(selectedRateTiers).filter(k => selectedRateTiers[k]);
+          
+          if (activeTiers.length > 0) {
+            const matchesForTiers = activeTiers.map(t => {
+              const val = listPrices[t] || 0;
+              const minVal = rateMinPrices[t];
+              const maxVal = rateMaxPrices[t];
+              let match = true;
+              if (minVal !== '') match = match && val >= parseFloat(minVal);
+              if (maxVal !== '') match = match && val <= parseFloat(maxVal);
+              return match;
+            });
+
+            if (rateSearchMatchAll) {
+              ratePriceSearchMatch = matchesForTiers.every(m => m);
+            } else {
+              ratePriceSearchMatch = matchesForTiers.some(m => m);
+            }
+          }
+        }
+
+        return itemMatch && typeMatch && priceMatch && sellingStyleMatch && scaleMatch && statusMatch && ratePriceSearchMatch;
     });
 
     const statusPriority = (status?: string) => {
@@ -1853,7 +2203,57 @@ export default function MarketTab({
       return 1; // offline or default
     };
 
+    const getListingTotalParts = (l: MarketListing) => {
+      if (l.totalParts !== undefined && l.totalParts > 0) return l.totalParts;
+      if (l.counts) {
+        return (l.counts.bronze15 || 0) +
+               (l.counts.bronze25 || 0) +
+               (l.counts.silver45 || 0) +
+               (l.counts.silver65 || 0) +
+               (l.counts.gold || 0);
+      }
+      return l.quantity || 1;
+    };
+
+    const getListingTotalDucats = (l: MarketListing) => {
+      if (l.totalDucats !== undefined && l.totalDucats > 0) return l.totalDucats;
+      if (l.counts) {
+        return (l.counts.bronze15 || 0) * 15 +
+               (l.counts.bronze25 || 0) * 25 +
+               (l.counts.silver45 || 0) * 45 +
+               (l.counts.silver65 || 0) * 65 +
+               (l.counts.gold || 0) * 100;
+      }
+      return 0;
+    };
+
+    const getListingTotalTrades = (l: MarketListing) => {
+      if (l.tradesRequired !== undefined && l.tradesRequired > 0) return l.tradesRequired;
+      const parts = getListingTotalParts(l);
+      return Math.ceil(parts / 6) || 1;
+    };
+
     result.sort((a, b) => {
+        // Execute active custom sorts in sequential order
+        for (const rule of activeSorts) {
+          let valA = 0;
+          let valB = 0;
+          if (rule.key === 'totalParts') {
+            valA = getListingTotalParts(a);
+            valB = getListingTotalParts(b);
+          } else if (rule.key === 'totalDucats') {
+            valA = getListingTotalDucats(a);
+            valB = getListingTotalDucats(b);
+          } else if (rule.key === 'totalTrades') {
+            valA = getListingTotalTrades(a);
+            valB = getListingTotalTrades(b);
+          }
+          if (valA !== valB) {
+            return rule.direction === 'desc' ? valB - valA : valA - valB;
+          }
+        }
+
+        // Fallback sort: Online status first, then newest first
         if (!isMyListingsMode) {
           const wA = statusPriority(getEffectiveSellerStatus(a));
           const wB = statusPriority(getEffectiveSellerStatus(b));
@@ -3045,7 +3445,10 @@ export default function MarketTab({
             </div>
 
             {user && userVerification.status === 'verified' && listings.filter(l => l.sellerUid === user.uid).length > 0 && (
-               <AdvancedFilterBar filters={myFilters} setFilters={setMyFilters} hideStatus />
+               <div className="space-y-4">
+                 <AdvancedFilterBar filters={myFilters} setFilters={setMyFilters} hideStatus />
+                 {renderSortingAndPriceSearchControls()}
+               </div>
             )}
 
             {!user ? (
@@ -3177,6 +3580,9 @@ export default function MarketTab({
             
             <AdvancedFilterBar filters={browseFilters} setFilters={setBrowseFilters} />
           </div>
+
+          {/* Custom Sorting and Pricing Scanner controls */}
+          {renderSortingAndPriceSearchControls()}
 
           {/* LISTINGS FEED CARDS CONTAINER */}
           {filteredListings.length === 0 ? (
