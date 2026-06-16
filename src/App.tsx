@@ -13,6 +13,8 @@ import AboutInfo from './components/AboutInfo';
 import SettingsTab from './components/SettingsTab';
 import SavedItemsTab from './components/SavedItemsTab';
 import MarketTab from './components/MarketTab';
+import ducatIcon from './data/480px-OrokinDucats.png';
+import platinumIcon from './data/platinum.png';
 import { PRIME_ITEMS } from './data/primeData';
 import { 
   Coins, 
@@ -213,6 +215,7 @@ export default function App() {
     partDistribution?: string;
   } | null>(null);
   const [copiedImported, setCopiedImported] = useState<boolean>(false);
+  const [showHomeMarketGuide, setShowHomeMarketGuide] = useState<boolean>(true);
 
   useEffect(() => {
     if (!user) {
@@ -591,11 +594,24 @@ export default function App() {
               {/* 4. Presence status & profiles */}
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {user && isVerified && (
-                  <div className="px-1.5 py-0.5 bg-[#111317] hover:bg-[#1a1c23] border border-[#2a2c33] hover:border-[#d4af37]/50 rounded-lg transition-colors flex items-center justify-center">
+                  <div className={`px-2 py-1 bg-[#111317] hover:bg-[#1a1c23] border rounded-lg transition-all duration-150 flex items-center gap-1.5 justify-center ${
+                    userPresence === 'online' ? 'border-emerald-500/40 hover:border-emerald-500/60 shadow-[0_0_8px_rgba(16,185,129,0.05)]' :
+                    userPresence === 'online-in-game' ? 'border-purple-500/40 hover:border-purple-500/60 shadow-[0_0_8px_rgba(168,85,247,0.05)]' :
+                    'border-[#2a2c33] hover:border-zinc-700'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      userPresence === 'online' ? 'bg-emerald-400 animate-pulse' :
+                      userPresence === 'online-in-game' ? 'bg-purple-400 animate-pulse' :
+                      'bg-zinc-600'
+                    }`} />
                     <select 
                       value={userPresence}
                       onChange={handlePresenceChange}
-                      className="bg-transparent max-w-[70px] sm:max-w-none text-[8px] sm:text-[10px] md:text-xs truncate uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer text-zinc-500"
+                      className={`bg-transparent max-w-[70px] sm:max-w-none text-[8px] sm:text-[10px] md:text-xs truncate uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer ${
+                        userPresence === 'online' ? 'text-emerald-400' :
+                        userPresence === 'online-in-game' ? 'text-purple-400 font-bold' :
+                        'text-zinc-500'
+                      }`}
                       title="Market Presence Status"
                     >
                       <option value="offline" className="text-zinc-500 bg-[#0c0d10]">OFFLINE</option>
@@ -806,7 +822,7 @@ export default function App() {
                 <div className="p-8 rounded-xl bg-[#14161c] border border-[#2a2c33] relative overflow-hidden shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
                   <div className="absolute right-0 top-0 w-96 h-96 bg-[#d4af37]/5 rounded-full blur-3xl pointer-events-none" />
                   <div className="space-y-4 max-w-2xl relative z-10">
-                    <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 bg-[#d4af37]/10 rounded border border-[#d4af37]/20 text-[#d4af37]">
+                    <span className="inline-block mb-2 text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 bg-[#d4af37]/10 rounded border border-[#d4af37]/20 text-[#d4af37]">
                       Market Intelligence Tool
                     </span>
                     <h2 className="text-3xl font-light tracking-tight text-white leading-tight" style={{ fontFamily: "'Georgia', serif" }}>
@@ -876,6 +892,68 @@ export default function App() {
                       Verify difference yields among separate buyer portfolios using Turkey's Honest Significant Difference post-hoc pairings. We output detailed, mathematically proven confidence limits.
                     </p>
                   </div>
+                </div>
+
+                {/* Collapsible Market Sync Guide (Nesting block) */}
+                <div className="bg-[#14161c] border border-[#2a2c33]/85 rounded-xl overflow-hidden shadow-xl">
+                  <button
+                    type="button"
+                    onClick={() => setShowHomeMarketGuide(!showHomeMarketGuide)}
+                    className="w-full flex items-center justify-between p-5 bg-[#0c0d10]/95 hover:bg-[#111317] select-none text-left cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-[#d4af37]/10 rounded border border-[#d4af37]/25 text-[#d4af37]">
+                        <ShoppingBag className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider font-mono">
+                          📡 Live Market Integration Overview
+                        </h3>
+                        <p className="text-[11px] text-[#8e9299] mt-0.5">
+                          Learn how to list, sync, and import transactions for real-time statistical analysis
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold text-[#d4af37] tracking-widest uppercase bg-[#d4af37]/10 border border-[#d4af37]/25 px-2 py-0.5 rounded">
+                        {showHomeMarketGuide ? 'Collapse' : 'Expand Guide'}
+                      </span>
+                    </div>
+                  </button>
+
+                  {showHomeMarketGuide && (
+                    <div className="p-5 border-t border-[#2a2c33]/50 space-y-4 animate-fadeIn text-xs text-[#c4c5cc] leading-relaxed bg-[#0c0d10]/20">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5 p-4 bg-[#0c0d10]/50 rounded-lg border border-[#2a2c33]/30">
+                          <h4 className="text-[11px] font-bold uppercase text-[#d4af37] tracking-wider flex items-center gap-1.5 font-mono">
+                            <Tag className="w-3.5 h-3.5" />
+                            List and Manage Bulk Deals
+                          </h4>
+                          <p className="text-[#8e9299] text-[11px]">
+                            Certify your identity by verifying your biography code. Once connected, broadcast your status as <span className="text-emerald-400 font-bold">ONLINE</span> or <span className="text-purple-400 font-bold">IN GAME</span> so players can see your custom buying or selling rate coefficients.
+                          </p>
+                        </div>
+                        <div className="space-y-1.5 p-4 bg-[#0c0d10]/50 rounded-lg border border-[#2a2c33]/30">
+                          <h4 className="text-[11px] font-bold uppercase text-[#d4af37] tracking-wider flex items-center gap-1.5 font-mono">
+                            <Coins className="w-3.5 h-3.5" />
+                            Direct Calculation Imports
+                          </h4>
+                          <p className="text-[#8e9299] text-[11px]">
+                            When browsing community deals, use the <strong className="text-white">"Analyze in Calculator"</strong> option. This instantly loads the listing’s precise volumes of Bronze, Silver, and Gold categories directly into your calculator, letting you compare yields using One-Way ANOVA tests!
+                          </p>
+                        </div>
+                      </div>
+                      <div className="pt-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('Market')}
+                          className="px-4 py-2 bg-[#d4af37]/10 hover:bg-[#d4af37]/20 border border-[#d4af37]/35 text-[#d4af37] rounded text-[10px] font-extrabold uppercase tracking-widest transition cursor-pointer"
+                        >
+                          Launch Live Market Hub &rarr;
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Searchable reference table list */}
@@ -975,10 +1053,41 @@ export default function App() {
                           </span>
                         </div>
                         {importedListing.totalParts > 0 && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[9px] uppercase font-mono tracking-wider font-semibold">Cargo Quantity:</span>
-                            <span className="text-zinc-300 font-medium">
-                              {importedListing.totalParts} Parts {importedListing.partDistribution ? `(${importedListing.partDistribution.replace(/(\d+)d/g, '$1 :ducats:')})` : ''}
+                            <span className="text-zinc-300 font-medium inline-flex items-center flex-wrap gap-1">
+                              <span>{importedListing.totalParts} Parts</span>
+                              {importedListing.partDistribution ? (
+                                <span className="inline-flex items-center gap-1 text-zinc-400 text-[11px] bg-[#1a1c22]/60 px-2 py-0.5 rounded border border-zinc-800/60 ml-1">
+                                  <span>(</span>
+                                  {importedListing.partDistribution.split(', ').map((segment, idx) => {
+                                    const match = segment.match(/^(\d+)d\s*(.*)$/);
+                                    if (match) {
+                                      const [_, value, rest] = match;
+                                      return (
+                                        <span key={idx} className="inline-flex items-center gap-0.5">
+                                          {idx > 0 && <span className="mr-1 text-zinc-500">,</span>}
+                                          <span className="font-mono font-bold text-zinc-200">{value}</span>
+                                          <img 
+                                            src={ducatIcon} 
+                                            className="w-3.5 h-3.5 object-contain inline" 
+                                            alt="Ducats" 
+                                            referrerPolicy="no-referrer"
+                                          />
+                                          <span className="text-zinc-450 text-[10px] font-mono">{rest}</span>
+                                        </span>
+                                      );
+                                    }
+                                    return (
+                                      <span key={idx}>
+                                        {idx > 0 && <span className="mr-1 text-zinc-500">,</span>}
+                                        {segment}
+                                      </span>
+                                    );
+                                  })}
+                                  <span>)</span>
+                                </span>
+                              ) : ''}
                             </span>
                           </div>
                         )}

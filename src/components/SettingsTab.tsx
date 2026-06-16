@@ -2,9 +2,9 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { PriceRangesConfig, DEFAULT_NARROW_CONFIG, DEFAULT_BROAD_CONFIG } from '../utils/mathUtils';
-import { Sliders, RefreshCw, Sparkles, Check, Info } from 'lucide-react';
+import { Sliders, RefreshCw, Sparkles, Check, Info, Share2, Copy, Upload, AlertCircle, CheckCircle } from 'lucide-react';
 import platinumIcon from '../data/platinum.png';
 import ducatIcon from '../data/480px-OrokinDucats.png';
 
@@ -78,6 +78,77 @@ export default function SettingsTab({
   onNavigateToCalculator
 }: SettingsTabProps) {
   
+  const [importText, setImportText] = useState('');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
+  const [importStatus, setImportStatus] = useState<{ type: 'idle' | 'success' | 'error'; message?: string }>({ type: 'idle' });
+
+  const handleCopyConfig = () => {
+    try {
+      const configData = {
+        narrow: narrowConfig,
+        broad: broadConfig
+      };
+      const code = 'DUCAPLAT-' + btoa(JSON.stringify(configData));
+      navigator.clipboard.writeText(code);
+      setCopyStatus('copied');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleImportConfig = () => {
+    if (!importText.trim()) {
+      setImportStatus({ type: 'error', message: 'Config field is empty. Please paste your custom code first.' });
+      return;
+    }
+    try {
+      let parsed: any;
+      const cleanText = importText.trim().replace(/^DUCAPLAT-/, '');
+      
+      try {
+        const decoded = atob(cleanText);
+        parsed = JSON.parse(decoded);
+      } catch (e) {
+        parsed = JSON.parse(cleanText);
+      }
+
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('Config must be a valid object structure.');
+      }
+
+      if (!parsed.narrow || !parsed.broad) {
+        throw new Error('Config must contain both "narrow" and "broad" boundaries.');
+      }
+
+      const isValidConfig = (cfg: any) => {
+        if (typeof cfg.b15 !== 'number') return false;
+        const keys: Array<'b25'|'s45'|'s65'|'g'> = ['b25', 's45', 's65', 'g'];
+        for (const k of keys) {
+          if (!cfg[k] || typeof cfg[k].min !== 'number' || typeof cfg[k].max !== 'number') {
+            return false;
+          }
+        }
+        return true;
+      };
+
+      if (!isValidConfig(parsed.narrow)) {
+        throw new Error('Corrupt or invalid narrow boundaries structure.');
+      }
+      if (!isValidConfig(parsed.broad)) {
+        throw new Error('Corrupt or invalid broad boundaries structure.');
+      }
+
+      setNarrowConfig(parsed.narrow);
+      setBroadConfig(parsed.broad);
+      setImportStatus({ type: 'success', message: 'Installed pricing boundaries successfully!' });
+      setImportText('');
+      setTimeout(() => setImportStatus({ type: 'idle' }), 4000);
+    } catch (err: any) {
+      setImportStatus({ type: 'error', message: err.message || 'Malformed configuration code.' });
+    }
+  };
+
   // Calculate total combinations pool size for a given PriceRangesConfig
   const calculateCombinations = (cfg: PriceRangesConfig) => {
     const getRangeLength = (min: number, max: number) => {
@@ -392,6 +463,84 @@ export default function SettingsTab({
             <Check className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>Vite is compiling layout metrics. Changes are retained automatically during your browser session.</span>
           </div>
+        </div>
+      </div>
+
+      {/* SHARE AND IMPORT PRICING CONFIGURATION */}
+      <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-6 shadow-2xl relative overflow-hidden space-y-6">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-[#d4af37]/5 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#2a2c33]/60 relative z-10">
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider flex items-center gap-2">
+              <Share2 className="w-4 h-4 text-[#d4af37]" />
+              Share & Import Custom Boundary Sets
+            </h3>
+            <p className="text-[11px] text-[#8e9299]">
+              Export your configurations to a portable, shareable code or import settings from other players.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCopyConfig}
+            className={`px-4 py-2 border rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 inline-flex items-center gap-2 cursor-pointer active:scale-95 shrink-0 select-none ${
+              copyStatus === 'copied'
+                ? 'bg-[#10b981]/10 border-emerald-500/35 text-emerald-400'
+                : 'bg-[#d4af37]/10 hover:bg-[#d4af37] border-[#d4af37]/35 hover:border-transparent text-[#d4af37] hover:text-black shadow-lg shadow-[#d4af37]/5'
+            }`}
+          >
+            {copyStatus === 'copied' ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                Copied Secure Code!
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                Copy Pricing Config
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Import section */}
+        <div className="space-y-3 relative z-10">
+          <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider font-mono">
+            📥 Import Shared Configuration Code
+          </label>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              placeholder="Paste custom 'DUCAPLAT-...' code block or raw pricing JSON here..."
+              className="flex-1 bg-[#0c0d10] border border-[#2a2c33] hover:border-[#383a42] rounded-lg px-4 py-3 text-xs text-white placeholder-zinc-600 font-mono focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all"
+            />
+            <button
+              type="button"
+              onClick={handleImportConfig}
+              className="px-5 py-3 bg-[#111317] hover:bg-[#1a1c23] border border-[#2a2c33] hover:border-[#d4af37]/50 text-white hover:text-[#d4af37] rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-150 inline-flex items-center justify-center gap-2 cursor-pointer shrink-0 select-none active:scale-95"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              Import Pricing Config
+            </button>
+          </div>
+
+          {/* Feedback messages */}
+          {importStatus.type === 'success' && (
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-xs flex items-center gap-2 animate-fadeIn font-mono">
+              <CheckCircle className="w-4 h-4 shrink-0" />
+              <span>{importStatus.message}</span>
+            </div>
+          )}
+
+          {importStatus.type === 'error' && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-xs flex items-center gap-2 animate-fadeIn font-mono">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{importStatus.message}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

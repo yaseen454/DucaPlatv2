@@ -2346,7 +2346,7 @@ export default function MarketTab({
                                   onAnalyzeInCalculator?.(analysisCounts, {
                                     sellerIGN: listing.sellerIGN,
                                     price: listing.price,
-                                    itemName: listing.isPrimeJunk ? "Bulk Prime Junk Bundle" : (listing.itemName || "Prime Item Bundle"),
+                                    itemName: listing.isRateBased ? "Rate-Based Prime Parts Listing" : (listing.isPrimeJunk ? "Bulk Prime Junk Bundle" : (listing.itemName || "Prime Item Bundle")),
                                     tradeText: tradeText.replace(/<\/?[^>]+(>|$)/g, ""),
                                     isWTS: isWTS,
                                     quantity: listing.quantity || 1,
@@ -3862,6 +3862,34 @@ export default function MarketTab({
 
           {/* Custom Sorting and Pricing Scanner controls */}
           {renderSortingAndPriceSearchControls()}
+
+          {/* Market Listings Statistics Panel */}
+          <div className="bg-[#14161c]/50 border border-[#2a2c33]/40 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] text-[#8e9299]">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-pulse"></span>
+                <span>Active Database: <strong className="text-white">{listings.length} listings</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5 md:border-l md:border-[#2a2c33] md:pl-4">
+                <span>Matching Filters: <strong className="text-[#d4af37]">{filteredListings.length}</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5 border-l border-[#2a2c33] pl-4">
+                <span>WTS (Sells): <strong className="text-emerald-400">{filteredListings.filter(l => l.type === 'WTS').length}</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5 border-l border-[#2a2c33] pl-4">
+                <span>WTB (Buys): <strong className="text-purple-400">{filteredListings.filter(l => l.type === 'WTB').length}</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5 border-l border-[#2a2c33] pl-4">
+                <span>Verified: <strong className="text-blue-400">{filteredListings.filter(l => l.isSellerVerified).length}</strong></span>
+              </div>
+            </div>
+            
+            {filteredListings.length > 0 && (
+              <div className="text-[10px] uppercase text-[#8e9299] flex items-center gap-1 bg-[#14161c] px-3 py-1 rounded border border-[#2a2c33] ml-auto sm:ml-0">
+                <span>Showing {Math.min(filteredListings.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(filteredListings.length, currentPage * ITEMS_PER_PAGE)} of {filteredListings.length} trades</span>
+              </div>
+            )}
+          </div>
 
           {/* LISTINGS FEED CARDS CONTAINER */}
           {filteredListings.length === 0 ? (
