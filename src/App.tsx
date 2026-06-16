@@ -479,181 +479,190 @@ export default function App() {
             <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] text-[#8e9299] mt-1 sm:mt-1.5">Void Market Efficiency Analytics</p>
           </div>
 
-          <div className="w-full md:w-auto flex flex-row items-center justify-center md:justify-end gap-3 md:gap-4 flex-nowrap overflow-x-auto no-scrollbar py-1">
-            {/* 1. GitHub & Ko-fi Buttons (Left endpoint anchor) */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              <a
-                href="https://github.com/yaseen454/DucaPlatv2"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 md:p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[#d4af37] border border-[#2a2c33] hover:border-[#d4af37]/30 rounded-lg transition-all duration-150 flex items-center justify-center"
-                title="GitHub Repository"
-              >
-                <Github className="w-4 h-4" />
-              </a>
-
-              <a
-                href="https://ko-fi.com/trc07#"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 md:p-2 bg-[#1a1313] hover:bg-[#2c1d1a] text-[#ff5e5b] hover:text-[#ff7875] border border-[#ff5e5b]/20 hover:border-[#ff5e5b]/40 rounded-lg transition-all duration-150 flex items-center justify-center gap-1 md:gap-1.5 px-2 md:px-2.5 text-xs font-semibold shrink-0"
-                title="Support Me on Ko-fi!"
-              >
-                <Coffee className="w-3.5 h-3.5 text-[#ff5e5b]" />
-                <span className="hidden sm:inline text-[#ff5e5b] font-mono text-[9px] uppercase tracking-wider font-bold leading-none">Ko-fi</span>
-              </a>
-            </div>
-
-            {/* 2. Top Main App Ribbon (Positioned right next to the GitHub button at its right end-point) */}
-            <div className="flex items-center gap-1.5 bg-[#111317] p-1.5 rounded-lg border border-[#2a2c33] shrink-0 shadow-lg">
-              {/* Navigation History Controls */}
-              <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={handleGoBack}
-                  disabled={historyIndex <= 0}
-                  className={`p-1 rounded transition select-none ${
-                    historyIndex > 0
-                      ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
-                      : 'text-zinc-600 opacity-20 cursor-not-allowed'
-                  }`}
-                  title="Go Back"
+          <div className="w-full md:w-auto flex flex-col md:flex-row items-center justify-center md:justify-end gap-2.5 md:gap-4 mt-2 md:mt-0">
+            {/* Row 1 (on mobile): Socials and Top Main App Ribbon */}
+            <div className="flex items-center gap-2 justify-between md:justify-end w-full md:w-auto shrink-0">
+              {/* 1. GitHub & Ko-fi Buttons */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <a
+                  href="https://github.com/yaseen454/DucaPlatv2"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[#d4af37] border border-[#2a2c33] hover:border-[#d4af37]/30 rounded-lg transition-all duration-150 flex items-center justify-center"
+                  title="GitHub Repository"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleGoForward}
-                  disabled={historyIndex >= navHistory.length - 1}
-                  className={`p-1 rounded transition select-none ${
-                    historyIndex < navHistory.length - 1
-                      ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
-                      : 'text-zinc-600 opacity-20 cursor-not-allowed'
-                  }`}
-                  title="Go Forward"
+                  <Github className="w-4 h-4" />
+                </a>
+
+                <a
+                  href="https://ko-fi.com/trc07#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 bg-[#1a1313] hover:bg-[#2c1d1a] text-[#ff5e5b] hover:text-[#ff7875] border border-[#ff5e5b]/20 hover:border-[#ff5e5b]/40 rounded-lg transition-all duration-150 flex items-center justify-center gap-1 px-2 text-xs font-semibold shrink-0"
+                  title="Support Me on Ko-fi!"
                 >
-                  <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-                </button>
+                  <Coffee className="w-3.5 h-3.5 text-[#ff5e5b]" />
+                  <span className="hidden sm:inline text-[#ff5e5b] font-mono text-[9px] uppercase tracking-wider font-bold leading-none">Ko-fi</span>
+                </a>
               </div>
 
-              <div className="h-4 w-px bg-[#2a2c33] mx-1" />
-
-              {/* Quick Access Top Main Ribbon Controls */}
-              <div className="flex items-center gap-1">
-                {[
-                  { id: 'SavedItems' as const, label: 'Saved Items', icon: Bookmark },
-                  { id: 'Settings' as const, label: 'Settings', icon: Settings },
-                  { id: 'Help' as const, label: 'Guide', icon: HelpCircle }
-                ].map((tab) => {
-                  const Icon = tab.icon;
-                  const active = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => {
-                        setActiveTab(tab.id);
-                      }}
-                      className={`px-2 py-1 rounded text-[9px] sm:text-[10px] md:text-[11px] font-semibold flex items-center gap-1 transition duration-200 select-none uppercase tracking-wider cursor-pointer ${
-                        active
-                          ? 'border border-[#d4af37]/45 text-[#d4af37] bg-[#d4af37]/10 font-bold'
-                          : 'border border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
-                      }`}
-                      title={tab.label}
-                    >
-                      <Icon className="w-3.5 h-3.5 text-[#d4af37]" />
-                      <span className="hidden sm:inline">{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 3. Active Inventory & total ducat pool (Aligned horizontally next to newly aligned ribbon) */}
-            <div className="flex gap-4 items-center bg-[#111317]/50 px-3 py-1.5 sm:py-2 rounded-lg border border-[#2a2c33]/40 shrink-0 shadow-sm">
-              <div className="text-center">
-                <span className="block text-[8px] sm:text-[9px] text-[#8e9299] uppercase tracking-wider mb-0.5 leading-none">Active Inv</span>
-                <span className="text-white font-mono text-xs font-semibold leading-none">{totalCount} Parts</span>
-              </div>
-              <div className="h-4 w-px bg-[#2a2c33]/40" />
-              <div className="text-center">
-                <span className="block text-[8px] sm:text-[9px] text-[#8e9299] uppercase tracking-wider mb-0.5 leading-none">Docats</span>
-                <span className="text-[#d4af37] font-mono text-xs font-semibold leading-none text-right">
-                  {counts.bronze15*15 + counts.bronze25*25 + counts.silver45*45 + counts.silver65*65 + counts.gold*100}
-                </span>
-              </div>
-            </div>
-
-            {/* 4. Presence status & profiles on the far right of the line */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              {user && isVerified && (
-                <div className="px-2 py-1 bg-[#111317] hover:bg-[#1a1c23] border border-[#2a2c33] hover:border-[#d4af37]/50 rounded-lg transition-colors flex items-center justify-center">
-                  <select 
-                    value={userPresence}
-                    onChange={handlePresenceChange}
-                    className={`bg-transparent max-w-[80px] sm:max-w-none text-[9px] sm:text-[10px] md:text-xs truncate uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer ${userPresence === 'online-in-game' ? 'text-purple-400' : userPresence === 'online' ? 'text-emerald-400' : 'text-zinc-500'}`}
-                    title="Market Presence Status"
-                  >
-                    <option value="offline" className="text-zinc-500 bg-[#0c0d10]">OFFLINE</option>
-                    <option value="online" className="text-emerald-400 bg-[#0c0d10]">ONLINE</option>
-                    <option value="online-in-game" className="text-purple-400 bg-[#0c0d10]">IN GAME</option>
-                  </select>
-                </div>
-              )}
-
-              {user ? (
-                <div className="flex items-center gap-1.5 sm:gap-2 bg-[#111317] border border-[#d4af37]/20 p-1 pl-1.5 pr-1.5 sm:pl-2.5 sm:pr-2.5 rounded-lg">
-                  {user.photoURL ? (
-                    <img 
-                      src={user.photoURL} 
-                      alt={user.displayName || "User"} 
-                      className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-[#d4af37]/30 object-cover shrink-0"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/30 flex items-center justify-center text-[9px] font-bold uppercase shrink-0">
-                      {(user.displayName || user.email || "U")[0]}
-                    </div>
-                  )}
-                  <div className="text-left hidden sm:block">
-                    <span className="block text-[8px] text-[#8e9299] uppercase tracking-widest leading-none mb-0.5">Cloud Synced</span>
-                    <span className="block text-[11px] text-zinc-100 max-w-[100px] truncate leading-none font-medium">{user.displayName || user.email}</span>
-                  </div>
+              {/* 2. Top Main App Ribbon */}
+              <div className="flex items-center gap-1.5 bg-[#111317] p-1 rounded-lg border border-[#2a2c33] shrink-0 shadow-lg">
+                {/* Navigation History Controls */}
+                <div className="flex items-center gap-0.5">
                   <button
-                    onClick={async () => {
-                      await setGlobalPresence('offline');
-                      logout();
-                    }}
-                    className="px-1.5 py-1 text-[8px] md:text-[9px] font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded transition-all uppercase tracking-wider select-none shrink-0"
+                    type="button"
+                    onClick={handleGoBack}
+                    disabled={historyIndex <= 0}
+                    className={`p-1 rounded transition select-none ${
+                      historyIndex > 0
+                        ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
+                        : 'text-zinc-600 opacity-20 cursor-not-allowed'
+                    }`}
+                    title="Go Back"
                   >
-                    Sign Out
+                    <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGoForward}
+                    disabled={historyIndex >= navHistory.length - 1}
+                    className={`p-1 rounded transition select-none ${
+                      historyIndex < navHistory.length - 1
+                        ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
+                        : 'text-zinc-600 opacity-20 cursor-not-allowed'
+                    }`}
+                    title="Go Forward"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5 shrink-0" />
                   </button>
                 </div>
-              ) : (
-                <button
-                  onClick={signInWithGoogle}
-                  className="px-2 py-1.5 sm:px-3 lg:px-4 md:py-2 bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#d4af37] hover:text-black border border-[#d4af37]/30 hover:border-transparent rounded-lg text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider transition duration-150 flex items-center gap-1.5 md:gap-2 select-none"
-                >
-                  <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-white text-black font-extrabold flex items-center justify-center text-[9px] sm:text-[10px] rounded-full shrink-0">G</span>
-                  <span>Sign In</span>
-                </button>
-              )}
+
+                <div className="h-4 w-px bg-[#2a2c33] mx-1" />
+
+                {/* Quick Access Top Main Ribbon Controls */}
+                <div className="flex items-center gap-1">
+                  {[
+                    { id: 'SavedItems' as const, label: 'Saved Items', icon: Bookmark },
+                    { id: 'Settings' as const, label: 'Settings', icon: Settings },
+                    { id: 'Help' as const, label: 'Guide', icon: HelpCircle }
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    const active = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          setActiveTab(tab.id);
+                        }}
+                        className={`px-1.5 py-1 rounded text-[9px] sm:text-[10px] md:text-[11px] font-semibold flex items-center gap-1 transition duration-200 select-none uppercase tracking-wider cursor-pointer ${
+                          active
+                            ? 'border border-[#d4af37]/45 text-[#d4af37] bg-[#d4af37]/10 font-bold'
+                            : 'border border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+                        }`}
+                        title={tab.label}
+                      >
+                        <Icon className="w-3.5 h-3.5 text-[#d4af37]" />
+                        <span className="hidden sm:inline">{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2 (on mobile): Active Inventory & Profile/Sign In */}
+            <div className="flex items-center gap-2 justify-between md:justify-end w-full md:w-auto shrink-0 mt-0.5 md:mt-0">
+              {/* 3. Active Inventory & total ducat pool */}
+              <div className="flex gap-3 items-center bg-[#111317]/50 px-2.5 py-1 sm:py-1.5 rounded-lg border border-[#2a2c33]/40 shrink-0 shadow-sm">
+                <div className="text-center">
+                  <span className="block text-[8px] sm:text-[9px] text-[#8e9299] uppercase tracking-wider mb-0.5 leading-none">Active Inv</span>
+                  <span className="text-white font-mono text-xs font-semibold leading-none">{totalCount} Parts</span>
+                </div>
+                <div className="h-4 w-px bg-[#2a2c33]/40" />
+                <div className="text-center">
+                  <span className="block text-[8px] sm:text-[9px] text-[#8e9299] uppercase tracking-wider mb-0.5 leading-none">Ducats</span>
+                  <span className="text-[#d4af37] font-mono text-xs font-semibold leading-none text-right">
+                    {counts.bronze15*15 + counts.bronze25*25 + counts.silver45*45 + counts.silver65*65 + counts.gold*100}
+                  </span>
+                </div>
+              </div>
+
+              {/* 4. Presence status & profiles */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                {user && isVerified && (
+                  <div className="px-1.5 py-0.5 bg-[#111317] hover:bg-[#1a1c23] border border-[#2a2c33] hover:border-[#d4af37]/50 rounded-lg transition-colors flex items-center justify-center">
+                    <select 
+                      value={userPresence}
+                      onChange={handlePresenceChange}
+                      className="bg-transparent max-w-[70px] sm:max-w-none text-[8px] sm:text-[10px] md:text-xs truncate uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer text-zinc-500"
+                      title="Market Presence Status"
+                    >
+                      <option value="offline" className="text-zinc-500 bg-[#0c0d10]">OFFLINE</option>
+                      <option value="online" className="text-emerald-400 bg-[#0c0d10]">ONLINE</option>
+                      <option value="online-in-game" className="text-purple-400 bg-[#0c0d10]">IN GAME</option>
+                    </select>
+                  </div>
+                )}
+
+                {user ? (
+                  <div className="flex items-center gap-1 sm:gap-1.5 bg-[#111317] border border-[#d4af37]/20 p-1 pl-1.5 pr-1.5 sm:pl-2 sm:pr-2 rounded-lg">
+                    {user.photoURL ? (
+                      <img 
+                        src={user.photoURL} 
+                        alt={user.displayName || "User"} 
+                        className="w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full border border-[#d4af37]/30 object-cover shrink-0"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/30 flex items-center justify-center text-[8px] font-bold uppercase shrink-0">
+                        {(user.displayName || user.email || "U")[0]}
+                      </div>
+                    )}
+                    <div className="text-left hidden sm:block">
+                      <span className="block text-[8px] text-[#8e9299] uppercase tracking-widest leading-none mb-0.5">Cloud Synced</span>
+                      <span className="block text-[10px] text-zinc-100 max-w-[80px] truncate leading-none font-medium">{user.displayName || user.email}</span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        await setGlobalPresence('offline');
+                        logout();
+                      }}
+                      className="px-1 py-0.5 text-[8px] font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded transition-all uppercase tracking-wider select-none shrink-0"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={signInWithGoogle}
+                    className="px-2 py-1 bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#d4af37] hover:text-black border border-[#d4af37]/30 hover:border-transparent rounded-lg text-[8px] sm:text-[9px] md:text-xs font-bold uppercase tracking-wider transition duration-150 flex items-center gap-1 select-none"
+                  >
+                    <span className="w-3.5 h-3.5 bg-white text-black font-extrabold flex items-center justify-center text-[9px] rounded-full shrink-0">G</span>
+                    <span>Sign In</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </header>
     </div>
 
     {/* Main Unified Navigation Ribbon shown across all tabs, moves with scrolling */}
-    <div className="flex flex-col lg:flex-row items-center justify-between bg-[#0a0a0d] px-4 sm:px-8 py-2.5 gap-3.5 max-w-7xl mx-auto w-full border-b border-[#2a2c33]/30">
-        <div className="flex-1 flex justify-center w-full overflow-x-auto select-none no-scrollbar">
+    <div className="flex flex-col lg:flex-row items-center justify-between bg-[#0a0a0d] px-2 sm:px-8 py-2 gap-3 max-w-7xl mx-auto w-full border-b border-[#2a2c33]/30">
+        <div className="flex-1 flex justify-center w-full select-none">
           {activeTab === 'Market' ? (
-            <nav className="flex flex-nowrap justify-center gap-1.5 sm:gap-2">
+            <nav className="flex flex-row justify-center gap-1 sm:gap-2 w-full max-w-full">
               {/* Back to App button */}
               <button
                 onClick={() => setActiveTab('Home')}
-                className="relative px-3 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-bold flex items-center gap-1.5 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider text-[#d4af37] hover:text-white bg-[#d4af37]/5 hover:bg-[#d4af37]/10 rounded-md cursor-pointer border border-[#d4af37]/30"
+                className="relative px-2 sm:px-4 py-1.5 sm:py-2 text-[9px] sm:text-[11px] md:text-xs font-bold flex items-center gap-1 md:gap-1.5 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider text-[#d4af37] hover:text-white bg-[#d4af37]/5 hover:bg-[#d4af37]/10 rounded-md cursor-pointer border border-[#d4af37]/30"
               >
-                <ArrowLeft className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span>Back to App</span>
+                <ArrowLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#d4af37]" />
+                <span>
+                  <span className="hidden sm:inline">Back to App</span>
+                  <span className="inline sm:hidden">Back</span>
+                </span>
               </button>
 
               {/* Custom separator on desktop/tablet */}
@@ -662,63 +671,75 @@ export default function App() {
               {/* Browse Listings */}
               <button
                 onClick={() => setMarketSubTab('browse')}
-                className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                className={`relative px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 text-[9px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
                   marketSubTab === 'browse'
                     ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold'
                     : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
                 }`}
               >
-                <ShoppingBag className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span>Browse listings</span>
+                <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#d4af37]" />
+                <span>
+                  <span className="hidden sm:inline">Browse listings</span>
+                  <span className="inline sm:hidden">Browse</span>
+                </span>
               </button>
 
               {/* Create listings */}
               <button
                 onClick={() => setMarketSubTab('saved')}
-                className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                className={`relative px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 text-[9px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
                   marketSubTab === 'saved'
                     ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold'
                     : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
                 }`}
               >
-                <Tag className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span>Create listings</span>
+                <Tag className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#d4af37]" />
+                <span>
+                  <span className="hidden sm:inline">Create listings</span>
+                  <span className="inline sm:hidden">Create</span>
+                </span>
               </button>
 
               {/* My Listings */}
               <button
                 onClick={() => setMarketSubTab('my_listings')}
-                className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                className={`relative px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 text-[9px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
                   marketSubTab === 'my_listings'
                     ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold'
                     : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
                 }`}
               >
-                <Coins className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span>My Listings</span>
+                <Coins className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#d4af37]" />
+                <span>
+                  <span className="hidden sm:inline">My Listings</span>
+                  <span className="inline sm:hidden">My List</span>
+                </span>
               </button>
 
               {/* My Trade Panel */}
               <button
                 onClick={() => setMarketSubTab('manage')}
-                className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                className={`relative px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 text-[9px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
                   marketSubTab === 'manage'
                     ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold'
                     : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
                 }`}
               >
-                <UserCheck className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span>My Trade Panel & Verification</span>
+                <UserCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#d4af37]" />
+                <span>
+                  <span className="hidden sm:inline">My Trade Panel & Verification</span>
+                  <span className="inline sm:hidden">Panel</span>
+                </span>
               </button>
             </nav>
           ) : (
-            <nav className="flex flex-nowrap sm:flex-wrap justify-center gap-1 sm:gap-1.5">
+            <nav className="flex flex-row justify-center gap-1 sm:gap-1.5 w-full max-w-full">
               {[
-                { id: 'Market', label: 'Live Market', icon: ShoppingBag },
-                { id: 'Home', label: 'Welcome', icon: Compass },
-                { id: 'Calculator', label: 'Calculator', icon: Coins },
-                { id: 'DataSelection', label: 'Directory', icon: Search },
-                { id: 'OCR', label: 'Image Scan', icon: Clipboard },
+                { id: 'Market', label: 'Live Market', shortLabel: 'Market', icon: ShoppingBag },
+                { id: 'Home', label: 'Welcome', shortLabel: 'Home', icon: Compass },
+                { id: 'Calculator', label: 'Calculator', shortLabel: 'Calc', icon: Coins },
+                { id: 'DataSelection', label: 'Directory', shortLabel: 'Dir', icon: Search },
+                { id: 'OCR', label: 'Image Scan', shortLabel: 'Scan', icon: Clipboard },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.id;
@@ -734,7 +755,7 @@ export default function App() {
                         setMarketSubTab('browse');
                       }
                     }}
-                    className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                    className={`relative px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 text-[9px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
                       active 
                         ? isLiveMarket
                           ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/10 font-bold shadow-[0_0_15px_rgba(212,175,55,0.12)]'
@@ -751,7 +772,10 @@ export default function App() {
                           ? 'text-red-400'
                           : 'text-[#8e9299]'
                     }`} />
-                    <span>{tab.label}</span>
+                    <span>
+                      <span className="hidden sm:inline">{tab.label}</span>
+                      <span className="inline sm:hidden">{tab.shortLabel}</span>
+                    </span>
                     {isLiveMarket && (
                       <span className="relative flex h-1.5 w-1.5 ml-0.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-450 opacity-75"></span>
