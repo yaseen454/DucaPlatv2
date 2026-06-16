@@ -2562,34 +2562,7 @@ export default function MarketTab({
         </p>
       </div>
 
-      {/* Localized Market sub-tabs ribbon */}
-      <div className="flex justify-start sm:justify-center w-full overflow-x-auto select-none border-b border-[#2a2c33]/40 pb-1">
-        <nav className="flex flex-nowrap justify-start sm:justify-center gap-1 sm:gap-2 pb-1 sm:pb-0">
-          {[
-            { id: 'browse' as const, label: 'Browse Listings', icon: ShoppingBag },
-            { id: 'saved' as const, label: 'Create Listings', icon: Tag },
-            { id: 'my_listings' as const, label: 'My Listings', icon: Coins },
-            { id: 'manage' as const, label: 'My Trade Panel & Verification', icon: UserCheck },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const active = marketSubTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setMarketSubTab(tab.id)}
-                className={`relative px-3 sm:px-4 md:px-5 py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
-                  active
-                    ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold'
-                    : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+
 
       {/* Messages */}
       {errorMsg && (

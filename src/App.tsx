@@ -467,7 +467,7 @@ export default function App() {
       <div className="sticky top-0 z-50 w-full bg-[#0c0d10]/95 backdrop-blur-md border-b border-[#2a2c33] shadow-xl flex flex-col">
         {/* Premium Header */}
         <header className="w-full px-3 md:px-8 py-3 md:py-4 flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 sm:gap-4 overflow-hidden border-b border-[#2a2c33]/30">
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3.5">
+        <div className="w-full sm:w-auto flex flex-col lg:flex-row items-center lg:items-center gap-3 lg:gap-6">
           <div className="text-center sm:text-left flex flex-col items-center sm:items-start w-full sm:w-auto">
             <div className="flex items-baseline justify-center sm:justify-start gap-2">
               <h1 className="text-xl md:text-3xl font-light tracking-widest text-[#d4af37]" style={{ fontFamily: "'Georgia', serif" }}>
@@ -478,6 +478,70 @@ export default function App() {
               </span>
             </div>
             <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] text-[#8e9299] mt-1 sm:mt-1.5">Void Market Efficiency Analytics</p>
+          </div>
+
+          {/* Top Main App Ribbon with Saved Items, Settings, Guide, and Navigation History */}
+          <div className="flex items-center gap-2 bg-[#111317] p-1 rounded-lg border border-[#2a2c33] shrink-0">
+            {/* Navigation History Controls */}
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={handleGoBack}
+                disabled={historyIndex <= 0}
+                className={`p-1.5 rounded transition select-none ${
+                  historyIndex > 0
+                    ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
+                    : 'text-zinc-600 opacity-20 cursor-not-allowed'
+                }`}
+                title="Go Back"
+              >
+                <ChevronLeft className="w-4 h-4 shrink-0" />
+              </button>
+              <button
+                type="button"
+                onClick={handleGoForward}
+                disabled={historyIndex >= navHistory.length - 1}
+                className={`p-1.5 rounded transition select-none ${
+                  historyIndex < navHistory.length - 1
+                    ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
+                    : 'text-zinc-600 opacity-20 cursor-not-allowed'
+                }`}
+                title="Go Forward"
+              >
+                <ChevronRight className="w-4 h-4 shrink-0" />
+              </button>
+            </div>
+
+            <div className="h-4 w-px bg-[#2a2c33] mx-1" />
+
+            {/* Quick Access Top Main Ribbon Controls */}
+            <div className="flex items-center gap-1">
+              {[
+                { id: 'SavedItems' as const, label: 'Saved Items', icon: Bookmark },
+                { id: 'Settings' as const, label: 'Settings', icon: Settings },
+                { id: 'Help' as const, label: 'Guide', icon: HelpCircle }
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                    }}
+                    className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded text-[9px] sm:text-[10px] md:text-[11px] font-semibold flex items-center gap-1 transition duration-200 select-none uppercase tracking-wider cursor-pointer ${
+                      active
+                        ? 'border border-[#d4af37]/45 text-[#d4af37] bg-[#d4af37]/10 font-bold'
+                        : 'border border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+                    }`}
+                    title={tab.label}
+                  >
+                    <Icon className="w-3.5 h-3.5 text-[#d4af37]" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -575,95 +639,125 @@ export default function App() {
 
       {/* Main Unified Navigation Ribbon shown across all tabs, enclosed in the sticky container */}
       <div className="flex flex-col lg:flex-row items-center justify-between bg-[#0a0a0d] px-4 sm:px-8 py-2.5 gap-3.5 max-w-7xl mx-auto w-full border-t border-[#2a2c33]/30">
-        {/* Navigation History Controls */}
-        <div className="flex items-center gap-1 shrink-0 bg-[#111317] p-1 rounded-lg border border-[#2a2c33]">
-          <button
-            type="button"
-            onClick={handleGoBack}
-            disabled={historyIndex <= 0}
-            className={`p-1.5 rounded transition select-none ${
-              historyIndex > 0
-                ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
-                : 'text-zinc-650 opacity-20 cursor-not-allowed'
-            }`}
-            title="Go Back"
-          >
-            <ChevronLeft className="w-4 h-4 shrink-0" />
-          </button>
-          
-          <span className="text-[9px] text-[#8e9299] px-2 font-mono uppercase tracking-widest select-none font-black animate-pulse">
-            History
-          </span>
-
-          <button
-            type="button"
-            onClick={handleGoForward}
-            disabled={historyIndex >= navHistory.length - 1}
-            className={`p-1.5 rounded transition select-none ${
-              historyIndex < navHistory.length - 1
-                ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
-                : 'text-zinc-650 opacity-20 cursor-not-allowed'
-            }`}
-            title="Go Forward"
-          >
-            <ChevronRight className="w-4 h-4 shrink-0" />
-          </button>
-        </div>
-
         <div className="flex-1 flex justify-center w-full overflow-x-auto select-none no-scrollbar">
-          <nav className="flex flex-nowrap sm:flex-wrap justify-center gap-1 sm:gap-1.5">
-            {[
-              { id: 'Market', label: 'Live Market', icon: ShoppingBag },
-              { id: 'Home', label: 'Welcome', icon: Compass },
-              { id: 'Calculator', label: 'Calculator', icon: Coins },
-              { id: 'DataSelection', label: 'Directory', icon: Search },
-              { id: 'OCR', label: 'Image Scan', icon: Clipboard },
-              { id: 'SavedItems', label: 'Saved Items', icon: Bookmark },
-              { id: 'Settings', label: 'Settings', icon: Settings },
-              { id: 'Help', label: 'Guide', icon: HelpCircle }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const active = activeTab === tab.id;
-              const isLiveMarket = tab.id === 'Market';
-              
-              return (
-                <button
-                  key={tab.id}
-                  id={`nav-tab-${tab.id}`}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    if (isLiveMarket) {
-                      setMarketSubTab('browse');
-                    }
-                  }}
-                  className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
-                    active 
-                      ? isLiveMarket
-                        ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/10 font-bold shadow-[0_0_15px_rgba(212,175,55,0.12)]'
-                        : 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold' 
-                      : isLiveMarket
-                        ? 'border-dashed border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-950/5 font-semibold'
-                        : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
-                  }`}
-                >
-                  <Icon className={`w-3.5 h-3.5 ${
-                    active 
-                      ? 'text-[#d4af37]' 
-                      : isLiveMarket
-                        ? 'text-red-400'
-                        : 'text-[#8e9299]'
-                  }`} />
-                  <span>{tab.label}</span>
-                  {isLiveMarket && (
-                    <span className="relative flex h-1.5 w-1.5 ml-0.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-450 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+          {activeTab === 'Market' ? (
+            <nav className="flex flex-nowrap justify-center gap-1.5 sm:gap-2">
+              {/* Back to App button */}
+              <button
+                onClick={() => setActiveTab('Home')}
+                className="relative px-3 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-bold flex items-center gap-1.5 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider text-[#d4af37] hover:text-white bg-[#d4af37]/5 hover:bg-[#d4af37]/10 rounded-md cursor-pointer border border-[#d4af37]/30"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>Back to App</span>
+              </button>
+
+              {/* Custom separator on desktop/tablet */}
+              <div className="hidden sm:block h-6 w-px bg-[#2a2c33] my-auto mx-1" />
+
+              {/* Browse Listings */}
+              <button
+                onClick={() => setMarketSubTab('browse')}
+                className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                  marketSubTab === 'browse'
+                    ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold'
+                    : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+                }`}
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>Browse listings</span>
+              </button>
+
+              {/* Create listings */}
+              <button
+                onClick={() => setMarketSubTab('saved')}
+                className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                  marketSubTab === 'saved'
+                    ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold'
+                    : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+                }`}
+              >
+                <Tag className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>Create listings</span>
+              </button>
+
+              {/* My Listings */}
+              <button
+                onClick={() => setMarketSubTab('my_listings')}
+                className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                  marketSubTab === 'my_listings'
+                    ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold'
+                    : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+                }`}
+              >
+                <Coins className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>My Listings</span>
+              </button>
+
+              {/* My Trade Panel */}
+              <button
+                onClick={() => setMarketSubTab('manage')}
+                className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                  marketSubTab === 'manage'
+                    ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold'
+                    : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+                }`}
+              >
+                <UserCheck className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>My Trade Panel & Verification</span>
+              </button>
+            </nav>
+          ) : (
+            <nav className="flex flex-nowrap sm:flex-wrap justify-center gap-1 sm:gap-1.5">
+              {[
+                { id: 'Market', label: 'Live Market', icon: ShoppingBag },
+                { id: 'Home', label: 'Welcome', icon: Compass },
+                { id: 'Calculator', label: 'Calculator', icon: Coins },
+                { id: 'DataSelection', label: 'Directory', icon: Search },
+                { id: 'OCR', label: 'Image Scan', icon: Clipboard },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                const isLiveMarket = tab.id === 'Market';
+                
+                return (
+                  <button
+                    key={tab.id}
+                    id={`nav-tab-${tab.id}`}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      if (isLiveMarket) {
+                        setMarketSubTab('browse');
+                      }
+                    }}
+                    className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                      active 
+                        ? isLiveMarket
+                          ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/10 font-bold shadow-[0_0_15px_rgba(212,175,55,0.12)]'
+                          : 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold' 
+                        : isLiveMarket
+                          ? 'border-dashed border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-950/5 font-semibold'
+                          : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+                    }`}
+                  >
+                    <Icon className={`w-3.5 h-3.5 ${
+                      active 
+                        ? 'text-[#d4af37]' 
+                        : isLiveMarket
+                          ? 'text-red-400'
+                          : 'text-[#8e9299]'
+                    }`} />
+                    <span>{tab.label}</span>
+                    {isLiveMarket && (
+                      <span className="relative flex h-1.5 w-1.5 ml-0.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-450 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          )}
         </div>
       </div>
     </div>
