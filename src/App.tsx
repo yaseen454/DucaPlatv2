@@ -36,6 +36,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from './context/AuthContext';
 import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
+import { setGlobalPresence } from './lib/presence';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('Home');
@@ -154,130 +156,32 @@ export default function App() {
   });
   const [isVerified, setIsVerified] = useState(false);
 
-  // RTDB hybrid system connection
-  const activeSessionRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (!user?.uid) return;
-    let isMounted = true;
-    let rtdbUnsubs: (() => void)[] = [];
-
-    import('firebase/database').then(({ ref, onValue, onDisconnect, serverTimestamp, set, push }) => {
-      import('./lib/firebase').then(({ rtdb }) => {
-        if (!isMounted) return;
-
-        const connectedRef = ref(rtdb, '.info/connected');
-        const myPresenceRef = ref(rtdb, `presence/${user.uid}`);
-
-        const unsub = onValue(connectedRef, (snap) => {
-          if (snap.val() === true) {
-            activeSessionRef.current = push(myPresenceRef);
-            const disconnectRef = onDisconnect(activeSessionRef.current);
-            disconnectRef.remove().then(() => {
-              const currentPref = localStorage.getItem('preferredMarketPresence') || 'offline';
-              if (currentPref !== 'offline') {
-                set(activeSessionRef.current, {
-                  status: currentPref,
-                  lastActive: serverTimestamp()
-                });
-              }
-            });
-          }
-        });
-        rtdbUnsubs.push(() => unsub());
-      });
-    });
-
-    return () => {
-      isMounted = false;
-      rtdbUnsubs.forEach(u => u());
-      if (activeSessionRef.current) {
-        import('firebase/database').then(({ remove }) => {
-          remove(activeSessionRef.current).catch(() => {});
-          activeSessionRef.current = null;
-        });
-      }
-    };
-  }, [user?.uid]);
-
-  const updatePresenceCore = async (status: PresenceStatus, currentUserUid: string | undefined) => {
-    setUserPresence(status);
-    if (!currentUserUid) return;
-    try {
-      const [rtdbMod, firestoreMod, { rtdb }] = await Promise.all([
-        import('firebase/database'),
-        import('firebase/firestore'),
-        import('./lib/firebase')
-      ]);
-
-      const myPresenceRef = rtdbMod.ref(rtdb, `presence/${currentUserUid}`);
-      
-      // Update RTDB explicitly
-      if (status === 'offline') {
-        await rtdbMod.remove(myPresenceRef);
-      } else {
-        if (activeSessionRef.current) {
-          await rtdbMod.set(activeSessionRef.current, {
-            status,
-            lastActive: rtdbMod.serverTimestamp()
-          });
-        }
-      }
-
-      // Update all active listings with the explicit status in Firestore
-      const q = firestoreMod.query(firestoreMod.collection(db, 'listings'), firestoreMod.where('sellerUid', '==', currentUserUid));
-      const snap = await firestoreMod.getDocs(q);
-      const batch = firestoreMod.writeBatch(db);
-      snap.forEach(d => {
-        batch.update(d.ref, { sellerStatus: status });
-      });
-      await batch.commit();
-    } catch (err) {
-      console.error("Failed to update market presence", err);
-    }
-  };
-
   useEffect(() => {
     if (!user) {
       setIsVerified(false);
       return;
     }
-    let unsub: (() => void) | null = null;
-    import("firebase/firestore").then(({ doc, onSnapshot }) => {
-      const userRef = doc(db, 'users', user.uid);
-      unsub = onSnapshot(userRef, (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          if (data.verification?.status === 'verified') {
-            setIsVerified(true);
-          } else {
-            setIsVerified(false);
-          }
+    const userRef = doc(db, 'users', user.uid);
+    const unsub = onSnapshot(userRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.verification?.status === 'verified') {
+          setIsVerified(true);
+        } else {
+          setIsVerified(false);
         }
-      });
+      }
     });
     return () => {
-      if (unsub) unsub();
+      unsub();
     };
-  }, [user]);
-
-  useEffect(() => {
-    // Passive disconnect is perfectly handled by RTDB onDisconnect hook.
-    // No need to execute a global wipe on beforeunload as it was aggressively disconnecting other tabs.
-    if (user) {
-      let pref = localStorage.getItem('preferredMarketPresence') as string | null;
-      if (pref === 'ONLINE IN GAME') pref = 'online-in-game';
-      if (pref === 'ONLINE') pref = 'online';
-      if (pref === 'OFFLINE') pref = 'offline';
-      
-      updatePresenceCore((pref as PresenceStatus) || 'offline', user.uid);
-    }
   }, [user]);
 
   const handlePresenceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const status = e.target.value as PresenceStatus;
+    setUserPresence(status);
     localStorage.setItem('preferredMarketPresence', status);
-    await updatePresenceCore(status, user?.uid);
+    await setGlobalPresence(status);
   };
 
 
@@ -588,7 +492,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={async () => {
-                    await updatePresenceCore('offline', user?.uid);
+                    await setGlobalPresence('offline');
                     logout();
                   }}
                   className="px-1.5 py-1 sm:px-2 sm:py-0.5 md:py-1 text-[8px] md:text-[9px] font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded transition-all uppercase tracking-wider select-none shrink-0"
