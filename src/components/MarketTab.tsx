@@ -2766,7 +2766,7 @@ export default function MarketTab({
 
             {!user ? (
               <p className="text-xs text-[#8e9299] leading-relaxed py-2">
-                Log in using Google via the Settings tab to authenticate your Warframe IGN and begin listing trades. Unverified guests can browse listings but cannot create trade requests.
+                Log in using Google to authenticate your Warframe IGN and begin listing trades. Unverified guests can browse listings but cannot create trade requests.
               </p>
             ) : (
               <>
@@ -3111,15 +3111,6 @@ export default function MarketTab({
                 })()}
               </div>
             )}
-          </div>
-          
-          {/* Quick tips */}
-          <div className="bg-[#14161c] border border-[#2a2c33] rounded-xl p-4.5 space-y-2 text-[11px] text-[#8e9299] leading-relaxed">
-            <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wide">Live Panel Tips</h4>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Pasting your profile View Source checks in step 4 securely discards private page cookies in-browser! No login parameters ever leave this page.</li>
-              <li>Marking listings Sold or Cancelled immediately removes public entries database-wide.</li>
-                          </ul>
           </div>
         </div>
       )}

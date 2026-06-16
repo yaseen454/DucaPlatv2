@@ -492,28 +492,23 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#0c0d10] text-[#e0e1e6] flex flex-col font-sans antialiased text-sm">
       {/* Premium Header */}
-      <header className="sticky top-0 z-50 bg-[#0c0d10]/95 backdrop-blur border-b border-[#2a2c33] px-4 md:px-8 py-5 flex items-center justify-between shadow-xl">
-        <div className="flex items-center gap-3.5">
-          <div>
-            <div className="flex items-baseline gap-2">
-              <h1 className="text-2xl md:text-3xl font-light tracking-widest text-[#d4af37]" style={{ fontFamily: "'Georgia', serif" }}>
+      <header className="sticky top-0 z-50 w-full bg-[#0c0d10]/95 backdrop-blur border-b border-[#2a2c33] px-3 md:px-8 py-3 md:py-5 flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 sm:gap-4 shadow-xl overflow-hidden">
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3.5">
+          <div className="text-center sm:text-left flex flex-col items-center sm:items-start w-full sm:w-auto">
+            <div className="flex items-baseline justify-center sm:justify-start gap-2">
+              <h1 className="text-xl md:text-3xl font-light tracking-widest text-[#d4af37]" style={{ fontFamily: "'Georgia', serif" }}>
                 DUCAPLAT
               </h1>
               <span className="text-[9px] md:text-[10px] bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 px-1.5 py-0.5 rounded-sm font-semibold tracking-wide uppercase">
                 PRO v2.0
               </span>
             </div>
-            <p className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-[#8e9299] mt-1.5">Void Market Efficiency Analytics</p>
+            <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] text-[#8e9299] mt-1 sm:mt-1.5">Void Market Efficiency Analytics</p>
           </div>
         </div>
 
-        {/* Dynamic metrics widget styled exactly with the design's elegant text-center rows */}
-        <div className="flex items-center gap-4 md:gap-8">
+        <div className="w-full sm:w-auto flex flex-wrap items-center justify-center sm:justify-end gap-2 md:gap-8">
           <div className="hidden lg:flex gap-8 items-center border-r border-[#2a2c33]/40 pr-8">
-            <div className="text-center">
-              <span className="block text-[10px] text-[#8e9299] uppercase tracking-wider mb-1">Market Volatility</span>
-              <span className="text-emerald-400 font-mono text-xs font-medium">+2.4% LOW</span>
-            </div>
             <div className="text-center">
               <span className="block text-[10px] text-[#8e9299] uppercase tracking-wider mb-1">Active Inventory</span>
               <span className="text-white font-mono text-xs font-medium">{totalCount} Parts</span>
@@ -526,13 +521,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* User authentication states block - Premium Orokin styling */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
             <a
               href="https://github.com/yaseen454/DucaPlatv2"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1.5 md:p-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[#d4af37] border border-[#2a2c33] hover:border-[#d4af37]/30 rounded-lg transition-all duration-150 flex items-center justify-center"
+              className="hidden sm:flex p-1.5 md:p-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[#d4af37] border border-[#2a2c33] hover:border-[#d4af37]/30 rounded-lg transition-all duration-150 items-center justify-center"
               title="GitHub Repository"
             >
               <Github className="w-4 h-4" />
@@ -542,7 +536,7 @@ export default function App() {
               href="https://ko-fi.com/trc07#"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1.5 md:p-2.5 bg-[#1a1313] hover:bg-[#2c1d1a] text-[#ff5e5b] hover:text-[#ff7875] border border-[#ff5e5b]/20 hover:border-[#ff5e5b]/40 rounded-lg transition-all duration-150 flex items-center justify-center gap-1.5 px-2 md:px-3 text-xs font-semibold"
+              className="hidden sm:flex p-1.5 md:p-2.5 bg-[#1a1313] hover:bg-[#2c1d1a] text-[#ff5e5b] hover:text-[#ff7875] border border-[#ff5e5b]/20 hover:border-[#ff5e5b]/40 rounded-lg transition-all duration-150 items-center justify-center gap-1.5 px-2 md:px-3 text-xs font-semibold"
               title="Support Me on Ko-fi!"
             >
               <Coffee className="w-4 h-4 text-[#ff5e5b]" />
@@ -554,31 +548,31 @@ export default function App() {
                 <select 
                   value={userPresence}
                   onChange={handlePresenceChange}
-                  className={`bg-transparent text-[10px] md:text-xs uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer ${userPresence === 'online-in-game' ? 'text-purple-400' : userPresence === 'online' ? 'text-emerald-400' : 'text-zinc-500'}`}
+                  className={`bg-transparent max-w-[80px] sm:max-w-none text-[9px] sm:text-[10px] md:text-xs truncate uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer ${userPresence === 'online-in-game' ? 'text-purple-400' : userPresence === 'online' ? 'text-emerald-400' : 'text-zinc-500'}`}
                   title="Market Presence Status"
                 >
                   <option value="offline" className="text-zinc-500 bg-[#0c0d10]">OFFLINE</option>
                   <option value="online" className="text-emerald-400 bg-[#0c0d10]">ONLINE</option>
-                  <option value="online-in-game" className="text-purple-400 bg-[#0c0d10]">ONLINE IN GAME</option>
+                  <option value="online-in-game" className="text-purple-400 bg-[#0c0d10]">IN GAME</option>
                 </select>
               </div>
             )}
 
             {user ? (
-              <div className="flex items-center gap-2.5 bg-[#111317] border border-[#d4af37]/20 p-1 pl-2.5 pr-2.5 md:pl-3 md:pr-3.5 rounded-lg max-w-full">
+              <div className="flex items-center gap-1.5 sm:gap-2.5 bg-[#111317] border border-[#d4af37]/20 p-1 pl-1.5 pr-1.5 sm:pl-2.5 sm:pr-2.5 md:pl-3 md:pr-3.5 rounded-lg max-w-full">
                 {user.photoURL ? (
                   <img 
                     src={user.photoURL} 
                     alt={user.displayName || "User"} 
-                    className="w-6 h-6 md:w-7 md:h-7 rounded-full border border-[#d4af37]/30 object-cover shrink-0"
+                    className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full border border-[#d4af37]/30 object-cover shrink-0"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/30 flex items-center justify-center text-[10px] font-bold uppercase shrink-0">
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/30 flex items-center justify-center text-[9px] font-bold uppercase shrink-0">
                     {(user.displayName || user.email || "U")[0]}
                   </div>
                 )}
-                <div className="text-left hidden md:block">
+                <div className="text-left hidden sm:block">
                   <span className="block text-[8px] text-[#8e9299] uppercase tracking-widest leading-none mb-0.5">Cloud Synced</span>
                   <span className="block text-[11px] text-zinc-100 max-w-[100px] truncate leading-none font-medium">{user.displayName || user.email}</span>
                 </div>
@@ -587,7 +581,7 @@ export default function App() {
                     await updatePresenceCore('offline', user?.uid);
                     logout();
                   }}
-                  className="px-2 py-0.5 md:py-1 text-[8px] md:text-[9px] font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded transition-all uppercase tracking-wider select-none shrink-0"
+                  className="px-1.5 py-1 sm:px-2 sm:py-0.5 md:py-1 text-[8px] md:text-[9px] font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded transition-all uppercase tracking-wider select-none shrink-0"
                 >
                   Sign Out
                 </button>
@@ -595,9 +589,9 @@ export default function App() {
             ) : (
               <button
                 onClick={signInWithGoogle}
-                className="px-3 py-1.5 md:px-4 md:py-2 bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#d4af37] hover:text-black border border-[#d4af37]/30 hover:border-transparent rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider transition duration-150 flex items-center gap-1.5 md:gap-2 select-none"
+                className="px-2 py-1.5 sm:px-3 lg:px-4 md:py-2 bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#d4af37] hover:text-black border border-[#d4af37]/30 hover:border-transparent rounded-lg text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider transition duration-150 flex items-center gap-1.5 md:gap-2 select-none"
               >
-                <span className="w-4 h-4 bg-white text-black font-extrabold flex items-center justify-center text-[10px] rounded-full shrink-0">G</span>
+                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-white text-black font-extrabold flex items-center justify-center text-[9px] sm:text-[10px] rounded-full shrink-0">G</span>
                 <span>Sign In</span>
               </button>
             )}
