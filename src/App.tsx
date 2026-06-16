@@ -31,7 +31,11 @@ import {
   ShoppingBag,
   ArrowLeft,
   Tag,
-  UserCheck
+  UserCheck,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  ClipboardPaste
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from './context/AuthContext';
@@ -155,6 +159,60 @@ export default function App() {
     return (pref as PresenceStatus) || 'offline';
   });
   const [isVerified, setIsVerified] = useState(false);
+
+  // Navigation stack v2 history states
+  const [navHistory, setNavHistory] = useState<string[]>(['Home']);
+  const [historyIndex, setHistoryIndex] = useState<number>(0);
+  const isNavigatingHistoryRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (isNavigatingHistoryRef.current) {
+      isNavigatingHistoryRef.current = false;
+      return;
+    }
+    // If activeTab changes outside of the back/forward history actions, update stack
+    setNavHistory(prev => {
+      const currentTabInHistory = prev[historyIndex];
+      if (currentTabInHistory === activeTab) return prev;
+      
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(activeTab);
+      setHistoryIndex(newHistory.length - 1);
+      return newHistory;
+    });
+  }, [activeTab]);
+
+  const handleGoBack = () => {
+    if (historyIndex > 0) {
+      isNavigatingHistoryRef.current = true;
+      const targetIndex = historyIndex - 1;
+      setHistoryIndex(targetIndex);
+      setActiveTab(navHistory[targetIndex]);
+    }
+  };
+
+  const handleGoForward = () => {
+    if (historyIndex < navHistory.length - 1) {
+      isNavigatingHistoryRef.current = true;
+      const targetIndex = historyIndex + 1;
+      setHistoryIndex(targetIndex);
+      setActiveTab(navHistory[targetIndex]);
+    }
+  };
+
+  // State to track imported market listing to display details nicely in Calculator
+  const [importedListing, setImportedListing] = useState<{
+    sellerIGN: string;
+    price: number;
+    itemName: string;
+    tradeText: string;
+    isWTS: boolean;
+    quantity: number;
+    totalParts: number;
+    totalDucats: number;
+    partDistribution?: string;
+  } | null>(null);
+  const [copiedImported, setCopiedImported] = useState<boolean>(false);
 
   useEffect(() => {
     if (!user) {
@@ -405,8 +463,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0c0d10] text-[#e0e1e6] flex flex-col font-sans antialiased text-sm">
-      {/* Premium Header */}
-      <header className="sticky top-0 z-50 w-full bg-[#0c0d10]/95 backdrop-blur border-b border-[#2a2c33] px-3 md:px-8 py-3 md:py-5 flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 sm:gap-4 shadow-xl overflow-hidden">
+      {/* Sticky Top Bar Container - Wraps both Header and Navigation Ribbon to keep them present while scrolling */}
+      <div className="sticky top-0 z-50 w-full bg-[#0c0d10]/95 backdrop-blur-md border-b border-[#2a2c33] shadow-xl flex flex-col">
+        {/* Premium Header */}
+        <header className="w-full px-3 md:px-8 py-3 md:py-4 flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 sm:gap-4 overflow-hidden border-b border-[#2a2c33]/30">
         <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3.5">
           <div className="text-center sm:text-left flex flex-col items-center sm:items-start w-full sm:w-auto">
             <div className="flex items-baseline justify-center sm:justify-start gap-2">
@@ -513,89 +573,45 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main navigation ribbon or New Live Market navigation bar */}
-      <div className="flex justify-center border-b border-[#2a2c33] bg-[#0c0d10] px-2 sm:px-4 py-1">
-        {activeTab === 'Market' ? (
-          <nav className="flex flex-wrap sm:flex-nowrap max-w-7xl w-full justify-center gap-1.5 sm:gap-2">
-            {/* Back to App button */}
-            <button
-              onClick={() => setActiveTab('Home')}
-              className="relative px-3 sm:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-bold flex items-center gap-1.5 border-b-2 border-transparent transition duration-200 select-none flex-shrink-0 uppercase tracking-wider text-[#d4af37] hover:text-white bg-[#d4af37]/5 hover:bg-[#d4af37]/10 rounded-md cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Back to App</span>
-            </button>
+      {/* Main Unified Navigation Ribbon shown across all tabs, enclosed in the sticky container */}
+      <div className="flex flex-col lg:flex-row items-center justify-between bg-[#0a0a0d] px-4 sm:px-8 py-2.5 gap-3.5 max-w-7xl mx-auto w-full border-t border-[#2a2c33]/30">
+        {/* Navigation History Controls */}
+        <div className="flex items-center gap-1 shrink-0 bg-[#111317] p-1 rounded-lg border border-[#2a2c33]">
+          <button
+            type="button"
+            onClick={handleGoBack}
+            disabled={historyIndex <= 0}
+            className={`p-1.5 rounded transition select-none ${
+              historyIndex > 0
+                ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
+                : 'text-zinc-650 opacity-20 cursor-not-allowed'
+            }`}
+            title="Go Back"
+          >
+            <ChevronLeft className="w-4 h-4 shrink-0" />
+          </button>
+          
+          <span className="text-[9px] text-[#8e9299] px-2 font-mono uppercase tracking-widest select-none font-black animate-pulse">
+            History
+          </span>
 
-            {/* Custom separator on desktop/tablet */}
-            <div className="hidden sm:block h-6 w-px bg-[#2a2c33] my-auto mx-1" />
+          <button
+            type="button"
+            onClick={handleGoForward}
+            disabled={historyIndex >= navHistory.length - 1}
+            className={`p-1.5 rounded transition select-none ${
+              historyIndex < navHistory.length - 1
+                ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
+                : 'text-zinc-650 opacity-20 cursor-not-allowed'
+            }`}
+            title="Go Forward"
+          >
+            <ChevronRight className="w-4 h-4 shrink-0" />
+          </button>
+        </div>
 
-            {/* Browse Listings */}
-            <button
-              onClick={() => setMarketSubTab('browse')}
-              className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
-                marketSubTab === 'browse'
-                  ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5'
-                  : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
-              }`}
-            >
-              <ShoppingBag className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Browse listings</span>
-            </button>
-
-            {/* Create listings */}
-            <button
-              onClick={() => setMarketSubTab('saved')}
-              className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
-                marketSubTab === 'saved'
-                  ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5'
-                  : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
-              }`}
-            >
-              <Tag className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Create listings</span>
-            </button>
-
-            {/* My Listings */}
-            <button
-              onClick={() => setMarketSubTab('my_listings')}
-              className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
-                marketSubTab === 'my_listings'
-                  ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5'
-                  : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
-              }`}
-            >
-              <Coins className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>My Listings</span>
-            </button>
-
-            {/* Saved Items */}
-            <button
-              onClick={() => setMarketSubTab('saved_items')}
-              className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
-                marketSubTab === 'saved_items'
-                  ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5'
-                  : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
-              }`}
-            >
-              <Bookmark className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Saved Items</span>
-            </button>
-
-            {/* My Trade Panel */}
-            <button
-              onClick={() => setMarketSubTab('manage')}
-              className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
-                marketSubTab === 'manage'
-                  ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5'
-                  : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
-              }`}
-            >
-              <UserCheck className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>My Trade Panel & Verification</span>
-            </button>
-          </nav>
-        ) : (
-          <nav className="flex flex-wrap sm:flex-nowrap max-w-7xl w-full justify-center gap-1 sm:gap-1.5 md:gap-2">
+        <div className="flex-1 flex justify-center w-full overflow-x-auto select-none no-scrollbar">
+          <nav className="flex flex-nowrap sm:flex-wrap justify-center gap-1 sm:gap-1.5">
             {[
               { id: 'Market', label: 'Live Market', icon: ShoppingBag },
               { id: 'Home', label: 'Welcome', icon: Compass },
@@ -613,42 +629,44 @@ export default function App() {
               return (
                 <button
                   key={tab.id}
+                  id={`nav-tab-${tab.id}`}
                   onClick={() => {
                     setActiveTab(tab.id);
                     if (isLiveMarket) {
                       setMarketSubTab('browse');
                     }
                   }}
-                  className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                  className={`relative px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
                     active 
                       ? isLiveMarket
                         ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/10 font-bold shadow-[0_0_15px_rgba(212,175,55,0.12)]'
-                        : 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5' 
+                        : 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold' 
                       : isLiveMarket
-                        ? 'border-dashed border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-950/5 font-semibold shadow-[0_0_8px_rgba(239,68,68,0.03)]'
+                        ? 'border-dashed border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-950/5 font-semibold'
                         : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 md:w-3.5 md:h-3.5 ${
+                  <Icon className={`w-3.5 h-3.5 ${
                     active 
                       ? 'text-[#d4af37]' 
                       : isLiveMarket
                         ? 'text-red-400'
                         : 'text-[#8e9299]'
                   }`} />
-                  {tab.label}
+                  <span>{tab.label}</span>
                   {isLiveMarket && (
-                    <span className="relative flex h-2 w-2 ml-0.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    <span className="relative flex h-1.5 w-1.5 ml-0.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-450 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
                     </span>
                   )}
                 </button>
               );
             })}
           </nav>
-        )}
+        </div>
       </div>
+    </div>
 
       {/* Active Tab Workspace Container */}
       <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 transition-all duration-300">
@@ -801,7 +819,97 @@ export default function App() {
             )}
 
             {activeTab === 'Calculator' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              <div className="space-y-6">
+                {importedListing && (
+                  <div className="relative bg-gradient-to-r from-[#171410] via-[#0e0f11] to-[#111317] border-2 border-[#d4af37]/45 rounded-xl p-5 md:p-6 shadow-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#d4af37]/4 rounded-full blur-2xl pointer-events-none" />
+                    
+                    <div className="space-y-2 flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-2 w-2 relative shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d4af37] opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#d4af37]"></span>
+                        </span>
+                        <span className="text-[10px] text-[#d4af37] font-extrabold uppercase tracking-widest font-mono">
+                          Imported Market Parameter Sync
+                        </span>
+                      </div>
+                      
+                      <h4 className="text-sm md:text-base font-bold text-zinc-100 flex items-center gap-1.5 leading-snug">
+                        Viewing market listing for <span className="text-[#d4af37] font-sans font-bold">→</span> {importedListing.itemName}
+                      </h4>
+                      
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#8e9299]">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] uppercase font-mono tracking-wider">Seller IGN:</span>
+                          <span className="text-zinc-200 font-bold bg-[#111317] border border-zinc-800 px-1.5 py-0.5 rounded font-mono select-all">
+                            {importedListing.sellerIGN}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] uppercase font-mono tracking-wider">Price:</span>
+                          <span className="text-white font-extrabold bg-[#d4af37]/10 border border-[#d4af37]/25 px-1.5 py-0.5 rounded flex items-center gap-0.5 font-mono">
+                            {importedListing.price} Pt
+                          </span>
+                        </div>
+                        {importedListing.totalParts > 0 && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] uppercase font-mono tracking-wider font-semibold">Cargo Quantity:</span>
+                            <span className="text-zinc-300 font-medium">
+                              {importedListing.totalParts} Parts {importedListing.partDistribution ? `(${importedListing.partDistribution.replace(/(\d+)d/g, '$1 :ducats:')})` : ''}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Interactive Copy Trade Command Input */}
+                      <div className="flex items-center gap-1.5 bg-[#0a0a0d] border border-zinc-900 rounded-lg p-1 max-w-2xl mt-1.5">
+                        <span className="text-[9px] text-[#8e9299] uppercase font-mono tracking-widest select-none shrink-0 border-r border-[#2d3039] pr-2.5 pl-2">Command</span>
+                        <div className="flex-1 font-mono text-[10.5px] text-emerald-400 truncate select-all px-2 font-semibold">
+                          {importedListing.tradeText}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(importedListing.tradeText);
+                            setCopiedImported(true);
+                            setTimeout(() => setCopiedImported(false), 2000);
+                          }}
+                          className="py-1 px-3 bg-zinc-950 hover:bg-zinc-900 rounded text-[9px] text-[#d4af37] border border-[#d4af37]/20 hover:border-[#d4af37]/45 transition uppercase font-extrabold flex items-center gap-1.5 cursor-pointer shrink-0"
+                        >
+                          {copiedImported ? <Check className="w-3.5 h-3.5 text-emerald-450" /> : <ClipboardPaste className="w-3.5 h-3.5" />}
+                          <span className={copiedImported ? "text-emerald-450 font-bold" : ""}>{copiedImported ? 'Copied' : 'Copy Command'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Navigation Buttons Row */}
+                    <div className="flex flex-row md:flex-col items-stretch md:items-end gap-2.5 w-full md:w-auto shrink-0 border-t border-[#2a2c33]/40 md:border-t-0 pt-3 md:pt-0 justify-between self-stretch md:self-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('Market');
+                        }}
+                        className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-[#d4af37]/10 hover:bg-[#d4af37]/20 border border-[#d4af37]/35 hover:border-[#d4af37]/55 rounded-lg text-xs font-bold text-[#d4af37] transition uppercase tracking-wider cursor-pointer select-none"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Go Back to Market</span>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImportedListing(null);
+                        }}
+                        className="py-1.5 px-2.5 bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 hover:border-[#2a2c33] rounded-lg text-[9px] font-bold text-zinc-400 hover:text-white transition uppercase tracking-wider cursor-pointer select-none"
+                      >
+                        Dismiss Params
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* Parameter & settings panel */}
                 <div className="lg:col-span-4 space-y-6">
                   <ManualInput 
@@ -1017,7 +1125,8 @@ export default function App() {
                   )}
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
             {activeTab === 'DataSelection' && (
               <DataSelection 
@@ -1084,9 +1193,14 @@ export default function App() {
                 onDeleteEntry={handleDeleteSavedInventory}
                 onClearAll={handleClearAllSavedInventories}
                 onUpdateEntryPrices={handleUpdateEntryPrices}
-                onAnalyzeInCalculator={(selectedCounts: InventoryCount) => {
+                onAnalyzeInCalculator={(selectedCounts: InventoryCount, listingDetails?: any) => {
                   setCounts(selectedCounts);
                   setDisplayAnova(true);
+                  if (listingDetails) {
+                    setImportedListing(listingDetails);
+                  } else {
+                    setImportedListing(null);
+                  }
                   setActiveTab('Calculator');
                 }}
               />

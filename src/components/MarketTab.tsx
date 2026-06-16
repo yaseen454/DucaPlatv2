@@ -41,11 +41,13 @@ import {
   Clock,
   ArrowLeft,
   Info,
-  ClipboardPaste
+  ClipboardPaste,
+  Sparkles,
+  Settings
 } from 'lucide-react';
 import { PRIME_ITEMS } from '../data/primeData';
 import { InventoryCount, PresenceStatus, SavedItemEntry } from '../types';
-import { getProfitStats, generateCostsCustom } from '../utils/mathUtils';
+import { getProfitStats, generateCostsCustom, runAnova, calculateProfit } from '../utils/mathUtils';
 import platinumIcon from '../data/platinum.png';
 import ducatIcon from '../data/480px-OrokinDucats.png';
 import AnovaPricingModal from './AnovaPricingModal';
@@ -175,7 +177,7 @@ export function guessCountsFromItem(nameStr: string, qtyValue: number): Inventor
 interface MarketTabProps {
   narrowConfig?: any;
   broadConfig?: any;
-  onAnalyzeInCalculator?: (counts: InventoryCount) => void;
+  onAnalyzeInCalculator?: (counts: InventoryCount, listingDetails?: any) => void;
   marketSubTab: 'browse' | 'manage' | 'saved' | 'saved_items' | 'my_listings';
   setMarketSubTab: (tab: 'browse' | 'manage' | 'saved' | 'saved_items' | 'my_listings') => void;
   onNavigateToSettings?: () => void;
@@ -399,6 +401,7 @@ export default function MarketTab({
   const [editingRarityPrices, setEditingRarityPrices] = useState<any>({});
   const [editingPriceListingId, setEditingPriceListingId] = useState<string | null>(null);
   const [newPriceValue, setNewPriceValue] = useState<string>('');
+  const [analyzedListingId, setAnalyzedListingId] = useState<string | null>(null);
 
   const handleUpdatePrice = async (listing: MarketListing) => {
     if (!user || !userVerification || userVerification.status !== 'verified') return;
@@ -1705,7 +1708,13 @@ export default function MarketTab({
                     : `/w ${listing.sellerIGN} Hi I want to sell Prime Junk 15 :ducats: = ${listPrices.bronze15} :platinum: , 25 :ducats: = ${listPrices.bronze25} :platinum: , 45 :ducats: = ${listPrices.silver45} :platinum: , 65 :ducats: = ${listPrices.silver65} :platinum: , 100 :ducats: = ${listPrices.gold} :platinum:`;
                 } else if (isPrimeJunk) {
                   const formattedParts = listing.partDistribution ? `(${listing.partDistribution.replace(/(\d+)d/g, '$1 :ducats:')}) ` : '';
-                  const tradeInfo = `(${listing.totalParts} parts for ${listing.price} :platinum:) (${Math.round(listing.price / (listing.tradesRequired || 1))} :platinum: / 1 Trade) (Total Trades = ${listing.tradesRequired || 1}) (Total Ducats = ${listing.totalDucats || 0})`;
+                  const totalTrades = listing.tradesRequired || 1;
+                  const basePlat = Math.floor(listing.price / totalTrades);
+                  const remainderPlat = listing.price % totalTrades;
+                  const platPerTradeStr = remainderPlat > 0 
+                    ? `${basePlat} :platinum: / 1 Trade + ${remainderPlat} :platinum: extra` 
+                    : `${basePlat} :platinum: / 1 Trade`;
+                  const tradeInfo = `(${listing.totalParts} parts for ${listing.price} :platinum:) (${platPerTradeStr}) (Total Trades = ${totalTrades}) (Total Ducats = ${listing.totalDucats || 0})`;
                   tradeText = isWTS
                     ? `/w ${listing.sellerIGN} Hi! I want to buy your Bulk Prime Junk Bundle ${formattedParts}${tradeInfo}`
                     : `/w ${listing.sellerIGN} Hi! I want to sell you a Bulk Prime Junk Bundle ${formattedParts}${tradeInfo}`;
@@ -1718,11 +1727,13 @@ export default function MarketTab({
                 return (
                   <div
                     key={listing.id}
-                    className={`bg-[#14161c] border rounded-xl p-6 transition duration-150 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-5 ${isOwner ? 'border-[#d4af37]/45 shadow-lg shadow-[#d4af37]/3' : 'border-[#2a2c33]'}`}
+                    className={`bg-[#14161c] border rounded-xl p-6 transition duration-150 relative overflow-hidden flex flex-col gap-5 ${isOwner ? 'border-[#d4af37]/45 shadow-lg shadow-[#d4af37]/3' : 'border-[#2a2c33]'}`}
                   >
                     
                     {/* Left Accent Bar depending on listing type */}
                     <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${isWTS ? 'bg-[#c55353]' : 'bg-[#3b82f6]'}`} />
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 w-full">
 
                     <div className="space-y-2 flex-1 pl-1">
                       
@@ -2004,22 +2015,21 @@ export default function MarketTab({
                           </div>
                         )}
 
-                        {!listing.isRateBased && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const derivedCounts = isPrimeJunk 
-                                ? (listing.counts || { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })
-                                : guessCountsFromItem(listing.itemName, listing.quantity);
-                              onAnalyzeInCalculator?.(derivedCounts);
-                            }}
-                            className="px-3.5 py-1.5 bg-[#d4af37]/10 hover:bg-[#d4af37]/15 text-[#d4af37] border border-[#d4af37]/25 hover:border-[#d4af37]/45 text-[9px] font-extrabold uppercase tracking-widest rounded-lg transition duration-150 inline-flex items-center gap-1.5 cursor-pointer max-w-max select-none"
-                            title="Transmit item parameters to the main ANOVA statistical calculator"
-                          >
-                            <TrendingUp className="w-3.5 h-3.5 text-[#d4af37]" />
-                            <span>Analyze in Calculator</span>
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAnalyzedListingId(prev => prev === listing.id ? null : listing.id);
+                          }}
+                          className={`px-3.5 py-1.5 text-[9px] font-extrabold uppercase tracking-widest rounded-lg transition duration-150 inline-flex items-center gap-1.5 cursor-pointer max-w-max select-none ${
+                            analyzedListingId === listing.id
+                              ? 'bg-[#d4af37] text-[#0c0d10] border border-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.35)]'
+                              : 'bg-[#d4af37]/10 hover:bg-[#d4af37]/15 text-[#d4af37] border border-[#d4af37]/25 hover:border-[#d4af37]/45'
+                          }`}
+                          title="Open ANOVA Statistical Wizard for this listing"
+                        >
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          <span>{analyzedListingId === listing.id ? "Close Wizard" : "Analyze in Calculator"}</span>
+                        </button>
                       </div>
                     </div>
 
@@ -2119,6 +2129,243 @@ export default function MarketTab({
                       ) : null}
                     </div>
                   </div>
+
+                  {/* Collapsible ANOVA Strategic Verdict Panel */}
+                    {analyzedListingId === listing.id && (() => {
+                      const isRateBased = !!listing.isRateBased;
+                      const isWTS = listing.type === 'WTS';
+                      const derivedCounts = (listing.isPrimeJunk || listing.isRateBased)
+                        ? (listing.counts || { bronze15: 0, bronze25: 0, silver45: 0, silver65: 0, gold: 0 })
+                        : guessCountsFromItem(listing.itemName, listing.quantity);
+
+                      const hasCounts = derivedCounts.bronze15 > 0 || derivedCounts.bronze25 > 0 || derivedCounts.silver45 > 0 || derivedCounts.silver65 > 0 || derivedCounts.gold > 0;
+                      const analysisCounts = hasCounts ? derivedCounts : { bronze15: 1, bronze25: 1, silver45: 1, silver65: 1, gold: 1 };
+
+                      const baseCosts = generateCostsCustom(activeNarrowConfig);
+                      const stats = getProfitStats(analysisCounts, baseCosts);
+                      const anovaResult = runAnova(analysisCounts, 1, baseCosts);
+
+                      const listPrices = listing.rarityPrices || {
+                        bronze15: 1,
+                        bronze25: 2,
+                        silver45: 3,
+                        silver65: 5,
+                        gold: 8
+                      };
+
+                      const list15 = listPrices.bronze15 || 0;
+                      const list25 = listPrices.bronze25 || 0;
+                      const list45 = listPrices.silver45 || 0;
+                      const list65 = listPrices.silver65 || 0;
+                      const listGold = listPrices.gold || 0;
+
+                      const set15 = activeNarrowConfig.b15;
+                      const set25 = (activeNarrowConfig.b25.min + activeNarrowConfig.b25.max) / 2;
+                      const set45 = (activeNarrowConfig.s45.min + activeNarrowConfig.s45.max) / 2;
+                      const set65 = (activeNarrowConfig.s65.min + activeNarrowConfig.s65.max) / 2;
+                      const setGold = (activeNarrowConfig.g.min + activeNarrowConfig.g.max) / 2;
+
+                      const totalListingRate = list15 + list25 + list45 + list65 + listGold;
+                      const totalSettingsAvgRate = set15 + set25 + set45 + set65 + setGold;
+
+                      let verdictRating = "";
+                      let verdictColorClass = "";
+                      let verdictBgClass = "";
+                      let verdictBorderClass = "";
+                      let verdictDescription = "";
+
+                      if (!isRateBased) {
+                        const listedPrice = listing.price;
+                        const diffAvg = Math.round(listedPrice - stats.average);
+                        if (isWTS) {
+                          if (listedPrice < stats.min) {
+                            verdictRating = "🔥 STEAL BUY OPPORTUNITY";
+                            verdictColorClass = "text-emerald-400";
+                            verdictBgClass = "bg-[#10b981]/10";
+                            verdictBorderClass = "border-[#10b981]/30";
+                            verdictDescription = `This bundle deal is priced incredibly low! Purchasing this saves you statistically ${Math.abs(diffAvg)} Platinum compared to your median settings baseline.`;
+                          } else if (listedPrice <= stats.average) {
+                            verdictRating = "🟢 UNDER-AVERAGE BARGAIN BUY";
+                            verdictColorClass = "text-emerald-400";
+                            verdictBgClass = "bg-[#10b981]/5";
+                            verdictBorderClass = "border-[#10b981]/20";
+                            verdictDescription = `Highly recommended buy. The listed price is ${Math.abs(diffAvg)} Platinum cheaper than your default settings baseline.`;
+                          } else if (listedPrice <= stats.max) {
+                            verdictRating = "⚖️ FAIR MARKET CONGRUENCY";
+                            verdictColorClass = "text-yellow-500";
+                            verdictBgClass = "bg-yellow-500/5";
+                            verdictBorderClass = "border-yellow-500/20";
+                            verdictDescription = `The listed price is highly congruent with your configured margins, costing slightly extra of around ${diffAvg} Platinum above the strict statistical baseline.`;
+                          } else {
+                            verdictRating = "🚨 INFLATED PREMIUM / OVERPRICED";
+                            verdictColorClass = "text-rose-400";
+                            verdictBgClass = "bg-rose-950/20";
+                            verdictBorderClass = "border-rose-900/45";
+                            verdictDescription = `The seller is requesting ${diffAvg} Platinum above standard value ranges. We advise holding off or looking elsewhere for a wholesale package.`;
+                          }
+                        } else {
+                          // isWTB
+                          if (listedPrice > stats.max) {
+                            verdictRating = "🔥 PREMIUM CASH OUT WAVE";
+                            verdictColorClass = "text-emerald-400";
+                            verdictBgClass = "bg-[#10b981]/10";
+                            verdictBorderClass = "border-[#10b981]/30";
+                            verdictDescription = `Outstanding offer! Selling your items to this buyer yields a high plat surplus of ${diffAvg} Platinum above your maximum configured settings.`;
+                          } else if (listedPrice >= stats.average) {
+                            verdictRating = "🟢 DISCRIMINATIVE PROFIT SELL";
+                            verdictColorClass = "text-emerald-400";
+                            verdictBgClass = "bg-[#10b981]/5";
+                            verdictBorderClass = "border-[#10b981]/20";
+                            verdictDescription = `Optimal turnover option. Sells for ${diffAvg} Platinum surplus compared to your settings baseline.`;
+                          } else if (listedPrice >= stats.min) {
+                            verdictRating = "⚖️ FAIR TURNOVER VALUE";
+                            verdictColorClass = "text-yellow-500";
+                            verdictBgClass = "bg-yellow-500/5";
+                            verdictBorderClass = "border-yellow-500/20";
+                            verdictDescription = `Acceptable trade. This transaction lies in your lower margins range (paying you ${Math.abs(diffAvg)} Platinum below average, but above minimum threshold).`;
+                          } else {
+                            verdictRating = "🚨 TRUNCATED LOSS DEVIANT / LOWBALL";
+                            verdictColorClass = "text-rose-400";
+                            verdictBgClass = "bg-rose-950/20";
+                            verdictBorderClass = "border-rose-900/45";
+                            verdictDescription = `This buyer is underpaying your item standard by ${Math.abs(diffAvg)} Platinum. We strongly warn you of margin loss if you proceed.`;
+                          }
+                        }
+                      } else {
+                        // Rate-Based
+                        const diffPercent = Math.round(((totalListingRate - totalSettingsAvgRate) / totalSettingsAvgRate) * 100);
+                        if (isWTS) {
+                          if (totalListingRate < totalSettingsAvgRate * 0.9) {
+                            verdictRating = "🔥 DISCOUNTED WHOLESALE RATES";
+                            verdictColorClass = "text-emerald-400";
+                            verdictBgClass = "bg-[#10b981]/10";
+                            verdictBorderClass = "border-[#10b981]/30";
+                            verdictDescription = `These custom rates offer a wholesale discount of ${Math.abs(diffPercent)}% compared to your default settings baseline! Super optimal configuration.`;
+                          } else if (totalListingRate <= totalSettingsAvgRate * 1.05) {
+                            verdictRating = "🟢 REGULAR MARKET CONGRUENCY";
+                            verdictColorClass = "text-[#d4af37]";
+                            verdictBgClass = "bg-[#d4af37]/5";
+                            verdictBorderClass = "border-[#d4af37]/20";
+                            verdictDescription = `Normal market rates. Sits within ${diffPercent >= 0 ? '+' : ''}${diffPercent}% tolerance from your average settings standard.`;
+                          } else {
+                            verdictRating = "🚨 INFLATED SPECULATIVE PREMIUM";
+                            verdictColorClass = "text-rose-400";
+                            verdictBgClass = "bg-rose-950/20";
+                            verdictBorderClass = "border-rose-900/45";
+                            verdictDescription = `The custom tier rates represent a ${diffPercent}% inflation premium over your standard configuration. Best to keep searching for cheaper rates.`;
+                          }
+                        } else {
+                          // isWTB
+                          if (totalListingRate > totalSettingsAvgRate * 1.1) {
+                            verdictRating = "🔥 HIGH PROFIT ACQUISITION ENABLER";
+                            verdictColorClass = "text-emerald-400";
+                            verdictBgClass = "bg-[#10b981]/10";
+                            verdictBorderClass = "border-[#10b981]/30";
+                            verdictDescription = `This buyer's custom tier rates are highly competitive, paying about ${diffPercent}% MORE than your default settings baseline!`;
+                          } else if (totalListingRate >= totalSettingsAvgRate * 0.92) {
+                            verdictRating = "🟢 STABLE TURNOVER SELLING";
+                            verdictColorClass = "text-[#d4af37]";
+                            verdictBgClass = "bg-[#d4af37]/5";
+                            verdictBorderClass = "border-[#d4af37]/20";
+                            verdictDescription = `Comfortable liquid rates. Sitting at a minor ${diffPercent}% deviation from your configured average baseline.`;
+                          } else {
+                            verdictRating = "🚨 MINIMUM BASELINE EXCEEDED (LOWBALL)";
+                            verdictColorClass = "text-rose-400";
+                            verdictBgClass = "bg-rose-950/20";
+                            verdictBorderClass = "border-rose-900/45";
+                            verdictDescription = `Underpaid rates. The buyer's offers are ${Math.abs(diffPercent)}% below your default configurations. Avoid unless in desperate need of platinum.`;
+                          }
+                        }
+                      }
+
+                      return (
+                        <div id={`anova-wizard-${listing.id}`} className="mt-4 pt-4 border-t border-[#2a2c33]/80 w-full flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-extrabold text-[#d4af37] tracking-widest uppercase font-mono flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-[#d4af37]" />
+                              <span>ANOVA Wizard Strategic Verdict Console</span>
+                            </span>
+                            <span className="text-[9px] text-[#8e9299] font-mono select-none px-2 py-0.5 bg-[#0c0d10] border border-[#2a2c33] rounded">
+                              N = {anovaResult.groups.reduce((acc, g) => acc + g.count, 0)} Vectors
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Left: Strategic Verdict Block */}
+                            <div className={`p-4 rounded-xl border border-dashed ${verdictBorderClass} ${verdictBgClass} flex flex-col justify-between space-y-3`}>
+                              <div>
+                                <div className="flex items-center gap-1 text-[10px] uppercase font-black tracking-widest text-[#d4af37]">
+                                  <Sparkles className="w-3.5 h-3.5" />
+                                  <span>Strategic Verdict Indicator</span>
+                                </div>
+                                <h5 className={`text-xs font-extrabold font-mono uppercase tracking-tight mt-1.5 ${verdictColorClass}`}>
+                                  {verdictRating}
+                                </h5>
+                                <p className="text-xs text-zinc-300 leading-relaxed font-sans mt-2">
+                                  {verdictDescription}
+                                </p>
+                              </div>
+                              
+                              {/* Settings Disclaimer with Interactive Shortcut Link */}
+                              <div className="text-[10px] text-zinc-400 bg-[#0c0d10]/95 p-2.5 rounded-lg border border-zinc-800/80 leading-normal flex flex-col gap-1.5 mt-2">
+                                <div className="flex items-start gap-1.5 italic">
+                                  <Info className="w-3.5 h-3.5 text-[#d4af37] shrink-0 mt-0.5" />
+                                  <span>
+                                    <strong>Decision Criteria Reminder:</strong> This decision is purely based on the rates you are applying at your settings. (Avg. Baseline: {totalSettingsAvgRate.toFixed(1)}p).
+                                  </span>
+                                </div>
+                                {onNavigateToSettings && (
+                                  <button
+                                    type="button"
+                                    onClick={onNavigateToSettings}
+                                    className="text-[#d4af37] hover:text-[#f3da82] font-semibold text-[9px] uppercase tracking-wider text-left flex items-center gap-1 cursor-pointer transition duration-150 mt-1 select-none"
+                                  >
+                                    <Settings className="w-3 h-3 text-[#d4af37]" />
+                                    <span>Adjust Custom Pricing Parameters/Baselines →</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Right: Clean Import layout with description */}
+                            <div className="p-4 rounded-xl border border-[#2a2c33] bg-[#0c0d10] flex flex-col justify-between space-y-3">
+                              <div>
+                                <div className="flex items-center gap-1.5 text-[10px] uppercase font-black tracking-widest text-[#8e9299] font-mono">
+                                  <TrendingUp className="w-3.5 h-3.5 text-[#8e9299]" />
+                                  <span>ANOVA Statistical Calculator</span>
+                                </div>
+                                
+                                <p className="text-xs text-[#8e9299] leading-relaxed mt-2.5 font-sans">
+                                  To view full statistical variance distributions, detailed group density plots, post-hoc Tukey tests, and perform full hypothesis testing, import this listing's parameters directly into the main calculator interface.
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onAnalyzeInCalculator?.(analysisCounts, {
+                                    sellerIGN: listing.sellerIGN,
+                                    price: listing.price,
+                                    itemName: listing.isPrimeJunk ? "Bulk Prime Junk Bundle" : (listing.itemName || "Prime Item Bundle"),
+                                    tradeText: tradeText.replace(/<\/?[^>]+(>|$)/g, ""),
+                                    isWTS: isWTS,
+                                    quantity: listing.quantity || 1,
+                                    totalParts: listing.totalParts || 0,
+                                    totalDucats: listing.totalDucats || 0,
+                                    partDistribution: listing.partDistribution
+                                  });
+                                }}
+                                className="w-full py-2 bg-[#d4af37]/10 hover:bg-[#d4af37]/20 text-[#d4af37] text-[10px] font-extrabold uppercase tracking-widest border border-[#d4af37]/30 rounded-lg transition duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <span>Import to Full ANOVA Sellsheet</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 );
 
   };
@@ -2138,8 +2385,38 @@ export default function MarketTab({
         const typeMatch = filters.orderType === 'all' || l.type === filters.orderType;
         
         let priceMatch = true;
-        if (filters.minPrice !== '') priceMatch = priceMatch && l.price >= parseInt(filters.minPrice);
-        if (filters.maxPrice !== '') priceMatch = priceMatch && l.price <= parseInt(filters.maxPrice);
+        const minVal = filters.minPrice !== '' ? parseInt(filters.minPrice) : null;
+        const maxVal = filters.maxPrice !== '' ? parseInt(filters.maxPrice) : null;
+
+        if (minVal !== null || maxVal !== null) {
+          if (l.isRateBased || l.isBatchMode || (l.isPrimeJunk && l.price === 0)) {
+            const listPrices = l.rarityPrices || {
+              bronze15: 1,
+              bronze25: 2,
+              silver45: 3,
+              silver65: 5,
+              gold: 8
+            };
+            const activeTiers = (['bronze15', 'bronze25', 'silver45', 'silver65', 'gold'] as const).filter(t => {
+              if (l.isRateBased) return true;
+              return l.counts && (l.counts[t] || 0) > 0;
+            });
+            if (activeTiers.length > 0) {
+              priceMatch = activeTiers.some(t => {
+                const rate = listPrices[t] || 0;
+                let match = true;
+                if (minVal !== null) match = match && rate >= minVal;
+                if (maxVal !== null) match = match && rate <= maxVal;
+                return match;
+              });
+            } else {
+              priceMatch = false;
+            }
+          } else {
+            if (minVal !== null) priceMatch = priceMatch && l.price >= minVal;
+            if (maxVal !== null) priceMatch = priceMatch && l.price <= maxVal;
+          }
+        }
 
         let sellingStyleMatch = true;
         if (filters.sellingType === 'rate-based') sellingStyleMatch = !!l.isRateBased;
@@ -2283,6 +2560,35 @@ export default function MarketTab({
         <p className="text-xs text-[#8e9299]">
           Trade Prime parts and Junk safely. Authenticate your In-Game name via warframe.market profile bios to guarantee seller identities.
         </p>
+      </div>
+
+      {/* Localized Market sub-tabs ribbon */}
+      <div className="flex justify-start sm:justify-center w-full overflow-x-auto select-none border-b border-[#2a2c33]/40 pb-1">
+        <nav className="flex flex-nowrap justify-start sm:justify-center gap-1 sm:gap-2 pb-1 sm:pb-0">
+          {[
+            { id: 'browse' as const, label: 'Browse Listings', icon: ShoppingBag },
+            { id: 'saved' as const, label: 'Create Listings', icon: Tag },
+            { id: 'my_listings' as const, label: 'My Listings', icon: Coins },
+            { id: 'manage' as const, label: 'My Trade Panel & Verification', icon: UserCheck },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const active = marketSubTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setMarketSubTab(tab.id)}
+                className={`relative px-3 sm:px-4 md:px-5 py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold flex items-center gap-1.5 border-b-2 transition duration-200 select-none flex-shrink-0 uppercase tracking-wider cursor-pointer ${
+                  active
+                    ? 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/5 font-bold'
+                    : 'border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
       {/* Messages */}
