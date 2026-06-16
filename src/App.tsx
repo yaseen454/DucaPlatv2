@@ -466,10 +466,9 @@ export default function App() {
       {/* Sticky Top Bar Container - Wraps both Header and Navigation Ribbon to keep them present while scrolling */}
       <div className="sticky top-0 z-50 w-full bg-[#0c0d10]/95 backdrop-blur-md border-b border-[#2a2c33] shadow-xl flex flex-col">
         {/* Premium Header */}
-        <header className="w-full px-3 md:px-8 py-3 md:py-4 flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 sm:gap-4 overflow-hidden border-b border-[#2a2c33]/30">
-        <div className="w-full sm:w-auto flex flex-col lg:flex-row items-center lg:items-center gap-3 lg:gap-6">
-          <div className="text-center sm:text-left flex flex-col items-center sm:items-start w-full sm:w-auto">
-            <div className="flex items-baseline justify-center sm:justify-start gap-2">
+        <header className="w-full px-3 md:px-8 py-3 md:py-4 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 overflow-hidden">
+          <div className="text-center md:text-left flex flex-col items-center md:items-start w-full md:w-auto shrink-0">
+            <div className="flex items-baseline justify-center md:justify-start gap-2">
               <h1 className="text-xl md:text-3xl font-light tracking-widest text-[#d4af37]" style={{ fontFamily: "'Georgia', serif" }}>
                 DUCAPLAT
               </h1>
@@ -480,165 +479,171 @@ export default function App() {
             <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] text-[#8e9299] mt-1 sm:mt-1.5">Void Market Efficiency Analytics</p>
           </div>
 
-          {/* Top Main App Ribbon with Saved Items, Settings, Guide, and Navigation History */}
-          <div className="flex items-center gap-2 bg-[#111317] p-1 rounded-lg border border-[#2a2c33] shrink-0">
-            {/* Navigation History Controls */}
-            <div className="flex items-center gap-0.5">
-              <button
-                type="button"
-                onClick={handleGoBack}
-                disabled={historyIndex <= 0}
-                className={`p-1.5 rounded transition select-none ${
-                  historyIndex > 0
-                    ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
-                    : 'text-zinc-600 opacity-20 cursor-not-allowed'
-                }`}
-                title="Go Back"
+          <div className="w-full md:w-auto flex flex-row items-center justify-center md:justify-end gap-3 md:gap-4 flex-nowrap overflow-x-auto no-scrollbar py-1">
+            {/* 1. GitHub & Ko-fi Buttons (Left endpoint anchor) */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <a
+                href="https://github.com/yaseen454/DucaPlatv2"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 md:p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[#d4af37] border border-[#2a2c33] hover:border-[#d4af37]/30 rounded-lg transition-all duration-150 flex items-center justify-center"
+                title="GitHub Repository"
               >
-                <ChevronLeft className="w-4 h-4 shrink-0" />
-              </button>
-              <button
-                type="button"
-                onClick={handleGoForward}
-                disabled={historyIndex >= navHistory.length - 1}
-                className={`p-1.5 rounded transition select-none ${
-                  historyIndex < navHistory.length - 1
-                    ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
-                    : 'text-zinc-600 opacity-20 cursor-not-allowed'
-                }`}
-                title="Go Forward"
+                <Github className="w-4 h-4" />
+              </a>
+
+              <a
+                href="https://ko-fi.com/trc07#"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 md:p-2 bg-[#1a1313] hover:bg-[#2c1d1a] text-[#ff5e5b] hover:text-[#ff7875] border border-[#ff5e5b]/20 hover:border-[#ff5e5b]/40 rounded-lg transition-all duration-150 flex items-center justify-center gap-1 md:gap-1.5 px-2 md:px-2.5 text-xs font-semibold shrink-0"
+                title="Support Me on Ko-fi!"
               >
-                <ChevronRight className="w-4 h-4 shrink-0" />
-              </button>
+                <Coffee className="w-3.5 h-3.5 text-[#ff5e5b]" />
+                <span className="hidden sm:inline text-[#ff5e5b] font-mono text-[9px] uppercase tracking-wider font-bold leading-none">Ko-fi</span>
+              </a>
             </div>
 
-            <div className="h-4 w-px bg-[#2a2c33] mx-1" />
-
-            {/* Quick Access Top Main Ribbon Controls */}
-            <div className="flex items-center gap-1">
-              {[
-                { id: 'SavedItems' as const, label: 'Saved Items', icon: Bookmark },
-                { id: 'Settings' as const, label: 'Settings', icon: Settings },
-                { id: 'Help' as const, label: 'Guide', icon: HelpCircle }
-              ].map((tab) => {
-                const Icon = tab.icon;
-                const active = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setActiveTab(tab.id);
-                    }}
-                    className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded text-[9px] sm:text-[10px] md:text-[11px] font-semibold flex items-center gap-1 transition duration-200 select-none uppercase tracking-wider cursor-pointer ${
-                      active
-                        ? 'border border-[#d4af37]/45 text-[#d4af37] bg-[#d4af37]/10 font-bold'
-                        : 'border border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
-                    }`}
-                    title={tab.label}
-                  >
-                    <Icon className="w-3.5 h-3.5 text-[#d4af37]" />
-                    <span className="hidden sm:inline">{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="w-full sm:w-auto flex flex-wrap items-center justify-center sm:justify-end gap-2 md:gap-8">
-          <div className="hidden lg:flex gap-8 items-center border-r border-[#2a2c33]/40 pr-8">
-            <div className="text-center">
-              <span className="block text-[10px] text-[#8e9299] uppercase tracking-wider mb-1">Active Inventory</span>
-              <span className="text-white font-mono text-xs font-medium">{totalCount} Parts</span>
-            </div>
-            <div className="text-center">
-              <span className="block text-[10px] text-[#8e9299] uppercase tracking-wider mb-1">Total Ducat Pool</span>
-              <span className="text-[#d4af37] font-mono text-xs font-medium">
-                {counts.bronze15*15 + counts.bronze25*25 + counts.silver45*45 + counts.silver65*65 + counts.gold*100}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            <a
-              href="https://github.com/yaseen454/DucaPlatv2"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:flex p-1.5 md:p-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[#d4af37] border border-[#2a2c33] hover:border-[#d4af37]/30 rounded-lg transition-all duration-150 items-center justify-center"
-              title="GitHub Repository"
-            >
-              <Github className="w-4 h-4" />
-            </a>
-
-            <a
-              href="https://ko-fi.com/trc07#"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:flex p-1.5 md:p-2.5 bg-[#1a1313] hover:bg-[#2c1d1a] text-[#ff5e5b] hover:text-[#ff7875] border border-[#ff5e5b]/20 hover:border-[#ff5e5b]/40 rounded-lg transition-all duration-150 items-center justify-center gap-1.5 px-2 md:px-3 text-xs font-semibold"
-              title="Support Me on Ko-fi!"
-            >
-              <Coffee className="w-4 h-4 text-[#ff5e5b]" />
-              <span className="hidden sm:inline text-[#ff5e5b] font-mono text-[10px] uppercase tracking-wider font-bold">Ko-fi</span>
-            </a>
-
-            {user && isVerified && (
-              <div className="px-2 py-1 md:py-1.5 bg-[#111317] hover:bg-[#1a1c23] border border-[#2a2c33] hover:border-[#d4af37]/50 rounded-lg transition-colors flex items-center justify-center">
-                <select 
-                  value={userPresence}
-                  onChange={handlePresenceChange}
-                  className={`bg-transparent max-w-[80px] sm:max-w-none text-[9px] sm:text-[10px] md:text-xs truncate uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer ${userPresence === 'online-in-game' ? 'text-purple-400' : userPresence === 'online' ? 'text-emerald-400' : 'text-zinc-500'}`}
-                  title="Market Presence Status"
-                >
-                  <option value="offline" className="text-zinc-500 bg-[#0c0d10]">OFFLINE</option>
-                  <option value="online" className="text-emerald-400 bg-[#0c0d10]">ONLINE</option>
-                  <option value="online-in-game" className="text-purple-400 bg-[#0c0d10]">IN GAME</option>
-                </select>
-              </div>
-            )}
-
-            {user ? (
-              <div className="flex items-center gap-1.5 sm:gap-2.5 bg-[#111317] border border-[#d4af37]/20 p-1 pl-1.5 pr-1.5 sm:pl-2.5 sm:pr-2.5 md:pl-3 md:pr-3.5 rounded-lg max-w-full">
-                {user.photoURL ? (
-                  <img 
-                    src={user.photoURL} 
-                    alt={user.displayName || "User"} 
-                    className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full border border-[#d4af37]/30 object-cover shrink-0"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/30 flex items-center justify-center text-[9px] font-bold uppercase shrink-0">
-                    {(user.displayName || user.email || "U")[0]}
-                  </div>
-                )}
-                <div className="text-left hidden sm:block">
-                  <span className="block text-[8px] text-[#8e9299] uppercase tracking-widest leading-none mb-0.5">Cloud Synced</span>
-                  <span className="block text-[11px] text-zinc-100 max-w-[100px] truncate leading-none font-medium">{user.displayName || user.email}</span>
-                </div>
+            {/* 2. Top Main App Ribbon (Positioned right next to the GitHub button at its right end-point) */}
+            <div className="flex items-center gap-1.5 bg-[#111317] p-1.5 rounded-lg border border-[#2a2c33] shrink-0 shadow-lg">
+              {/* Navigation History Controls */}
+              <div className="flex items-center gap-0.5">
                 <button
-                  onClick={async () => {
-                    await setGlobalPresence('offline');
-                    logout();
-                  }}
-                  className="px-1.5 py-1 sm:px-2 sm:py-0.5 md:py-1 text-[8px] md:text-[9px] font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded transition-all uppercase tracking-wider select-none shrink-0"
+                  type="button"
+                  onClick={handleGoBack}
+                  disabled={historyIndex <= 0}
+                  className={`p-1 rounded transition select-none ${
+                    historyIndex > 0
+                      ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
+                      : 'text-zinc-600 opacity-20 cursor-not-allowed'
+                  }`}
+                  title="Go Back"
                 >
-                  Sign Out
+                  <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGoForward}
+                  disabled={historyIndex >= navHistory.length - 1}
+                  className={`p-1 rounded transition select-none ${
+                    historyIndex < navHistory.length - 1
+                      ? 'text-[#d4af37] hover:text-[#f3da82] bg-[#d4af37]/5 hover:bg-[#d4af37]/10 cursor-pointer'
+                      : 'text-zinc-600 opacity-20 cursor-not-allowed'
+                  }`}
+                  title="Go Forward"
+                >
+                  <ChevronRight className="w-3.5 h-3.5 shrink-0" />
                 </button>
               </div>
-            ) : (
-              <button
-                onClick={signInWithGoogle}
-                className="px-2 py-1.5 sm:px-3 lg:px-4 md:py-2 bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#d4af37] hover:text-black border border-[#d4af37]/30 hover:border-transparent rounded-lg text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider transition duration-150 flex items-center gap-1.5 md:gap-2 select-none"
-              >
-                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-white text-black font-extrabold flex items-center justify-center text-[9px] sm:text-[10px] rounded-full shrink-0">G</span>
-                <span>Sign In</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
 
-      {/* Main Unified Navigation Ribbon shown across all tabs, enclosed in the sticky container */}
-      <div className="flex flex-col lg:flex-row items-center justify-between bg-[#0a0a0d] px-4 sm:px-8 py-2.5 gap-3.5 max-w-7xl mx-auto w-full border-t border-[#2a2c33]/30">
+              <div className="h-4 w-px bg-[#2a2c33] mx-1" />
+
+              {/* Quick Access Top Main Ribbon Controls */}
+              <div className="flex items-center gap-1">
+                {[
+                  { id: 'SavedItems' as const, label: 'Saved Items', icon: Bookmark },
+                  { id: 'Settings' as const, label: 'Settings', icon: Settings },
+                  { id: 'Help' as const, label: 'Guide', icon: HelpCircle }
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const active = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                      }}
+                      className={`px-2 py-1 rounded text-[9px] sm:text-[10px] md:text-[11px] font-semibold flex items-center gap-1 transition duration-200 select-none uppercase tracking-wider cursor-pointer ${
+                        active
+                          ? 'border border-[#d4af37]/45 text-[#d4af37] bg-[#d4af37]/10 font-bold'
+                          : 'border border-transparent text-[#8e9299] hover:text-[#e0e1e6] hover:bg-[#1a1c22]/30'
+                      }`}
+                      title={tab.label}
+                    >
+                      <Icon className="w-3.5 h-3.5 text-[#d4af37]" />
+                      <span className="hidden sm:inline">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3. Active Inventory & total ducat pool (Aligned horizontally next to newly aligned ribbon) */}
+            <div className="flex gap-4 items-center bg-[#111317]/50 px-3 py-1.5 sm:py-2 rounded-lg border border-[#2a2c33]/40 shrink-0 shadow-sm">
+              <div className="text-center">
+                <span className="block text-[8px] sm:text-[9px] text-[#8e9299] uppercase tracking-wider mb-0.5 leading-none">Active Inv</span>
+                <span className="text-white font-mono text-xs font-semibold leading-none">{totalCount} Parts</span>
+              </div>
+              <div className="h-4 w-px bg-[#2a2c33]/40" />
+              <div className="text-center">
+                <span className="block text-[8px] sm:text-[9px] text-[#8e9299] uppercase tracking-wider mb-0.5 leading-none">Docats</span>
+                <span className="text-[#d4af37] font-mono text-xs font-semibold leading-none text-right">
+                  {counts.bronze15*15 + counts.bronze25*25 + counts.silver45*45 + counts.silver65*65 + counts.gold*100}
+                </span>
+              </div>
+            </div>
+
+            {/* 4. Presence status & profiles on the far right of the line */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {user && isVerified && (
+                <div className="px-2 py-1 bg-[#111317] hover:bg-[#1a1c23] border border-[#2a2c33] hover:border-[#d4af37]/50 rounded-lg transition-colors flex items-center justify-center">
+                  <select 
+                    value={userPresence}
+                    onChange={handlePresenceChange}
+                    className={`bg-transparent max-w-[80px] sm:max-w-none text-[9px] sm:text-[10px] md:text-xs truncate uppercase tracking-widest leading-none outline-none font-bold block appearance-none cursor-pointer ${userPresence === 'online-in-game' ? 'text-purple-400' : userPresence === 'online' ? 'text-emerald-400' : 'text-zinc-500'}`}
+                    title="Market Presence Status"
+                  >
+                    <option value="offline" className="text-zinc-500 bg-[#0c0d10]">OFFLINE</option>
+                    <option value="online" className="text-emerald-400 bg-[#0c0d10]">ONLINE</option>
+                    <option value="online-in-game" className="text-purple-400 bg-[#0c0d10]">IN GAME</option>
+                  </select>
+                </div>
+              )}
+
+              {user ? (
+                <div className="flex items-center gap-1.5 sm:gap-2 bg-[#111317] border border-[#d4af37]/20 p-1 pl-1.5 pr-1.5 sm:pl-2.5 sm:pr-2.5 rounded-lg">
+                  {user.photoURL ? (
+                    <img 
+                      src={user.photoURL} 
+                      alt={user.displayName || "User"} 
+                      className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-[#d4af37]/30 object-cover shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/30 flex items-center justify-center text-[9px] font-bold uppercase shrink-0">
+                      {(user.displayName || user.email || "U")[0]}
+                    </div>
+                  )}
+                  <div className="text-left hidden sm:block">
+                    <span className="block text-[8px] text-[#8e9299] uppercase tracking-widest leading-none mb-0.5">Cloud Synced</span>
+                    <span className="block text-[11px] text-zinc-100 max-w-[100px] truncate leading-none font-medium">{user.displayName || user.email}</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      await setGlobalPresence('offline');
+                      logout();
+                    }}
+                    className="px-1.5 py-1 text-[8px] md:text-[9px] font-bold text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded transition-all uppercase tracking-wider select-none shrink-0"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={signInWithGoogle}
+                  className="px-2 py-1.5 sm:px-3 lg:px-4 md:py-2 bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#d4af37] hover:text-black border border-[#d4af37]/30 hover:border-transparent rounded-lg text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider transition duration-150 flex items-center gap-1.5 md:gap-2 select-none"
+                >
+                  <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-white text-black font-extrabold flex items-center justify-center text-[9px] sm:text-[10px] rounded-full shrink-0">G</span>
+                  <span>Sign In</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
+    </div>
+
+    {/* Main Unified Navigation Ribbon shown across all tabs, moves with scrolling */}
+    <div className="flex flex-col lg:flex-row items-center justify-between bg-[#0a0a0d] px-4 sm:px-8 py-2.5 gap-3.5 max-w-7xl mx-auto w-full border-b border-[#2a2c33]/30">
         <div className="flex-1 flex justify-center w-full overflow-x-auto select-none no-scrollbar">
           {activeTab === 'Market' ? (
             <nav className="flex flex-nowrap justify-center gap-1.5 sm:gap-2">
@@ -760,7 +765,6 @@ export default function App() {
           )}
         </div>
       </div>
-    </div>
 
       {/* Active Tab Workspace Container */}
       <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 transition-all duration-300">
